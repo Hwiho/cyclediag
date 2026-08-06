@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 
 from cyclediag.features.curve_fit import attach_curve_fit
+from cyclediag.features.cycle_roles import attach_cycle_roles
 from cyclediag.features.fade_trajectory import attach_fade_trajectory
 from cyclediag.features.dcir_decompose import (
     decompose_pulse_cycle,
@@ -463,7 +464,17 @@ def enrich_feature_table(
             rest_current_max=rest_current_max, cycle_list=feat_cycles,
         )
 
-    # §5.12 fade exponent + bilinear knee (cell-level, broadcast to rows)
+    # Role tags (routine 0.5C / C/3 RPT / DCIR) before fade — SoHQ bumps ≠ noise
+    out, role_table = attach_cycle_roles(out, raw_df)
+    meta["cycle_role_counts"] = (
+        role_table["cycle_role"].value_counts().to_dict() if not role_table.empty else {}
+    )
+    meta["rpt_c3_cycles"] = (
+        sorted(int(c) for c in role_table.loc[role_table["cycle_role"].eq("rpt_c3"), "cycle"])
+        if not role_table.empty else []
+    )
+
+    # §5.12 fade exponent + bilinear knee on routine SoHQ only
     out = attach_fade_trajectory(out)
 
     return out, meta

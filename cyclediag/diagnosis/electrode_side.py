@@ -356,16 +356,29 @@ def segment_electrode_trajectory(
     min_segment_cycles: int = 3,
     margin_flip: float = 0.05,
     lean_eps: float = 0.05,
+    routine_only: bool = True,
 ) -> pd.DataFrame:
-    """Segment by PE vs contact/NE lean with dwell hysteresis."""
+    """Segment by PE vs contact/NE lean with dwell hysteresis.
+
+    When ``cycle_role`` is present and ``routine_only``, C/3 RPT and DCIR pulse
+    cycles are excluded — mid-life SoHQ bumps are protocol RPT, not lean flips.
+    """
     if features is None or features.empty or "cycle" not in features.columns:
         return pd.DataFrame()
 
     d = features.sort_values("cycle").copy()
+    if routine_only and "cycle_role" in d.columns:
+        rout = d["cycle_role"].astype(str).eq("routine_05c")
+        if int(rout.sum()) >= max(min_segment_cycles, 8):
+            d = d.loc[rout].copy()
     sohq = pd.to_numeric(d.get("SoHQ"), errors="coerce")
     d = d[sohq.fillna(0) >= 50.0]
     if d.empty:
         d = features.sort_values("cycle").copy()
+        if routine_only and "cycle_role" in d.columns:
+            rout = d["cycle_role"].astype(str).eq("routine_05c")
+            if rout.any():
+                d = d.loc[rout].copy()
 
     pe = pd.to_numeric(d.get("PE_side_score"), errors="coerce")
     ne = pd.to_numeric(d.get("NE_side_score"), errors="coerce")

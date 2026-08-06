@@ -70,11 +70,17 @@ def load_cell(cell: str) -> tuple[pd.DataFrame, pd.DataFrame]:
     d = d[d["cycle"] >= 2].copy()
     for c in (
         "SoHQ", "PE_side_score", "NE_side_score", "shared_side_score",
+        "contact_stack_score",
         "LAM_PE_pattern_score", "contact_loss_score", "LLI_pattern_score",
         "dominance_margin", "electrode_confidence", "mech_vs_chem_ratio", "PER",
+        "C_rate_med_est", "I_abs_med_cc",
     ):
         if c in d.columns:
             d[c] = pd.to_numeric(d[c], errors="coerce")
+    if "contact_stack_score" in d.columns:
+        d["delta_PE_rival"] = d["PE_side_score"] - np.fmax(
+            d["NE_side_score"].fillna(0), d["contact_stack_score"].fillna(0),
+        )
     d["delta_PE_NE"] = d["PE_side_score"] - d["NE_side_score"]
     segs = pd.read_csv(SEGS[cell]) if SEGS[cell].exists() else pd.DataFrame()
     return d, segs
@@ -120,24 +126,23 @@ def page_cover(pdf: PdfPages):
                          facecolor=C_BG, edgecolor="#DDD", linewidth=1)
     fig.patches.append(box)
     summary = (
-        "진단 레벨: hypothesis_bol_ocp (aged 하프셀 교정 아님)\n"
+        "진단 레벨: hypothesis_bol_ocp v1.2 (aged 하프셀 교정 아님)\n"
         "셀: set4 SJ900 full-cell · 45 °C · 2.5–4.2 V · 0.5C routine / C/3 RPT\n"
-        "Ch022: SoHQ ≈ 100% → 65% (564 cyc) · 중기 음극(contact_loss) → 후기 양극(PE)\n"
-        "Ch024: SoHQ ≈ 100% → 64% (≈533 cyc) · 초·후기 양극 경향 · 중기 음극 포켓\n"
-        "근거: full-cell pattern score + BOL OCP peak attribution + fade trajectory"
+        "프로토콜: 중간 SoHQ ‘스파이크’ = C/3(~0.33C) RPT 용량 (노이즈 아님)\n"
+        "궤적·세그먼트: routine 0.5C only · RPT는 이중 트랙 앵커(RCF/η)\n"
+        "근거: full-cell pattern score + BOL OCP peak attribution + routine fade"
     )
     draw_wrapped(fig, 0.11, 0.66, summary, width=78, size=9.5)
     fig.text(0.08, 0.34, "핵심 결론 (한 줄)", fontproperties=fp(11, "bold"))
     draw_wrapped(
         fig, 0.08, 0.30,
-        "두 셀 모두 수명 후반에 양극(PE) 쪽 신호가 상대적으로 강해지지만, "
-        "Ch022는 중기(~80–380 사이클)에 음극(NE) 접촉 손실(contact_loss) 가설이 "
-        "더 길고 명확하게 지속된 뒤 ~390 사이클 부근에서 양극 지배로 전환된다. "
-        "이 결과는 절대 LAM%가 아니라 full-cell 패턴 점수와 BOL OCP에 기반한 상대 가설이다.",
+        "중간 궤적의 SoHQ 상승은 C/3 RPT다. fade/lean은 0.5C routine만으로 재구성했다. "
+        "상대 가설은 contact_stack(전극 미분해) vs PE lean 경쟁이며, "
+        "NE는 Si co-sign이 있을 때만 라벨한다. 절대 LAM%는 보고하지 않는다.",
         width=92, size=9.5,
     )
-    fig.text(0.08, 0.12, "작성: CycleDiag automated report · 2026-08-06", fontproperties=fp(8), color="#777")
-    fig.text(0.08, 0.09, "정책: IMPROVEMENT_ROADMAP §9.5 · LLI_LAM_DIAGNOSIS (ASSB Si-rich)", fontproperties=fp(8), color="#777")
+    fig.text(0.08, 0.12, "작성: CycleDiag automated report · 2026-08-06 · v1.2", fontproperties=fp(8), color="#777")
+    fig.text(0.08, 0.09, "정책: IMPROVEMENT_ROADMAP §9.5 · dual-track RPT (C/3)", fontproperties=fp(8), color="#777")
     pdf.savefig(fig)
     plt.close(fig)
 
@@ -174,13 +179,14 @@ def page_methods(pdf: PdfPages):
         "구간 분할: lean 부호 전환 · LAM_PE vs contact_loss 우위 전환 · (가능 시) knee 통과",
         width=92, size=9,
     ) + 0.02
-    y -= draw_wrapped(fig, 0.08, y, "1.4 데이터·전처리", width=92, size=11, weight="bold") + 0.01
+    y -= draw_wrapped(fig, 0.08, y, "1.4 데이터·전처리 · 이중 트랙", width=92, size=11, weight="bold") + 0.01
     draw_wrapped(
         fig, 0.08, y,
-        "용량(capa) 사이클만 사용. DC-IR 3-SOC 펄스 트리플릿(|I|≈1C)은 SoHQ가 부분 SOC로 "
-        "왜곡되므로 제외. 루틴 0.5C와 혼동되지 않도록 펄스 임계를 0.75·1C로 엄격화. "
-        "샘플: ~10 사이클 간격 + RPT 직전 capa + 수명 마일스톤. "
-        "baseline: SoHQ≥95% 첫 용량 사이클. BOL 하프셀: C/20, 음극 cycle 1–3, 양극 단사이클.",
+        "SJ900 프로토콜: routine 0.5C (|I|≈38.7 A) · C/3 RPT (|I|≈25.8 A, ~105 cyc 주기) · "
+        "DC-IR 1C 펄스 (|I|≈77 A). 중간 SoHQ 상승 스파이크는 C/3 RPT 용량이며 fade 노이즈가 아니다. "
+        "fade·lean·세그먼트는 routine_05c만 사용. RPT는 SoHQ_rpt_c3 이중 트랙·RCF·η(SOC) 앵커로만 사용. "
+        "DC-IR 트리플릿은 부분 SOC라 SoHQ 궤적에서 제외(펄스 임계 0.75·1C). "
+        "baseline: early routine SoHQ≥95%. BOL 하프셀: C/20.",
         width=92, size=9,
     )
     pdf.savefig(fig)
@@ -190,14 +196,14 @@ def page_methods(pdf: PdfPages):
 def page_param_catalog(pdf: PdfPages):
     fig = new_page(pdf, "2. 패턴을 결정하는 핵심 파라미터")
     rows = [
-        ("SoHQ", "용량 유지율(%)", "열화 단계·구간 경계의 물리 축"),
-        ("LAM_PE_pattern_score", "양극 활성물질 손실 패턴", "PE 측 핵심 모드 (피크 면적·곡선 proxy 등)"),
-        ("contact_loss_score", "접촉 손실 패턴", "NE 측 핵심 (R_ohmic·mech/chem)"),
+        ("SoHQ_routine (0.5C)", "루틴 용량 유지율", "fade·세그먼트 물리 축 (연속 궤적)"),
+        ("SoHQ_rpt_c3 (C/3)", "RPT 용량 앵커", "중간 ‘스파이크’ — rate gap, 노이즈 아님"),
+        ("LAM_PE_pattern_score", "양극 활성물질 손실 패턴", "PE 측 핵심 모드"),
+        ("contact_stack / contact_loss", "접촉·스택 저항 패턴", "전극 미분해 rival (NE≠자동)"),
         ("LLI_pattern_score", "리튬 재고 손실 패턴", "공유 모드 — 전극 단정 금지"),
-        ("PE_side_score / NE_side_score", "전극 가설 점수", "모드+부가증거 가중합"),
-        ("Δ (PE−NE)", "상대 지배 lean", "구간 전환의 직접 트리거"),
-        ("BOL OCP peaks", "하프셀 개방회로 피크", "full-cell 피크→PE attribution"),
-        ("fade_exponent / knee", "페이드 지수·변곡", "수명 단계(조기/가속) 맥락"),
+        ("PE / contact / NE_hyp", "전극·스택 가설 점수", "모드+부가증거 가중합"),
+        ("RCF / η(SOC)", "rate capability · 분극", "C/3↔0.5C 이중 트랙 파생"),
+        ("fade_exponent / knee", "페이드 지수·변곡", "routine SoHQ만으로 적합"),
     ]
     fig.text(0.08, 0.90, "아래 파라미터가 세그먼트 라벨(PE/NE/mixed)을 실질적으로 결정한다.", fontproperties=fp(9))
     y = 0.86
@@ -226,7 +232,18 @@ def page_param_catalog(pdf: PdfPages):
 
 def fig_sohq_and_sides(ax1, ax2, d: pd.DataFrame, segs: pd.DataFrame, cell: str):
     shade_segments(ax1, segs)
-    ax1.plot(d["cycle"], d["SoHQ"], color=C_SOHQ, lw=2.0, label="SoHQ")
+    if "cycle_role" in d.columns:
+        rout = d[d["cycle_role"].astype(str).eq("routine_05c")]
+        rpt = d[d["cycle_role"].astype(str).eq("rpt_c3")]
+        ax1.plot(rout["cycle"], rout["SoHQ"], color=C_SOHQ, lw=2.0, label="SoHQ 0.5C routine")
+        if not rpt.empty:
+            ax1.scatter(
+                rpt["cycle"], rpt["SoHQ"], s=36, zorder=5,
+                facecolors="#F59E0B", edgecolors="#92400E", linewidths=0.8,
+                label="SoHQ C/3 RPT",
+            )
+    else:
+        ax1.plot(d["cycle"], d["SoHQ"], color=C_SOHQ, lw=2.0, label="SoHQ")
     ax1.set_ylabel("SoHQ (%)", fontproperties=fp(9))
     ax1.set_title(f"{cell} — 용량 유지율과 전극 가설 점수", fontproperties=fp(10, "bold"), loc="left")
     ax1.legend(prop=fp(8), loc="upper right", frameon=False)
@@ -234,13 +251,20 @@ def fig_sohq_and_sides(ax1, ax2, d: pd.DataFrame, segs: pd.DataFrame, cell: str)
     ax1.grid(True, alpha=0.25)
 
     shade_segments(ax2, segs)
-    ax2.plot(d["cycle"], d["PE_side_score"], color=C_PE, lw=2.0, label="PE_side")
-    ax2.plot(d["cycle"], d["NE_side_score"], color=C_NE, lw=2.0, label="NE_side")
-    ax2.plot(d["cycle"], d["shared_side_score"], color=C_SHARED, lw=1.2, ls="--", label="shared")
+    plot_d = d
+    if "cycle_role" in d.columns:
+        plot_d = d[d["cycle_role"].astype(str).eq("routine_05c")]
+        if plot_d.empty:
+            plot_d = d
+    ax2.plot(plot_d["cycle"], plot_d["PE_side_score"], color=C_PE, lw=2.0, label="PE_side")
+    if "contact_stack_score" in plot_d.columns:
+        ax2.plot(plot_d["cycle"], plot_d["contact_stack_score"], color=C_CL, lw=1.8, label="contact_stack")
+    ax2.plot(plot_d["cycle"], plot_d["NE_side_score"], color=C_NE, lw=1.5, ls="--", label="NE_hyp")
+    ax2.plot(plot_d["cycle"], plot_d["shared_side_score"], color=C_SHARED, lw=1.0, ls=":", label="shared")
     ax2.axhline(0, color="#999", lw=0.5)
     ax2.set_xlabel("Cycle", fontproperties=fp(9))
     ax2.set_ylabel("Side score (0–1)", fontproperties=fp(9))
-    ax2.legend(prop=fp(8), loc="upper left", ncol=3, frameon=False)
+    ax2.legend(prop=fp(8), loc="upper left", ncol=4, frameon=False)
     ax2.set_ylim(0, 0.85)
     ax2.grid(True, alpha=0.25)
     for ax in (ax1, ax2):
