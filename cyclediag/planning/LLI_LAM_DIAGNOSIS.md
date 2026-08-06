@@ -32,6 +32,9 @@
 
 하프셀 DMA는 Phase 3 **교정**이며, 위 8가지의 **전제 조건이 아니다**.
 
+**데이터 (2026-08-06):** BOL 양·음극 하프셀(C/20)이 [`example/fixtures/halfcell/`](../../example/fixtures/halfcell/README.md)에 있음.  
+음극 cycle 1–3. **열화 후 하프셀은 아직 없음.**
+
 ### 삭제된 제한 (적용 금지)
 
 다음 취지의 문장·구현은 **사용하지 않는다**.

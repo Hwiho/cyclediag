@@ -157,9 +157,13 @@ sg_window=21 (도구에선 31 자주 사용), sg_poly=3
 - 전극 두께 **미확인**.
 
 ### 27. 반쪽셀 OCV
-**CONFIRMED — 현재 없음**  
-`HalfCellCalibrationNotReady` stub. Level-1은 하프셀 없이 동작.  
-→ **P3 `*_est`는 하프셀/문헌 템플릿 확보 전까지 보류가 맞음.**
+**UPDATED 2026-08-06 — BOL 데이터 있음 / aged 없음**  
+- Fixture: [`example/fixtures/halfcell/`](../../example/fixtures/halfcell/README.md) (원본 `C:\Halfcell`)
+- **있음:** 양·음극 초기 하프셀, **C/20**. 음극 CSV는 **cycle 1–3**.
+- **없음:** 열화 이후(aged / harvested) 하프셀 OCP.
+- Level-1 pattern은 하프셀 없이 동작 (변경 없음).
+- Level-3 `*_est_hc_calibrated`는 BOL OCP 라이브러리로 **스키마·fit 프로토타입 가능**.  
+  Aged 대비 검증은 열화 하프셀 확보 전까지 보류.
 
 ---
 

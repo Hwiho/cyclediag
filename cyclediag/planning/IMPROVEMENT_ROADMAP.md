@@ -75,12 +75,13 @@ full-cell raw
 
 | 가능 (지금) | 보류 (하프셀·OCP 템플릿 후) |
 |---|---|
-| ICA/DVA · peak detect/match/track | `LLI_est_hc_calibrated` 등 Level 3 수치 |
-| peak ΔV / Δarea → **pattern score** | stoichiometry window 절대값 (PyDMA) |
-| ΔQ(V) · curve corr → early fade / RUL proxy | blend phase OCP 분해 |
-| R 3성분 · PER · hysteresis | electrode utilization 절대 % |
+| ICA/DVA · peak detect/match/track | Aged half-cell 대비 `*_est_hc_calibrated` 검증 |
+| peak ΔV / Δarea → **pattern score** | stoichiometry window 절대값 (열화 후 OCP 필요) |
+| ΔQ(V) · curve corr → early fade / RUL proxy | blend phase OCP 분해 (aged) |
+| R 3성분 · PER · hysteresis | electrode utilization 절대 % (aged) |
 | knee / change-point | full-cell↔half-cell peak 화학 라벨 확정 |
-| 3-param curve fit proxy (§5.6) | CompositeOCP weighted DMA fit |
+| 3-param curve fit proxy (§5.6) | |
+| **BOL 하프셀 OCP library** (`example/fixtures/halfcell/`, C/20) | **Aged / harvested 하프셀 — 아직 없음** |
 
 ### 0.3 완료 정의 (Full-cell MVP DoD)
 
@@ -125,6 +126,7 @@ full-cell raw
 | `POST_RPT_EXCLUDE` | **5, 이미 구현** | 회복 구간 오염 방지 완료 |
 | Ch22 수명 | **564 cycles, SoHQ ~65 %** | knee 검증 데이터 (§5.12) |
 | 두 rate 곡선 | C/3 + 0.5C 동일 셀 | RCF, η(SOC), PER (§5.9–5.10) |
+| **하프셀 BOL OCP** | **있음** — `example/fixtures/halfcell/` (C/20, 음극 cycle 1–3) | DM-P3 OCP library · DMA fit 프로토타입 |
 
 ### 1.2 제약 조건 (설계에 반영 필요)
 
@@ -132,7 +134,7 @@ full-cell raw
 |---|---|---|
 | **화학** | ASSB, Si-rich 음극 | 모드 체계 전면 재정의 (§3) |
 | **온도 로그** | `Temp (Celsius)` 전부 0.0 | Arrhenius 보정·DTV 불가. 결론은 45 °C 한정 |
-| **반쪽셀 OCV** | 없음 (`HalfCellCalibrationNotReady`) | Level-2 `*_est` 보류 확정 |
+| **하프셀 aged OCP** | **없음** (BOL만 있음) | 열화 전후 OCP 비교·harvest 검증 불가. BOL로 library·fit 프로토타입은 가능 |
 | **golden set** | 없음 | 합성 데이터 + 공개셋 검증이 유일 (§8) |
 | **RPT 주기** | 105 사이클 | 앵커 간격 과다 → §5.8 보간 신뢰도 리스크 |
 | **DC-IR SOC 배치** | 3개 **연속 사이클**에 분산 | SOC 간 비교 시 순서 효과 존재 |
