@@ -15,6 +15,7 @@ import pandas as pd
 from cyclediag.features.self_discharge import self_discharge_for_cycle
 
 _SOC_ORDER = (80, 50, 20)
+_SOC_PTS = np.array([80.0, 50.0, 20.0], dtype=float)
 
 _BLOCK_COLS = (
     "ocv_V_inf_soc80",
@@ -25,6 +26,7 @@ _BLOCK_COLS = (
     "ocv_spread_20_50",
     "ocv_parallel_shift",
     "ocv_spread_compression",
+    "ocv_spread_slope",
     "ocv_drift_mode",
     "relax_completeness_soc80",
     "relax_completeness_soc50",
@@ -114,31 +116,40 @@ def _classify_drift(
     d_spread_20_80: float,
     parallel_thr: float = 0.005,
     spread_thr: float = 0.010,
-) -> tuple[str, float, float]:
-    """Return (mode, parallel_shift, spread_compression)."""
+) -> tuple[str, float, float, float]:
+    """Return (mode, parallel_shift@SOC50, spread_compression, spread_slope).
+
+    Parallel and spread are orthogonal: linear fit on (SOC80,50,20) vs deltas.
+    """
     deltas = np.array([d80, d50, d20], dtype=float)
-    parallel_shift = float(np.mean(deltas))
-    spread_std = float(np.std(deltas - parallel_shift))
+    max_abs = float(np.max(np.abs(deltas)))
+    if max_abs < parallel_thr and abs(d_spread_20_80) < spread_thr:
+        return "stable", 0.0, float(d_spread_20_80), 0.0
+
+    slope, intercept = np.polyfit(_SOC_PTS, deltas, 1)
+    parallel_shift = float(intercept + slope * 50.0)
+    spread_slope = float(slope)
     spread_compression = float(d_spread_20_80)
+    fit_line = intercept + slope * _SOC_PTS
+    parallel_std = float(np.std(deltas - fit_line))
 
-    parallel = spread_std < parallel_thr
-    spread_dom = abs(spread_compression) > spread_thr
+    parallel_dom = parallel_std < parallel_thr
+    spread_dom = abs(spread_slope) * 60.0 > spread_thr or abs(spread_compression) > spread_thr
 
-    if parallel and not spread_dom:
-        mode = "parallel_shift"  # was lli_parallel — LLI + kinetic termination confound
-    elif spread_dom and parallel:
+    if parallel_dom and not spread_dom:
+        mode = "parallel_shift"
+    elif spread_dom and parallel_dom:
         mode = "spread_and_shift"
     elif spread_dom:
-        mode = "spread_change"  # was lam_spread — electrode imbalance proxy
+        mode = "spread_change"
     else:
-        # local: one SOC deviates from parallel line
-        dev = np.abs(deltas - parallel_shift)
+        dev = np.abs(deltas - fit_line)
         if float(np.max(dev)) > parallel_thr * 2:
             worst = _SOC_ORDER[int(np.argmax(dev))]
             mode = f"local_soc{worst}"
         else:
             mode = "stable"
-    return mode, parallel_shift, spread_compression
+    return mode, parallel_shift, spread_compression, spread_slope
 
 
 def compute_ocv_drift_table(
@@ -166,6 +177,7 @@ def compute_ocv_drift_table(
             baseline = cur
             row["ocv_parallel_shift"] = 0.0
             row["ocv_spread_compression"] = 0.0
+            row["ocv_spread_slope"] = 0.0
             row["ocv_drift_mode"] = "baseline"
             row["delta_ocv_V_inf_soc80"] = 0.0
             row["delta_ocv_V_inf_soc50"] = 0.0
@@ -176,13 +188,16 @@ def compute_ocv_drift_table(
             d50 = cur["ocv_V_inf_soc50"] - baseline["ocv_V_inf_soc50"]
             d20 = cur["ocv_V_inf_soc20"] - baseline["ocv_V_inf_soc20"]
             d_sp = cur["ocv_spread_20_80"] - baseline["ocv_spread_20_80"]
-            mode, par, comp = _classify_drift(d80=d80, d50=d50, d20=d20, d_spread_20_80=d_sp)
+            mode, par, comp, slope = _classify_drift(
+                d80=d80, d50=d50, d20=d20, d_spread_20_80=d_sp,
+            )
             row["delta_ocv_V_inf_soc80"] = d80
             row["delta_ocv_V_inf_soc50"] = d50
             row["delta_ocv_V_inf_soc20"] = d20
             row["delta_ocv_spread_20_80"] = d_sp
             row["ocv_parallel_shift"] = par
             row["ocv_spread_compression"] = comp
+            row["ocv_spread_slope"] = slope
             row["ocv_drift_mode"] = mode
         rows.append(row)
     return pd.DataFrame(rows)

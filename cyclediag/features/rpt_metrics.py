@@ -7,6 +7,8 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
+from cyclediag.features.cell_meta import CellProtocolMeta
+
 # Confirmed noise floor from SJ900 Ch22 TC107–108
 Q_RELAX_NOISE_FLOOR_PCT = 0.065
 
@@ -136,9 +138,12 @@ def attach_per(
     *,
     eta_soc50_col: str = "eta_SOC50",
     r_dcir_50_col: str = "R_30s_total_soc50",
-    dI_A: float = 12.89,
+    dI_A: float | None = None,
+    protocol_meta: CellProtocolMeta | None = None,
 ) -> pd.DataFrame:
     """PER = η(SOC50) / (ΔI · R_DCIR_50)."""
+    pm = protocol_meta or CellProtocolMeta()
+    delta_i = float(dI_A) if dI_A is not None else pm.per_delta_i_a
     out = features.copy()
     if "PER" not in out.columns:
         out["PER"] = np.nan
@@ -152,8 +157,8 @@ def attach_per(
             r_f = float(r)
         except (TypeError, ValueError):
             continue
-        if not np.isfinite(eta_f) or not np.isfinite(r_f) or r_f <= 0 or dI_A <= 0:
+        if not np.isfinite(eta_f) or not np.isfinite(r_f) or r_f <= 0 or delta_i <= 0:
             continue
         # R in mΩ → Ω
-        out.at[idx, "PER"] = eta_f / (dI_A * (r_f / 1000.0))
+        out.at[idx, "PER"] = eta_f / (delta_i * (r_f / 1000.0))
     return out

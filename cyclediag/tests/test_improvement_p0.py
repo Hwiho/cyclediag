@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from cyclediag.features.dcir_decompose import fit_r_t_components
+from cyclediag.features.dcir_decompose import fit_r_t_components, _detect_current_settle
 from cyclediag.features.self_discharge import fit_self_discharge_rest
 from cyclediag.features.signal_cv import detect_cv_signal
 from cyclediag.features.units import capacity_to_ah
@@ -97,9 +97,61 @@ def test_assb_mode_weights_load():
     assert "LAM_NE" not in cfg["modes"]
 
 
+def test_fit_r_t_components_rejects_current_ramp():
+    t = np.arange(0.0, 30.0 + 1e-9, 0.1)
+    r_ohm, r_ct, tau, a = 1.2, 0.8, 2.0, 0.15
+    r_true = r_ohm + r_ct * (1 - np.exp(-t / tau)) + a * np.sqrt(t)
+    i_target = 38.0
+    i = np.minimum(i_target, i_target * t / 1.0)
+    r_meas = r_true * (i_target / np.maximum(i, 1e-6))
+    fit = fit_r_t_components(t, r_meas, i=i)
+    assert "current_ramp" in fit.flag
+    assert fit.dcir_fit_valid is False
+
+
+def test_detect_current_settle_flags_slow_ramp():
+    t = np.linspace(0, 2, 200)
+    i = np.minimum(38.0, 38.0 * t / 1.0)
+    t_settle, ok = _detect_current_settle(t, i)
+    assert ok is False
+    assert t_settle == pytest.approx(1.0, abs=0.05)
+
+
 def test_ocv_drift_classify():
     from cyclediag.features.ocv_drift import _classify_drift
 
-    mode, par, _ = _classify_drift(d80=-0.05, d50=-0.05, d20=-0.05, d_spread_20_80=0.0)
-    assert mode == "lli_parallel"
+    mode, par, _, _ = _classify_drift(
+        d80=-0.05, d50=-0.05, d20=-0.05, d_spread_20_80=0.0,
+    )
+    assert mode == "parallel_shift"
     assert par == pytest.approx(-0.05, abs=0.001)
+
+    mode0, par0, _, _ = _classify_drift(d80=0.0, d50=0.0, d20=0.0, d_spread_20_80=0.0)
+    assert mode0 == "stable"
+    assert par0 == pytest.approx(0.0, abs=1e-9)
+
+    mode_sp, par_sp, _, _ = _classify_drift(
+        d80=0.0, d50=0.0, d20=-0.03, d_spread_20_80=-0.03,
+    )
+    assert mode_sp in ("spread_change", "local_soc20", "spread_and_shift")
+    assert abs(par_sp) < 0.02
+
+
+def test_band_capacity_high_low_split():
+    from cyclediag.features.band_capacity import BandCapacityConfig, discharge_band_capacity
+
+    v = np.linspace(4.0, 2.5, 400)
+    q = np.linspace(0, 70, 400)
+    seg = pd.DataFrame({"voltage": v, "discharge_capacity": q})
+    out = discharge_band_capacity(seg, config=BandCapacityConfig(v_high=3.5, v_low=3.0))
+    assert out["dchg_Q_high_frac"] is not None
+    assert out["dchg_Q_low_frac"] is not None
+    assert out["dchg_Q_high_frac"] + out["dchg_Q_low_frac"] <= 1.0 + 1e-6
+
+
+def test_cell_meta_per_delta_i():
+    from cyclediag.features.cell_meta import CellProtocolMeta
+
+    pm = CellProtocolMeta(q_rated_ah=72.0, routine_c_rate=0.5, rpt_c_rate=1.0 / 3.0)
+    assert pm.per_delta_i_a == pytest.approx(12.0, abs=0.5)
+    assert pm.dcir_pulse_current_a == pytest.approx(72.0, abs=0.1)

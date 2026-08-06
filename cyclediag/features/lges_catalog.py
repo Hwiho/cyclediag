@@ -4,7 +4,15 @@ from __future__ import annotations
 
 FEATURE_SET_LGES = "vp_lges_cycle_v2"
 MAX_DQDV_PEAKS = 8
-RESISTANCE_OFFSETS_S = (10.0, 30.0, 60.0)
+# Landmark DC-IR style offsets (0.1 s + 10/30/60 s); 60 s kept for legacy columns
+RESISTANCE_OFFSETS_S = (0.1, 10.0, 30.0, 60.0)
+
+
+def resistance_offset_label(offset_s: float) -> str:
+    """Column suffix for a resistance sample time (0.1 → ``0p1s``)."""
+    if abs(offset_s - 0.1) < 1e-9:
+        return "0p1s"
+    return f"{int(round(offset_s))}s"
 
 # Rest sample times (seconds from rest start). ``end`` = last point in rest block.
 EOC_REST_OFFSETS: dict[str, float | None] = {
@@ -33,8 +41,13 @@ DELTA_ABS_COLS = [
 
 # Columns that get *_inc (% vs cycle 1)
 DELTA_PCT_COLS = [
-    "EoC_dchgR_10s", "EoC_dchgR_30s", "EoC_dchgR_60s",
-    "EoD_chgR_10s", "EoD_chgR_30s", "EoD_chgR_60s",
+    "EoC_dchgR_0p1s", "EoC_dchgR_10s", "EoC_dchgR_30s", "EoC_dchgR_60s",
+    "EoD_chgR_0p1s", "EoD_chgR_10s", "EoD_chgR_30s", "EoD_chgR_60s",
+]
+
+BAND_CAPACITY_COLS = [
+    "dchg_Q_high_V", "dchg_Q_low_V", "dchg_Q_mid_V",
+    "dchg_Q_high_frac", "dchg_Q_low_frac", "dchg_f_graphite_proxy",
 ]
 
 PATTERN_CHECK_COLS = [
@@ -61,6 +74,10 @@ REST_DERIVED_COLS = [
 RESISTANCE_DERIVED_COLS = [
     "EoC_dchgR_10_60_ratio",
     "EoD_chgR_10_60_ratio",
+    "EoC_dchgR_R10_minus_R0p1",
+    "EoC_dchgR_R30_minus_R0p1",
+    "EoD_chgR_R10_minus_R0p1",
+    "EoD_chgR_R30_minus_R0p1",
     "EoC_dchgR_10s_T25",
     "EoD_chgR_10s_T25",
 ]
@@ -125,18 +142,15 @@ def dqdv_peak_column_names() -> list[str]:
 def all_lges_feature_columns() -> list[str]:
     res_cols = []
     for prefix in ("EoC_dchgR", "EoD_chgR"):
-        for t in ("10s", "30s", "60s"):
-            res_cols.append(f"{prefix}_{t}")
-    inc_cols = [
-        "EoC_dchgR_10s_inc", "EoC_dchgR_30s_inc", "EoC_dchgR_60s_inc",
-        "EoD_chgR_10s_inc", "EoD_chgR_30s_inc", "EoD_chgR_60s_inc",
-    ]
+        for off in RESISTANCE_OFFSETS_S:
+            res_cols.append(f"{prefix}_{resistance_offset_label(off)}")
+    inc_cols = [f"{c}_inc" for c in DELTA_PCT_COLS]
     delta_cols = [f"delta_{c}" for c in DELTA_ABS_COLS]
     return (
         PATTERN_CHECK_COLS
         + REST_EOC_COLS + REST_EOD_COLS + REST_DERIVED_COLS
         + res_cols + RESISTANCE_DERIVED_COLS + inc_cols
-        + CAPACITY_COLS + ["delta_chgCapa_CCratio"]
+        + CAPACITY_COLS + BAND_CAPACITY_COLS + ["delta_chgCapa_CCratio"]
         + SHAPE_COLS
         + dqdv_peak_column_names()
         + TRAJECTORY_COLS

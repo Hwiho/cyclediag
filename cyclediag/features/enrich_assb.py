@@ -7,6 +7,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
+from cyclediag.features.cell_meta import CellProtocolMeta
 from cyclediag.features.dcir_decompose import (
     decompose_pulse_cycle,
     result_to_dict,
@@ -16,7 +17,9 @@ from cyclediag.features.ocv_drift import attach_ocv_drift_to_features
 from cyclediag.features.quality import cycle_quality_metrics
 from cyclediag.features.rpt_metrics import (
     Q_RELAX_NOISE_FLOOR_PCT,
+    attach_per,
     attach_rcf,
+    compute_q_relax_for_blocks,
 )
 from cyclediag.features.self_discharge import self_discharge_for_cycle
 
@@ -140,10 +143,16 @@ def enrich_feature_table(
     features: pd.DataFrame,
     raw_df: pd.DataFrame | None,
     *,
-    rest_current_max: float = 0.5,
-    expected_pulse_current: float = 70.0,
+    rest_current_max: float | None = None,
+    expected_pulse_current: float | None = None,
+    protocol_meta: CellProtocolMeta | None = None,
 ) -> tuple[pd.DataFrame, dict[str, Any]]:
-    """Attach Q_relax, DCIR decompose, self-discharge, quality, RCF."""
+    """Attach Q_relax, DCIR decompose, self-discharge, quality, RCF, PER."""
+    pm = protocol_meta or CellProtocolMeta()
+    if rest_current_max is None:
+        rest_current_max = pm.rest_current_max_a
+    if expected_pulse_current is None:
+        expected_pulse_current = pm.dcir_pulse_current_a
     meta: dict[str, Any] = {
         "baseline_cycle_auto": None,
         "dcir_blocks": [],
@@ -177,6 +186,7 @@ def enrich_feature_table(
     pulse_set = set(pulse)
     routine_mask = ~out["cycle"].isin(pulse_set)
     out = attach_rcf(out, routine_mask=routine_mask, rpt_cycles=capa_anchors)
+    out = attach_per(out, dI_A=pm.per_delta_i_a)
 
     for soc in _SOC_ORDER:
         for k in (

@@ -33,7 +33,10 @@ from .lges_catalog import (
     DELTA_PCT_COLS,
     FEATURE_SET_LGES,
     RESISTANCE_OFFSETS_S,
+    resistance_offset_label,
 )
+from .band_capacity import BandCapacityConfig, discharge_band_capacity
+from .cell_meta import CellProtocolMeta, DEFAULT_Q_RATED_AH
 from .segment_utils import iter_rest_periods, leg_segment
 from .cc_cv import resolve_current_column
 from .signal_cv import detect_cv_signal, signal_cv_to_row
@@ -52,8 +55,31 @@ class LgesExtractConfig(FeatureConfig):
     with_diagnosis: bool = True
     diagnosis_config_path: str | None = None
     enrich_assb: bool = True
-    expected_pulse_current: float = 70.0
+    expected_pulse_current: float | None = None
+    q_rated_ah: float = DEFAULT_Q_RATED_AH
+    routine_c_rate: float = 0.5
+    rpt_c_rate: float = 1.0 / 3.0
+    dcir_c_rate: float = 1.0
+    band_capacity: BandCapacityConfig | None = None
     capacity_unit: str | None = None  # "ah" | "mah" | None (header-driven)
+
+    def protocol_meta(self) -> CellProtocolMeta:
+        return CellProtocolMeta(
+            q_rated_ah=float(self.q_rated_ah),
+            routine_c_rate=float(self.routine_c_rate),
+            rpt_c_rate=float(self.rpt_c_rate),
+            dcir_c_rate=float(self.dcir_c_rate),
+        )
+
+    def resolved_pulse_current(self) -> float:
+        if self.expected_pulse_current is not None:
+            return float(self.expected_pulse_current)
+        return self.protocol_meta().dcir_pulse_current_a
+
+    def resolved_rest_current_max(self) -> float:
+        if self.rest_current_max is not None:
+            return float(self.rest_current_max)
+        return self.protocol_meta().rest_current_max_a
 
     def resolved_dqdv_config(self) -> DqdvPeakConfig:
         return self.dqdv_peak_config or DEFAULT_DQDV_PEAK_CONFIG
@@ -314,10 +340,24 @@ def extract_lges_cycle_row(
     for prefix, seg in (("EoC_dchgR", dchg), ("EoD_chgR", chg)):
         samples = _sample_v_i_at_offsets(seg, RESISTANCE_OFFSETS_S)
         v0, _ = samples.get(0.0, (None, None))
+        r_by_label: dict[str, float | None] = {}
         for off in RESISTANCE_OFFSETS_S:
-            label = f"{int(off)}s"
+            label = resistance_offset_label(off)
             vt, it = samples.get(off, (None, None))
-            row[f"{prefix}_{label}"] = _resistance_mohm(v0, vt, it)
+            rval = _resistance_mohm(v0, vt, it)
+            row[f"{prefix}_{label}"] = rval
+            r_by_label[label] = rval
+        r0 = r_by_label.get("0p1s")
+        r10 = r_by_label.get("10s")
+        r30 = r_by_label.get("30s")
+        if r10 is not None and r0 is not None and np.isfinite(r10) and np.isfinite(r0):
+            row[f"{prefix}_R10_minus_R0p1"] = float(r10) - float(r0)
+        else:
+            row[f"{prefix}_R10_minus_R0p1"] = None
+        if r30 is not None and r0 is not None and np.isfinite(r30) and np.isfinite(r0):
+            row[f"{prefix}_R30_minus_R0p1"] = float(r30) - float(r0)
+        else:
+            row[f"{prefix}_R30_minus_R0p1"] = None
 
     row["EoC_dchgR_10_60_ratio"] = safe_ratio(row.get("EoC_dchgR_10s"), row.get("EoC_dchgR_60s"))
     row["EoD_chgR_10_60_ratio"] = safe_ratio(row.get("EoD_chgR_10s"), row.get("EoD_chgR_60s"))
@@ -371,6 +411,12 @@ def extract_lges_cycle_row(
             chg, dchg, chg_q, dchg_q,
             config=dqdv_cfg,
             dchg_v_cutoff=row.get("dchg_V_cutoff"),
+        )
+    )
+    row.update(
+        discharge_band_capacity(
+            dchg,
+            config=cfg.band_capacity or BandCapacityConfig(),
         )
     )
 
@@ -573,8 +619,9 @@ def extract_lges_features_table(
         table, enrich_meta = enrich_feature_table(
             table,
             raw_df,
-            rest_current_max=float(cfg.rest_current_max or 0.5),
-            expected_pulse_current=float(cfg.expected_pulse_current),
+            rest_current_max=cfg.resolved_rest_current_max(),
+            expected_pulse_current=cfg.resolved_pulse_current(),
+            protocol_meta=cfg.protocol_meta(),
         )
         if cfg.auto_baseline and enrich_meta.get("baseline_cycle_auto"):
             cfg.baseline_cycle = int(enrich_meta["baseline_cycle_auto"])

@@ -49,10 +49,35 @@ def _linreg(x: np.ndarray, y: np.ndarray) -> tuple[float, float]:
     return float(slope), float(intercept)
 
 
+def _detect_current_settle(
+    t: np.ndarray,
+    i: np.ndarray | None,
+    *,
+    settle_frac: float = 0.95,
+) -> tuple[float, bool]:
+    """Return (t_settle, ramp_ok). ramp_ok=False when rise time > 0.2 s."""
+    if i is None or len(t) < 3:
+        return 0.0, True
+    i_abs = np.abs(np.asarray(i, dtype=float))
+    t = np.asarray(t, dtype=float)
+    active = np.isfinite(i_abs) & (i_abs > 1e-6)
+    if not active.any():
+        return 0.0, True
+    i_target = float(np.nanmedian(i_abs[active]))
+    if i_target < 1e-9:
+        return 0.0, True
+    settled = active & (i_abs >= settle_frac * i_target)
+    if not settled.any():
+        return 0.0, False
+    t_settle = float(t[settled][0])
+    return t_settle, t_settle <= 0.2
+
+
 def fit_r_t_components(
     t: np.ndarray,
     r_mohm: np.ndarray,
     *,
+    i: np.ndarray | None = None,
     refine_global: bool = True,
 ) -> DcirFitResult:
     """Stepwise fit R(t) = RΩ + Rct(1-exp(-t/τ)) + A√t  [mΩ]."""
@@ -68,8 +93,12 @@ def fit_r_t_components(
         out.flag = "insufficient_early_samples"
         # still try but mark invalid
 
-    # 4a R_ohmic via √t extrapolate on [0, 0.3]
-    early = (t >= 0) & (t <= 0.3)
+    t_settle, ramp_ok = _detect_current_settle(t, i)
+    if not ramp_ok:
+        out.flag = (out.flag + "|current_ramp").strip("|")
+
+    # 4a R_ohmic via √t extrapolate on [t_settle, t_settle+0.3]
+    early = (t >= t_settle) & (t <= t_settle + 0.3)
     if early.sum() >= 3:
         slope_e, r_ohm = _linreg(np.sqrt(t[early]), r[early])
         out.R_ohmic = r_ohm if np.isfinite(r_ohm) else float(r[np.argmin(t)])
@@ -171,7 +200,12 @@ def fit_r_t_components(
         out.R_diff_frac = (a_diff * np.sqrt(30.0)) / r30
 
     out.dcir_fit_valid = bool(
-        rmse < 0.03 and r2 > 0.98 and (cond is None or cond < 1e8) and out.n_t_le_1s >= 8
+        rmse < 0.03
+        and r2 > 0.98
+        and (cond is None or cond < 1e8)
+        and out.n_t_le_1s >= 8
+        and ramp_ok
+        and "sampling_too_sparse" not in out.flag
     )
     return out
 
@@ -237,6 +271,7 @@ def extract_pulse_trace(
     rest_current_max: float = 0.5,
     pulse_duration_s: float = 30.0,
     expected_pulse_current: float | None = 70.0,
+    meta: dict[str, Any] | None = None,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, float, float] | None:
     """Return (t, V, I_series, I_med, V0) for first long high-|I| pulse in cycle."""
     need = {"voltage", "current"}
@@ -273,7 +308,21 @@ def extract_pulse_trace(
         if j > start + 5 and i_abs[j] < rest_current_max:
             break
         end = j
-    if end - start < 50:
+    seg_len = end - start + 1
+    dt_pts = np.diff(st[start : end + 1])
+    dt_fin = dt_pts[np.isfinite(dt_pts) & (dt_pts > 0)]
+    dt_med = float(np.median(dt_fin)) if len(dt_fin) else float("inf")
+    min_pts = max(15, int(pulse_duration_s / max(dt_med, 1e-6) * 0.85))
+    if meta is not None:
+        meta["dt_median"] = dt_med
+        meta["n_pulse_points"] = seg_len
+    if dt_med > 0.6:
+        if meta is not None:
+            meta["flag"] = "sampling_too_sparse"
+        return None
+    if seg_len < min_pts:
+        if meta is not None:
+            meta["flag"] = "insufficient_pulse_points"
         return None
 
     sl = slice(start, end + 1)
@@ -299,16 +348,20 @@ def decompose_pulse_cycle(
     fit_recovery: bool = True,
 ) -> DcirFitResult:
     """Full §5.3 (+ optional §5.5) for one DC-IR cycle DataFrame."""
+    meta: dict[str, Any] = {}
     extracted = extract_pulse_trace(
         cycle_df,
         rest_current_max=rest_current_max,
         expected_pulse_current=expected_pulse_current,
+        meta=meta,
     )
     if extracted is None:
-        return DcirFitResult(flag="no_pulse")
+        return DcirFitResult(flag=str(meta.get("flag") or "no_pulse"))
     t, v, i, i_med, v0 = extracted
     r = np.abs(v0 - v) / max(abs(i_med), 1e-9) * 1000.0  # mΩ
-    fit = fit_r_t_components(t, r)
+    fit = fit_r_t_components(t, r, i=i)
+    if meta.get("flag"):
+        fit.flag = (fit.flag + "|" + str(meta["flag"])).strip("|")
     fit.pulse_current_A = abs(i_med)
 
     if fit_recovery and "step_time" in cycle_df.columns:
@@ -353,9 +406,10 @@ def soc_ratio_features(rows: list[dict[str, Any]]) -> dict[str, Any]:
         slope, intercept = _linreg(np.asarray(xs), np.asarray(ys))
         out["R_SOC_slope"] = slope
         if len(xs) == 3:
-            # curvature via quadratic
             coef = np.polyfit(xs, ys, 2)
             out["R_SOC_curvature"] = float(coef[0])
+        if r20 is not None and r80 is not None:
+            out["R_SOC_diff_20_80"] = float(r20) - float(r80)
     return out
 
 

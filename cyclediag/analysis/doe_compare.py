@@ -25,12 +25,21 @@ EARLY_PARAM_CANDIDATES: tuple[str, ...] = (
     "hyst_area_SOC20",
     "hyst_area_SOC50",
     "hyst_area_SOC80",
+    "EoD_chgR_0p1s",
     "EoD_chgR_10s",
     "EoD_chgR_30s",
     "EoD_chgR_60s",
+    "EoD_chgR_R10_minus_R0p1",
+    "EoD_chgR_R30_minus_R0p1",
+    "EoC_dchgR_0p1s",
     "EoC_dchgR_10s",
     "EoC_dchgR_30s",
     "EoC_dchgR_60s",
+    "EoC_dchgR_R10_minus_R0p1",
+    "EoC_dchgR_R30_minus_R0p1",
+    "dchg_Q_low_frac",
+    "dchg_Q_high_frac",
+    "dchg_f_graphite_proxy",
     "dchg_dQdV_peak1_V",
     "dchg_dQdV_peak2_V",
     "dchg_dQdV_peak3_V",
@@ -41,9 +50,12 @@ EARLY_PARAM_CANDIDATES: tuple[str, ...] = (
     "chgCapa",
     "Q_CV_norm",
     "tau_CV",
-    "R_ohmic",
-    "R_ct",
-    "A_diff",
+    "R_30s_total_soc20",
+    "R_30s_total_soc50",
+    "R_30s_total_soc80",
+    "R_SOC_diff_20_80",
+    "R_SOC_slope",
+    "PER",
 )
 
 
@@ -414,6 +426,50 @@ def compare_arms_late_spread(
     return out.sort_values("arm_spread_std", ascending=False).reset_index(drop=True)
 
 
+def si_proxy_arm_summary(
+    features: pd.DataFrame,
+    *,
+    change_cycle_window: int = 5,
+) -> pd.DataFrame:
+    """Per-arm Si vs graphite proxy: band-Q fractions and low-V fade slope."""
+    cols = _present_cols(
+        features,
+        (
+            "dchg_Q_low_frac",
+            "dchg_Q_high_frac",
+            "dchg_f_graphite_proxy",
+            "dchg_Q_low_V",
+            "EoC_dchgR_R30_minus_R0p1",
+            "hyst_area_SOC20",
+        ),
+    )
+    if features.empty or "arm" not in features.columns or not cols:
+        return pd.DataFrame()
+
+    rows: list[dict[str, Any]] = []
+    for arm, grp in features.groupby("arm", sort=False):
+        sub = grp.copy()
+        cyc = pd.to_numeric(sub["cycle"], errors="coerce")
+        row: dict[str, Any] = {"arm": arm, "n_rows": len(sub)}
+        for col in cols:
+            s = pd.to_numeric(sub[col], errors="coerce")
+            row[f"mean_{col}"] = float(s.mean()) if s.notna().any() else float("nan")
+            row[f"late_{col}"] = (
+                float(s[cyc >= cyc.quantile(0.8)].mean())
+                if s.notna().any() and cyc.notna().any()
+                else float("nan")
+            )
+        qlow = pd.to_numeric(sub.get("dchg_Q_low_frac"), errors="coerce")
+        if qlow.notna().sum() >= change_cycle_window + 2:
+            ok = qlow.notna() & cyc.notna()
+            slope, _ = np.polyfit(cyc[ok].to_numpy(), qlow[ok].to_numpy(), 1)
+            row["dchg_Q_low_frac_slope_per_cycle"] = float(slope)
+        else:
+            row["dchg_Q_low_frac_slope_per_cycle"] = float("nan")
+        rows.append(row)
+    return pd.DataFrame(rows)
+
+
 def diagnose_by_arm(
     features: pd.DataFrame,
     *,
@@ -469,6 +525,50 @@ def mode_score_arm_summary(diagnosed: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+def si_proxy_arm_summary(
+    features: pd.DataFrame,
+    *,
+    change_cycle_window: int = 5,
+) -> pd.DataFrame:
+    """Per-arm Si vs graphite proxy: band-Q fractions and low-V fade slope."""
+    cols = _present_cols(
+        features,
+        (
+            "dchg_Q_low_frac",
+            "dchg_Q_high_frac",
+            "dchg_f_graphite_proxy",
+            "dchg_Q_low_V",
+            "EoC_dchgR_R30_minus_R0p1",
+            "hyst_area_SOC20",
+        ),
+    )
+    if features.empty or "arm" not in features.columns or not cols:
+        return pd.DataFrame()
+
+    rows: list[dict[str, Any]] = []
+    for arm, grp in features.groupby("arm", sort=False):
+        sub = grp.copy()
+        cyc = pd.to_numeric(sub["cycle"], errors="coerce")
+        row: dict[str, Any] = {"arm": arm, "n_rows": len(sub)}
+        for col in cols:
+            s = pd.to_numeric(sub[col], errors="coerce")
+            row[f"mean_{col}"] = float(s.mean()) if s.notna().any() else float("nan")
+            row[f"late_{col}"] = (
+                float(s[cyc >= cyc.quantile(0.8)].mean())
+                if s.notna().any() and cyc.notna().any()
+                else float("nan")
+            )
+        qlow = pd.to_numeric(sub.get("dchg_Q_low_frac"), errors="coerce")
+        if qlow.notna().sum() >= change_cycle_window + 2:
+            ok = qlow.notna() & cyc.notna()
+            slope, _ = np.polyfit(cyc[ok].to_numpy(), qlow[ok].to_numpy(), 1)
+            row["dchg_Q_low_frac_slope_per_cycle"] = float(slope)
+        else:
+            row["dchg_Q_low_frac_slope_per_cycle"] = float("nan")
+        rows.append(row)
+    return pd.DataFrame(rows)
+
+
 def mechanism_contrast_narrative(
     early_summary: pd.DataFrame,
     mode_summary: pd.DataFrame,
@@ -481,6 +581,8 @@ def mechanism_contrast_narrative(
     lines = [
         f"DOE2 contrast: cathode held constant; anode differs ({arm_a} vs {arm_b}).",
         "Early parameters reflect formation / BOL anode utilization & kinetics.",
+        "Resistance: landmark 0.1/10/30 s + R_slow=R30-R0.1 (routine); DC-IR fit gated on current settle.",
+        "Si proxy: dchg_Q_low_frac / dchg_f_graphite_proxy (low-V vs high-V band capacity).",
         "Mode scores are full-cell pattern scores (not half-cell calibrated).",
     ]
     # top early deltas
@@ -564,6 +666,10 @@ def _write_plots(
         ("SoHQ", "doe2_SoHQ.png"),
         ("CE", "doe2_CE.png"),
         ("EoD_chgR_30s", "doe2_EoD_R30s.png"),
+        ("EoD_chgR_R30_minus_R0p1", "doe2_EoD_Rslow.png"),
+        ("dchg_Q_low_frac", "doe2_Q_low_frac.png"),
+        ("dchg_f_graphite_proxy", "doe2_f_graphite_proxy.png"),
+        ("R_SOC_diff_20_80", "doe2_R_SOC_diff.png"),
         ("hyst_mean", "doe2_hyst.png"),
         ("dchg_dQdV_peak1_V", "doe2_dQdV_peak1_V.png"),
     ):
@@ -631,6 +737,7 @@ def run_doe_compare(cfg: DoeCompareConfig | None = None) -> dict[str, Any]:
     fade = early_fade_rates(features, early_cycles=cfg.early_cycles)
     traj = compare_arms_trajectory(features)
     late = compare_arms_late_spread(features, late_frac=cfg.late_frac)
+    si_proxy = si_proxy_arm_summary(features)
 
     diagnosed = features
     mode_sum = pd.DataFrame()
@@ -651,6 +758,8 @@ def run_doe_compare(cfg: DoeCompareConfig | None = None) -> dict[str, Any]:
     fade.to_csv(out_dir / "early_fade_rates.csv", index=False)
     traj.to_csv(out_dir / "arm_trajectories.csv", index=False)
     late.to_csv(out_dir / "late_arm_divergence.csv", index=False)
+    if not si_proxy.empty:
+        si_proxy.to_csv(out_dir / "si_proxy_by_arm.csv", index=False)
     if cfg.run_diagnosis:
         diagnosed.to_csv(out_dir / "diagnosis_by_cycle.csv", index=False)
         mode_sum.to_csv(out_dir / "mode_scores_by_arm_phase.csv", index=False)
@@ -685,10 +794,12 @@ def run_doe_compare(cfg: DoeCompareConfig | None = None) -> dict[str, Any]:
         "hypothesis": {
             "controlled": "cathode (S83S)",
             "varied": "anode (SJ900 vs SJ1300)",
-            "expect_early": "CE, hysteresis, low-SOC R, anode-side dQ/dV peaks",
-            "expect_aging": "LLI / contact / diffusion pattern mix may diverge with Si content",
+            "expect_early": "R_slow (R30-R0.1), low-V Q band, hysteresis; cathode dQ/dV peaks aligned",
+            "expect_aging": "Q_low fade + R_SOC_diff with contact_loss pattern; f_graphite_proxy may rise",
         },
     }
+    if not si_proxy.empty:
+        summary["si_proxy"] = si_proxy.to_dict(orient="records")
     (out_dir / "summary.json").write_text(
         json.dumps(summary, indent=2, ensure_ascii=False), encoding="utf-8"
     )
