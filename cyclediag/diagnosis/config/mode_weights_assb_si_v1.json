@@ -1,25 +1,23 @@
 {
-  "diagnosis_version": "assb_si_v1",
+  "diagnosis_version": "assb_si_on_gr_v1_3",
   "diagnosis_method": "rule_pattern",
-  "diagnosis_model_version": "pattern_rule_assb_si_v1_1",
-  "chemistry": "ASSB_SJ900_Si_rich",
-  "layer_note": "Layer3 mechanisms are hypotheses; Layer2 states preferred. v1.1: baseline-relative R/LAM, CE guards, no absolute R saturation.",
+  "diagnosis_model_version": "pattern_rule_assb_si_on_gr_v1_3",
+  "chemistry": "ASSB_SJ900_Si_on_Gr",
+  "layer_note": "Si coating on graphite (exposed Gr possible); NCM82 secondary particles. Layer3 mechanisms are hypotheses. v1.3: R-centric contact_stack; Si co-sign decoupled; baseline-required R terms; PE activity≠stoichiometric LAM%.",
   "support_threshold": 0.25,
   "conflict_threshold": 0.25,
   "min_evidence_for_valid": 2,
   "mode_collision_score": 0.65,
   "modes": {
     "contact_loss": {
-      "description": "ASSB chemo-mechanical contact / stack ohmic growth (Layer3 hypothesis — not electrode-resolved)",
+      "description": "ASSB stack/contact ohmic growth (Layer3 — not electrode-resolved until Si co-sign)",
       "layer": 3,
       "evidence": [
-        {"feature": "R_ohmic_growth_100", "direction": "increase", "weight": 1.5, "scale": 0.3},
-        {"feature": "R_ohmic_soc50", "direction": "increase", "weight": 1.0, "scale": 0.5, "use_baseline": true, "baseline_ref": "R_ohmic_soc50"},
-        {"feature": "R_ohmic_frac_soc50", "direction": "increase", "weight": 1.0, "scale": 0.1, "use_baseline": true, "baseline_ref": "R_ohmic_frac_soc50"},
-        {"feature": "EoC_dchgR_10s_inc", "direction": "increase", "weight": 1.0, "scale": 25.0},
-        {"feature": "mech_vs_chem_ratio", "direction": "increase", "weight": 1.2, "scale": 0.5, "use_baseline": true, "baseline_ref": "mech_vs_chem_ratio"},
-        {"feature": "hyst_area_low", "direction": "increase", "weight": 0.9, "scale": 0.05, "use_baseline": true, "baseline_ref": "hyst_area_low"},
-        {"feature": "Q_relax_pct", "direction": "increase", "weight": 0.6, "scale": 0.2}
+        {"feature": "R_ohmic_growth_100", "direction": "increase", "weight": 1.6, "scale": 0.3},
+        {"feature": "R_ohmic_soc50", "direction": "increase", "weight": 1.2, "scale": 0.5, "use_baseline": true, "baseline_ref": "R_ohmic_soc50"},
+        {"feature": "R_ohmic_frac_soc50", "direction": "increase", "weight": 1.1, "scale": 0.1, "use_baseline": true, "baseline_ref": "R_ohmic_frac_soc50"},
+        {"feature": "EoC_dchgR_10s_inc", "direction": "increase", "weight": 0.8, "scale": 25.0},
+        {"feature": "mech_vs_chem_ratio", "direction": "increase", "weight": 0.5, "scale": 0.5, "use_baseline": true, "baseline_ref": "mech_vs_chem_ratio"}
       ]
     },
     "interface_R": {
@@ -53,7 +51,7 @@
       ]
     },
     "LAM_PE": {
-      "description": "Positive electrode active material loss pattern (peak/plateau; not absolute %)",
+      "description": "PE activity / isolation pattern (NCM82 secondary: may include cracking/electronic isolation — not stoichiometric LAM%)",
       "layer": 2,
       "evidence": [
         {"feature": "delta_dchg_plateau_V", "direction": "either", "weight": 0.8, "scale": 0.05},

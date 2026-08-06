@@ -1,11 +1,13 @@
-"""Electrode-side hypothesis diagnosis (v1.1 — validated methodology).
+"""Electrode-side hypothesis diagnosis (v1.3 — Si-on-Gr · NCM82 secondary).
 
 Level: ``hypothesis_bol_ocp``.
-Changes vs v1.0:
-- Peak attribution uses synthetic full-cell OCP peaks (not cathode-vs-Li V).
-- Peak boost is Δhits vs baseline (BOL hits do not inflate PE).
-- ``contact_loss`` maps to **contact_stack** first; NE label only with Si co-sign.
-- SOC feature boosts ignore missing/zero sentinel values.
+Chemistry: Si coating on graphite (exposed Gr possible); NCM82 secondary particles.
+Changes vs v1.1/v1.2:
+- Residual argmax uses true SOC (discharge DOD→SOC fixed upstream).
+- Peak hits = charge-leg unique nearest to synth FC-OCP (not PE-resolved).
+- Si co-sign features not duplicated in NE_FEATURE_EVIDENCE.
+- contact_stack R-centric; NE only with Si chemo-mech co-sign.
+- LAM_PE interpreted as PE activity/isolation pattern (not stoichiometric %).
 """
 
 from __future__ import annotations
@@ -25,7 +27,6 @@ from cyclediag.diagnosis.halfcell.ocp_library import (
 from cyclediag.diagnosis.schema import score_column_name
 
 PE_MODES = ("LAM_PE",)
-# Ohmic/contact is stack-level until Si co-sign justifies NE hypothesis
 CONTACT_MODES = ("contact_loss",)
 SHARED_MODES = ("LLI", "interface_R", "SE_decomposition", "microshort", "solid_diffusion")
 
@@ -35,7 +36,7 @@ PE_FEATURE_EVIDENCE = (
     ("dchg_fit_residual_argmax_SOC", "high"),
     ("LAM_curve_proxy", "increase"),
 )
-# Si chemo-mechanical co-sign for NE hypothesis (not used alone as NE score core)
+# Si chemo-mechanical co-sign for NE hypothesis (Si-on-Gr; not LAM_NE%)
 SI_NE_COSIGN = (
     ("hyst_area_low", "increase"),
     ("Q_relax_pct", "increase"),
@@ -43,11 +44,11 @@ SI_NE_COSIGN = (
     ("tau_CV", "increase"),
     ("chgCVcapa", "increase"),
 )
+# Independent NE residual/SOC evidence only (Si features live in SI_NE_COSIGN)
 NE_FEATURE_EVIDENCE = (
     ("eta_argmax_SOC", "low"),
-    ("hyst_area_low", "increase"),
     ("dchg_fit_residual_argmax_SOC", "low"),
-) + SI_NE_COSIGN
+)
 
 
 @dataclass
@@ -71,8 +72,8 @@ class ElectrodeSideResult:
     electrode_confidence: float = 0.0
     electrode_diagnosis_level: str = "hypothesis_bol_ocp"
     electrode_diagnosis_note: str = (
-        "v1.1 hypothesis: FC-OCP peak Δhits; contact_stack vs NE only with Si co-sign; "
-        "not aged half-cell calibrated."
+        "v1.3 hypothesis (Si-on-Gr · NCM82 secondary): FC-OCP Δhits (charge); "
+        "contact_stack vs NE only with Si co-sign; PE activity≠LAM%; not aged-HC calibrated."
     )
     narrative: str = ""
 
@@ -92,6 +93,8 @@ class ElectrodeSideResult:
             "NE_supporting": ",".join(self.NE_supporting),
             "pe_peak_hits": self.pe_peak_hits,
             "pe_peak_hits_delta": self.pe_peak_hits_delta,
+            "fc_ocp_hits": self.pe_peak_hits,
+            "fc_ocp_hits_delta": self.pe_peak_hits_delta,
             "si_cosign": self.si_cosign,
             "electrode_confidence": self.electrode_confidence,
             "electrode_diagnosis_level": self.electrode_diagnosis_level,
@@ -155,26 +158,44 @@ def attribute_fullcell_peaks_to_fc_ocp(
     fc_peak_vs: list[float],
     *,
     tol_v: float = 0.06,
+    charge_only: bool = True,
 ) -> tuple[int, list[str]]:
-    """Count full-cell dQ/dV peaks near **synthetic full-cell OCP** peaks."""
+    """Count unique nearest full-cell charge dQ/dV peaks near synth FC-OCP peaks.
+
+    Hits are **full-cell fingerprints** (V_PE−V_NE), not cathode-only PE proof.
+    Discharge peaks are skipped by default (different V domain vs charge OCP).
+    """
     hits = 0
     labels: list[str] = []
     if not fc_peak_vs:
         return 0, labels
-    for i in range(1, 7):
-        for key in (f"chg_dQdV_peak{i}_V", f"dchg_dQdV_peak{i}_V"):
-            val = row.get(key)
-            try:
-                fv = float(val)
-            except (TypeError, ValueError):
+    used_fc: set[int] = set()
+    keys = [f"chg_dQdV_peak{i}_V" for i in range(1, 7)]
+    if not charge_only:
+        keys += [f"dchg_dQdV_peak{i}_V" for i in range(1, 7)]
+    candidates: list[tuple[str, float]] = []
+    for key in keys:
+        val = row.get(key)
+        try:
+            fv = float(val)
+        except (TypeError, ValueError):
+            continue
+        if not np.isfinite(fv):
+            continue
+        candidates.append((key, fv))
+    # Greedy unique assignment: each FC peak matched at most once
+    for key, fv in candidates:
+        best_j, best_d = None, None
+        for j, pv in enumerate(fc_peak_vs):
+            if j in used_fc:
                 continue
-            if not np.isfinite(fv):
-                continue
-            for pv in fc_peak_vs:
-                if abs(fv - pv) <= tol_v:
-                    hits += 1
-                    labels.append(f"{key}≈FC_OCP({pv:.3f})")
-                    break
+            d = abs(fv - pv)
+            if d <= tol_v and (best_d is None or d < best_d):
+                best_j, best_d = j, d
+        if best_j is not None:
+            used_fc.add(best_j)
+            hits += 1
+            labels.append(f"{key}≈FC_OCP({fc_peak_vs[best_j]:.3f})")
     return hits, labels
 
 
@@ -208,12 +229,15 @@ def diagnose_electrode_side(
     contact_core = float(np.nanmean([s for _, s in contact_scores])) if contact_scores else 0.0
     sh_core = float(np.nanmean([s for _, s in shared_mode_scores])) if shared_mode_scores else 0.0
 
-    # Only *new* peaks vs baseline boost PE (BOL fingerprint no longer pads PE)
-    pe_peak_boost = min(0.15, 0.04 * out.pe_peak_hits_delta)
+    # FC-OCP Δhits are weak PE-side activity evidence (not cathode-only)
+    pe_peak_boost = min(0.12, 0.03 * out.pe_peak_hits_delta)
     pe_score = float(np.clip(0.75 * pe_core + 0.20 * pe_boost + pe_peak_boost, 0.0, 1.0))
     contact_score = float(np.clip(contact_core, 0.0, 1.0))
-    # NE hypothesis score: contact × Si co-sign (without co-sign, NE stays low)
-    ne_score = float(np.clip(0.55 * contact_core * (0.35 + 0.65 * si_boost) + 0.25 * ne_boost, 0.0, 1.0))
+    # NE: contact prior × Si co-sign + independent residual/SOC boost (no Si double-count)
+    ne_score = float(np.clip(
+        0.55 * contact_core * (0.25 + 0.75 * si_boost) + 0.30 * ne_boost * max(si_boost, 0.15),
+        0.0, 1.0,
+    ))
     sh_score = float(np.clip(sh_core, 0.0, 1.0))
 
     out.PE_side_score = pe_score
@@ -223,17 +247,15 @@ def diagnose_electrode_side(
     out.PE_top_modes = [m for m, _ in sorted(pe_mode_scores, key=lambda x: -x[1])[:3]]
     out.NE_top_modes = [m for m, _ in sorted(contact_scores, key=lambda x: -x[1])[:3]]
     out.shared_top_modes = [m for m, _ in sorted(shared_mode_scores, key=lambda x: -x[1])[:4]]
-    out.PE_supporting = pe_feat + pe_peak_labels[:3]
+    out.PE_supporting = pe_feat + [f"fcΔhits={out.pe_peak_hits_delta}"] + pe_peak_labels[:2]
     out.NE_supporting = ne_feat + si_feat[:3]
 
-    # Dominance among PE / contact_stack / NE_hypothesis / shared
     scores = {
         "PE": pe_score,
         "contact_stack": contact_score,
         "NE_hypothesis": ne_score,
         "shared": sh_score,
     }
-    # Prefer NE_hypothesis over contact_stack when Si co-sign strong and NE close to contact
     if si_boost >= 0.25 and ne_score >= contact_score - 0.05 and ne_score >= 0.25:
         ranking_key = {"PE": pe_score, "NE_hypothesis": ne_score, "shared": sh_score}
     else:
@@ -265,12 +287,12 @@ def diagnose_electrode_side(
     dom = out.dominant_electrode
     if dom == "PE":
         out.narrative = (
-            f"PE-side hypothesis leads (PE={pe_score:.2f}, contact={contact_score:.2f}, "
-            f"NE_hyp={ne_score:.2f}). Top: {', '.join(out.PE_top_modes) or 'n/a'}."
+            f"PE activity/isolation pattern leads (PE={pe_score:.2f}, contact={contact_score:.2f}, "
+            f"NE_hyp={ne_score:.2f}). NCM82 secondary — not stoichiometric LAM%."
         )
     elif dom == "NE":
         out.narrative = (
-            f"NE hypothesis (contact×Si co-sign): NE_hyp={ne_score:.2f}, "
+            f"Si-on-Gr NE hypothesis (contact×Si co-sign): NE_hyp={ne_score:.2f}, "
             f"contact_stack={contact_score:.2f}, si_cosign={si_boost:.2f}."
         )
     elif dom == "contact_stack":
@@ -353,7 +375,7 @@ def _label_side(row: pd.Series) -> str:
 def segment_electrode_trajectory(
     features: pd.DataFrame,
     *,
-    min_segment_cycles: int = 3,
+    min_segment_cycles: int = 4,
     margin_flip: float = 0.05,
     lean_eps: float = 0.05,
     routine_only: bool = True,

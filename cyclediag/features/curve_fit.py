@@ -69,12 +69,18 @@ def fit_curve_params(
     v_n: np.ndarray,
     *,
     i_n: float = 1.0,
+    leg: str = "discharge",
 ) -> dict[str, Any]:
-    """Fit V_N(Q) ≈ V_ref(s·Q + o) - I·dR  (dR in Ω; report mΩ)."""
+    """Fit V_N(Q) ≈ V_ref(s·Q + o) - I·dR  (dR in Ω; report mΩ).
+
+    For discharge, Q is discharged capacity (DOD axis). Residual argmax is
+    converted to true SOC% = 100 − DOD%. Charge uses Q as charged capacity ≈ SOC.
+    """
     empty = {
         "fit_scale": None, "fit_offset": None, "fit_dR": None,
         "fit_residual_rms": None, "fit_residual_max": None,
-        "fit_residual_argmax_SOC": None, "fit_r2": None,
+        "fit_residual_argmax_SOC": None, "fit_residual_argmax_DOD": None,
+        "fit_r2": None,
         "fit_corr_s_o": None, "fit_degenerate_flag": None,
         "LAM_curve_proxy": None, "LLI_curve_proxy": None, "R_curve_proxy": None,
     }
@@ -134,13 +140,23 @@ def fit_curve_params(
     except Exception:
         pass
 
+    q_max_n = float(np.nanmax(q_n))
+    frac = (q_arg / q_max_n) * 100.0 if q_max_n > 0 else float("nan")
+    if str(leg).lower().startswith("disch"):
+        # discharge Q ascending = DOD; convert to SOC
+        dod = frac
+        soc = 100.0 - dod if np.isfinite(dod) else None
+    else:
+        soc = frac
+        dod = 100.0 - frac if np.isfinite(frac) else None
     return {
         "fit_scale": s,
         "fit_offset": o,
         "fit_dR": dr_ohm * 1000.0,  # mΩ
         "fit_residual_rms": float(np.sqrt(np.mean(rv ** 2)) * 1000.0),
         "fit_residual_max": float(np.max(np.abs(rv)) * 1000.0),
-        "fit_residual_argmax_SOC": (q_arg / float(np.nanmax(q_n))) * 100.0,
+        "fit_residual_argmax_SOC": soc,
+        "fit_residual_argmax_DOD": dod,
         "fit_r2": (1.0 - ss_res / ss_tot) if ss_tot > 1e-15 else None,
         "fit_corr_s_o": corr_so,
         "fit_degenerate_flag": deg or (s >= 1.199) or (s <= 0.501),
@@ -198,8 +214,10 @@ def attach_curve_fit(
             # skip SOC-step / pulse cycles — full capa only
             if float(np.nanmax(q_n) - np.nanmin(q_n)) < 40.0:
                 continue
-            fit = fit_curve_params(q_ref, v_ref, q_n, v_n, i_n=i_n)
+            fit = fit_curve_params(q_ref, v_ref, q_n, v_n, i_n=i_n, leg=leg)
             mask = out["cycle"] == int(cyc)
+            if f"{prefix}_fit_residual_argmax_DOD" not in out.columns:
+                out[f"{prefix}_fit_residual_argmax_DOD"] = np.nan
             mapping = {
                 f"{prefix}_fit_scale": fit["fit_scale"],
                 f"{prefix}_fit_offset": fit["fit_offset"],
@@ -207,6 +225,7 @@ def attach_curve_fit(
                 f"{prefix}_fit_residual_rms": fit["fit_residual_rms"],
                 f"{prefix}_fit_residual_max": fit["fit_residual_max"],
                 f"{prefix}_fit_residual_argmax_SOC": fit["fit_residual_argmax_SOC"],
+                f"{prefix}_fit_residual_argmax_DOD": fit.get("fit_residual_argmax_DOD"),
                 f"{prefix}_fit_r2": fit["fit_r2"],
                 f"{prefix}_fit_corr_s_o": fit["fit_corr_s_o"],
                 f"{prefix}_fit_degenerate_flag": fit["fit_degenerate_flag"],

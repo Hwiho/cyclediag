@@ -129,9 +129,14 @@ def _evidence_for_term(
     use_base = bool(term.get("use_baseline")) or direction in (
         "decrease_vs_baseline", "increase_vs_baseline",
     ) or term.get("baseline_ref") is not None
-    if use_base and baseline_row is not None:
+    if use_base:
+        if baseline_row is None:
+            # Required baseline missing → skip (do not absolute-score FF'd R etc.)
+            return feat, None
         ref = term.get("baseline_ref") or feat
         baseline = _finite(baseline_row.get(ref))
+        if baseline is None:
+            return feat, None
     signed = _signed_evidence(
         val,
         direction=direction,

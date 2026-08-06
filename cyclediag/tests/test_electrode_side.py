@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -62,6 +63,32 @@ def test_r_ohmic_uses_baseline_delta():
     )
     assert s0 is not None and abs(s0) < 0.2
     assert s1 is not None and s1 > 0.5
+    # missing baseline → skip (no absolute saturation)
+    _, s_skip = _evidence_for_term({"R_ohmic_soc50": 5.0}, term, None)
+    assert s_skip is None
+
+
+def test_baseline_required_skip():
+    feat, signed = _evidence_for_term(
+        {"R_ohmic_soc50": 4.0},
+        {"feature": "R_ohmic_soc50", "direction": "increase", "weight": 1.0, "scale": 0.5, "use_baseline": True},
+        {"R_ohmic_soc50": None},
+    )
+    assert signed is None
+
+
+def test_discharge_residual_argmax_is_soc_not_dod():
+    from cyclediag.features.curve_fit import fit_curve_params
+    q = np.linspace(0, 100, 200)
+    v_ref = 4.2 - 1.5 * (q / 100.0)
+    # residual peak near end of discharge (high DOD) → low SOC
+    v_n = v_ref.copy()
+    v_n[-20:] -= 0.05
+    out = fit_curve_params(q, v_ref, q, v_n, i_n=38.0, leg="discharge")
+    assert out["fit_residual_argmax_SOC"] is not None
+    assert out["fit_residual_argmax_DOD"] is not None
+    assert out["fit_residual_argmax_SOC"] < 40.0
+    assert abs(out["fit_residual_argmax_SOC"] + out["fit_residual_argmax_DOD"] - 100.0) < 1.0
 
 
 def test_electrode_contact_stack_without_si_cosign():

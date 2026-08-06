@@ -99,13 +99,21 @@ def attach_q_relax_from_dcir_blocks(
     *,
     noise_floor_pct: float = Q_RELAX_NOISE_FLOOR_PCT,
 ) -> pd.DataFrame:
-    """Q_relax from the two high-Q cycles immediately before each DC-IR block."""
+    """Q_relax from the two high-Q cycles immediately before each DC-IR block.
+
+    Values are stamped on the RPT capa pair and **forward-filled onto subsequent
+    routine cycles** until the next RPT block, so Si co-sign on routine lean
+    rows can see Q_relax (C2 fix).
+    """
     out = features.copy()
     for col in ("Q_relax", "Q_relax_pct", "Q_relax_significant"):
         if col not in out.columns:
             out[col] = np.nan if col != "Q_relax_significant" else None
     by = {int(r.cycle): r for r in out.itertuples()}
-    for block in dcir_blocks:
+    sorted_cycles = sorted(int(c) for c in out["cycle"].dropna().unique())
+    block_starts = sorted(int(b[0]) for b in dcir_blocks if b)
+
+    for bi, block in enumerate(dcir_blocks):
         if not block:
             continue
         start = int(block[0])
@@ -121,6 +129,16 @@ def attach_q_relax_from_dcir_blocks(
         q_relax_pct = q_relax / q2 * 100.0
         for c in (c1, c2):
             mask = out["cycle"] == c
+            out.loc[mask, "Q_relax"] = q_relax
+            out.loc[mask, "Q_relax_pct"] = q_relax_pct
+            out.loc[mask, "Q_relax_significant"] = abs(q_relax_pct) > noise_floor_pct
+        # Forward-fill onto cycles after this RPT pair until next DCIR block start
+        next_start = block_starts[bi + 1] if bi + 1 < len(block_starts) else (sorted_cycles[-1] + 1 if sorted_cycles else start + 1)
+        for cyc in sorted_cycles:
+            if cyc <= c2 or cyc >= next_start:
+                continue
+            mask = out["cycle"] == cyc
+            # don't overwrite a later block's own stamp
             out.loc[mask, "Q_relax"] = q_relax
             out.loc[mask, "Q_relax_pct"] = q_relax_pct
             out.loc[mask, "Q_relax_significant"] = abs(q_relax_pct) > noise_floor_pct

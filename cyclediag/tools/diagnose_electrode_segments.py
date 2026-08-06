@@ -128,11 +128,12 @@ def _build_report(
     n_rout = int(routine_mask(feats).sum()) if "cycle_role" in feats.columns else len(feats)
     n_rpt = int((feats.get("cycle_role") == "rpt_c3").sum()) if "cycle_role" in feats.columns else 0
     lines = [
-        f"# 열화 구간별 전극 가설 진단 v1.2 — {cell_id}",
+        f"# 열화 구간별 전극 가설 진단 v1.3 — {cell_id}",
         "",
         f"- Level: **hypothesis_bol_ocp** (aged 하프셀 교정 아님)",
-        f"- Methodology: electrode_side_v1_2 · FC-OCP peak Δhits · contact_stack vs NE(Si co-sign)",
-        f"- Protocol dual-track: routine 0.5C 궤적 + C/3 RPT 앵커 (중간 SoHQ bump = RPT, 노이즈 아님)",
+        f"- Chemistry: **Si-on-Gr** (Si coating on graphite, exposed Gr 가능) · **NCM82 secondary**",
+        f"- Methodology: electrode_side_v1_3 · FC-OCP charge unique Δhits · R-centric contact_stack · Si co-sign NE",
+        f"- Protocol dual-track: routine 0.5C 궤적 + C/3 RPT 앵커 (중간 SoHQ bump = RPT)",
         f"- OCP library: anode={lib_meta.get('n_anode_curves')} cathode={lib_meta.get('n_cathode_curves')} aged={lib_meta.get('aged_data')}",
         f"- 분석 포인트: {len(feats)} cycles (routine={n_rout}, rpt_c3={n_rpt}); 세그먼트는 routine only · SoHQ≥50",
         "",
@@ -256,9 +257,10 @@ def _build_report(
         )
     lines.append("")
     lines.append(
-        "> v1.2: mid-life SoHQ bumps = **C/3 RPT**. "
-        "`contact_stack` = 전극 미분해 접촉/스택 저항. "
-        "`NE`는 Si co-sign이 있을 때만. 절대 LAM% 금지."
+        "> v1.3 Si-on-Gr · NCM82 secondary: mid-life SoHQ bumps = **C/3 RPT**. "
+        "`contact_stack` = R-centric stack/contact. "
+        "`NE` = Si chemo-mech co-sign only. PE = activity/isolation pattern (not LAM%). "
+        "절대 LAM% 금지. Gr stage monitoring은 후속."
     )
     return "\n".join(lines)
 
@@ -346,7 +348,9 @@ def main() -> None:
     (out_dir / f"{cell_id}_segments_meta.json").write_text(
         json.dumps({
             "cell_id": cell_id,
-            "version": "electrode_side_v1_2",
+            "version": "electrode_side_v1_3",
+            "chemistry": "ASSB_SJ900_Si_on_Gr",
+            "cathode": "NCM82_secondary",
             "n_cycles_sampled": len(cycles),
             "n_feature_rows": len(feats),
             "n_segments": int(len(segs)),
