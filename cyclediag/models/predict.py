@@ -5,6 +5,8 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
+from cyclediag.features.family_registry import anomaly_feature_list
+
 NUMERIC_PREFIX = "f_"
 FLAG_WATCH = 0.55
 FLAG_ALERT = 0.75
@@ -29,6 +31,15 @@ def _numeric_feature_cols(df: pd.DataFrame) -> list[str]:
     return cols
 
 
+def _anomaly_input_cols(df: pd.DataFrame) -> list[str]:
+    """Prefer §4.1 family representatives to avoid correlated double-counting."""
+    available = [c for c in df.columns if pd.api.types.is_numeric_dtype(df[c])]
+    fam = anomaly_feature_list(available)
+    if len(fam) >= 3:
+        return fam
+    return _numeric_feature_cols(df)
+
+
 def predict_features(
     features: pd.DataFrame,
     *,
@@ -38,11 +49,12 @@ def predict_features(
 
   Uses reference median/std when provided; otherwise leave-one-out style
   stats across the input batch (MVP only — not for production eval).
+  Anomaly inputs prefer family representatives (§4.1) when available.
     """
     if features is None or features.empty:
         return pd.DataFrame()
 
-    cols = _numeric_feature_cols(features)
+    cols = _anomaly_input_cols(features)
     if not cols:
         out = features.copy()
         out["anomaly_score"] = np.nan

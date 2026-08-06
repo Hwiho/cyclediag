@@ -64,10 +64,14 @@ def diagnose_feature_table(
     config_path: str | Path | None = None,
     baseline_cycle: int | None = 1,
     write_json_sidecar: Path | str | None = None,
+    with_electrode_side: bool = True,
+    halfcell_dir: str | Path | None = None,
 ) -> pd.DataFrame:
     """Append Level-1 pattern diagnosis columns to a cycle feature DataFrame.
 
     Does **not** require half-cell data. Level-2/3 estimate columns are left null.
+    When ``with_electrode_side`` is True, also appends PE/NE hypothesis scores
+    using full-cell patterns (+ BOL OCP library if available).
     """
     if table is None or table.empty:
         out = table.copy() if table is not None else pd.DataFrame()
@@ -166,5 +170,16 @@ def diagnose_feature_table(
         path = Path(write_json_sidecar)
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps(sidecar_rows, indent=2, ensure_ascii=False), encoding="utf-8")
+
+    if with_electrode_side and not out.empty:
+        from cyclediag.diagnosis.electrode_side import attach_electrode_side_diagnosis
+
+        # Prefer auto baseline from enrich meta if present on table attrs; else arg
+        bl = baseline_cycle
+        out = attach_electrode_side_diagnosis(
+            out,
+            baseline_cycle=bl,
+            halfcell_dir=halfcell_dir,
+        )
 
     return out

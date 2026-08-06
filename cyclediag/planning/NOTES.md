@@ -53,6 +53,7 @@
 | 2026-08-06 | **PyDMA · PyProBE · DiffCapAnalyzer** 추가 — DMA는 PyDMA 과학+PyProBE API; ICA peak descriptor는 DiffCapAnalyzer. §12.3–12.5 |
 | 2026-08-06 | **Full-cell 우선 스택 F1–F8** — ICA/DVA·peak·corr·R·change-point. 하프셀 없어도 MVP 완성. 상세: `IMPROVEMENT_ROADMAP.md` §0 |
 | 2026-08-06 | **하프셀 BOL 데이터 있음** — `example/fixtures/halfcell/` (C/20, 음극 cycle 1–3). **Aged 하프셀은 없음.** |
+| 2026-08-06 | **실현가능성 재검토 (§9.5)** — Level 3/`*_est`·DMA quantify·절대 stoich = aged HC 게이트; fade/knee·electrode hypothesis·family anomaly = 지금 구현. Temp/Arrhenius = 불가. |
 
 ---
 

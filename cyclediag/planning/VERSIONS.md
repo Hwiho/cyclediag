@@ -19,9 +19,25 @@
 
 ---
 
+## v1.1 — Electrode-side hypothesis + fade/knee (2026-08-06)
+
+**상태:** Current on `cursor/electrode-side-diagnosis-60f9`
+
+- BOL OCP library (`diagnosis/halfcell/ocp_library.py`) + PE peak attribution
+- PE/NE electrode-side **hypothesis** (`diagnosis/electrode_side.py`, level=`hypothesis_bol_ocp`)
+- CLI: `tools/diagnose_electrode_sides.py`
+- §5.12 fade exponent + bilinear knee → `enrich_assb`
+- §4.1 family registry → anomaly input de-dup in `predict`
+- `bol_ocp_prototype_status` — aged HC 전 calibrate stub 유지
+- Roadmap §9.5 feasibility matrix (가능 / 부분 / 불가 / Blocked)
+
+**다음:** §5.1 verdict → §5.2 V-axis; synthetic harness §8.1; aged HC → Level 3
+
+---
+
 ## v1.0 — Full-cell ASSB diagnose (2026-08-06)
 
-**상태:** Current (Cloud Agents / fixtures)
+**상태:** Superseded by v1.1 for electrode/fade paths
 
 - Standalone CV / dQ/dV (no `pne_studio` required)
 - ASSB Level-1 modes: contact_loss, interface_R, SE_decomposition, microshort, LAM_PE, LLI, solid_diffusion

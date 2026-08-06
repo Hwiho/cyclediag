@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 
 from cyclediag.features.curve_fit import attach_curve_fit
+from cyclediag.features.fade_trajectory import attach_fade_trajectory
 from cyclediag.features.dcir_decompose import (
     decompose_pulse_cycle,
     result_to_dict,
@@ -444,5 +445,8 @@ def enrich_feature_table(
             out, raw_df, ref_cycle=int(ref),
             rest_current_max=rest_current_max, cycle_list=feat_cycles,
         )
+
+    # §5.12 fade exponent + bilinear knee (cell-level, broadcast to rows)
+    out = attach_fade_trajectory(out)
 
     return out, meta
