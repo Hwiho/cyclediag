@@ -1,0 +1,322 @@
+[
+  {
+    "key": "SoHQ",
+    "title_ko": "용량 유지율",
+    "unit": "%",
+    "family": "capacity",
+    "description": "기준 대비 방전용량 유지율. fade/knee의 1차 관측량.",
+    "how": "Q_dchg(cycle) / Q_baseline × 100 (routine 0.5C).",
+    "aging_hint": "decrease",
+    "panel_priority": 10
+  },
+  {
+    "key": "CE",
+    "title_ko": "쿨롱 효율",
+    "unit": "%",
+    "family": "capacity",
+    "description": "충전 대비 방전용량 비. LLI·부반응 힌트.",
+    "how": "Q_dchg / Q_chg × 100 (이상치 >102% 또는 <85%는 진단에서 제외).",
+    "aging_hint": "decrease",
+    "panel_priority": 20
+  },
+  {
+    "key": "VE",
+    "title_ko": "전압 효율",
+    "unit": "1",
+    "family": "capacity",
+    "description": "에너지 효율의 전압 측. 저항·분극 증가 시 하락.",
+    "how": "E_dchg / E_chg (Wh).",
+    "aging_hint": "decrease",
+    "panel_priority": 30
+  },
+  {
+    "key": "EE",
+    "title_ko": "에너지 효율",
+    "unit": "1",
+    "family": "capacity",
+    "description": "충·방전 에너지 비.",
+    "how": "E_dchg / E_chg.",
+    "aging_hint": "decrease",
+    "panel_priority": 40
+  },
+  {
+    "key": "Q_relax_pct",
+    "title_ko": "완화 용량 회복",
+    "unit": "%",
+    "family": "capacity",
+    "description": "DCIR/RPT 전후 휴지로 회복되는 용량 분율. Si chemo-mech co-sign.",
+    "how": "DCIR 블록 전후 Q 차이 / Q × 100, routine에 forward-fill.",
+    "aging_hint": "increase",
+    "panel_priority": 50
+  },
+  {
+    "key": "R_ohmic_soc50",
+    "title_ko": "옴 저항 (SOC50)",
+    "unit": "mΩ",
+    "family": "resistance",
+    "description": "DCIR 펄스 early √t 외삽 t→0 절편. 순수 옴이 아니라 초기 비옴 성분 proxy.",
+    "how": "R(t)=|ΔV|/|I|; t∈[0,0.3]s 에서 R vs √t 회귀 절편. SOC50 블록 → forward-fill.",
+    "aging_hint": "increase",
+    "panel_priority": 10
+  },
+  {
+    "key": "R_ct_soc50",
+    "title_ko": "전하전달 저항 (SOC50)",
+    "unit": "mΩ",
+    "family": "resistance",
+    "description": "중간 시간대 잔차의 지수 포화항. 계면/화학 저항 proxy (Cdl 직접 추정 아님).",
+    "how": "resid = R−RΩ−A√t; t∈[0.3,10]s 에서 Rct(1−e^(−t/τ)) fit.",
+    "aging_hint": "increase",
+    "panel_priority": 20
+  },
+  {
+    "key": "tau_ct_soc50",
+    "title_ko": "Rct 시정수 τ",
+    "unit": "s",
+    "family": "resistance",
+    "description": "R(t) 잔차 fit의 유효 시정수. τ≈Rct·Cdl 가설이지만 Cdl은 분리하지 않음.",
+    "how": "curve_fit 초기값 2s, bounds [0.05, 20]; 데이터로 추정.",
+    "aging_hint": "either",
+    "panel_priority": 30
+  },
+  {
+    "key": "mech_vs_chem_ratio",
+    "title_ko": "기계/화학 비",
+    "unit": "1",
+    "family": "resistance",
+    "description": "옴(스택·접촉) vs 전하전달(계면) 상대 비중.",
+    "how": "R_ohmic_soc50 / R_ct_soc50.",
+    "aging_hint": "increase",
+    "panel_priority": 40
+  },
+  {
+    "key": "R_ohmic_growth_100",
+    "title_ko": "RΩ 성장률 /100cyc",
+    "unit": "mΩ/100cyc",
+    "family": "resistance",
+    "description": "기준 DCIR 대비 100사이클당 옴 저항 증가율. 레벨(RΩ)과 별개 — 감속해도 RΩ는 계속 상승 가능.",
+    "how": "(RΩ - RΩ0) / ((cyc - cyc0)/100).",
+    "aging_hint": "either",
+    "panel_priority": 50
+  },
+  {
+    "key": "R_ohmic_frac_soc50",
+    "title_ko": "RΩ / R30s 분율",
+    "unit": "1",
+    "family": "resistance",
+    "description": "30s 총저항 중 옴 성분 비중.",
+    "how": "R_ohmic / R_30s_total @ SOC50.",
+    "aging_hint": "increase",
+    "panel_priority": 60
+  },
+  {
+    "key": "EoC_dchgR_10s",
+    "title_ko": "EoC 방전 10s DCIR",
+    "unit": "mΩ",
+    "family": "resistance",
+    "description": "충전 종료 후 방전 시작 10초 시점 ΔV/I. Rct·확산 포함 총 DCIR.",
+    "how": "|V0−V(10s)|/|I|×1000. 순수 RΩ 아님.",
+    "aging_hint": "increase",
+    "panel_priority": 70
+  },
+  {
+    "key": "hyst_area_low",
+    "title_ko": "저SOC 히스테리시스",
+    "unit": "V",
+    "family": "shape",
+    "description": "저SOC 충·방전 전압 면적. Si-on-Gr chemo-mech 지표.",
+    "how": "V–Q 히스테리시스를 SOC 밴드별로 적분 (low band).",
+    "aging_hint": "increase",
+    "panel_priority": 10
+  },
+  {
+    "key": "hyst_area_high",
+    "title_ko": "고SOC 히스테리시스",
+    "unit": "V",
+    "family": "shape",
+    "description": "고SOC 히스테리시스. PE activity 보조 증거.",
+    "how": "히스테리시스 high-SOC band 면적.",
+    "aging_hint": "increase",
+    "panel_priority": 20
+  },
+  {
+    "key": "dchg_plateau_width",
+    "title_ko": "방전 플래토 폭",
+    "unit": "Q-units",
+    "family": "shape",
+    "description": "방전 플래토 구간 폭. 좁아지면 PE isolation/activity 패턴.",
+    "how": "방전 V 플래토 검출 후 Q 폭.",
+    "aging_hint": "decrease",
+    "panel_priority": 30
+  },
+  {
+    "key": "delta_dchg_plateau_V",
+    "title_ko": "방전 플래토 ΔV",
+    "unit": "V",
+    "family": "shape",
+    "description": "기준 대비 방전 플래토 전압 이동.",
+    "how": "plateau_V(cycle) − plateau_V(baseline).",
+    "aging_hint": "either",
+    "panel_priority": 40
+  },
+  {
+    "key": "chg_dQdV_peak1_V",
+    "title_ko": "충전 dQ/dV 피크1 V",
+    "unit": "V",
+    "family": "shape",
+    "description": "충전 IC 1번 피크 위치. FC-OCP 매칭·위상 이동 추적.",
+    "how": "Q 보간 → SG → find_peaks.",
+    "aging_hint": "either",
+    "panel_priority": 50
+  },
+  {
+    "key": "LAM_curve_proxy",
+    "title_ko": "LAM 곡선 proxy",
+    "unit": "%",
+    "family": "shape",
+    "description": "기준 V–Q 대비 scale 축소 proxy. 절대 LAM% 아님; 부호·bound 포화에 주의.",
+    "how": "(1 - fit_scale) * 100 (discharge 3-param fit). scale>1 이면 음수.",
+    "aging_hint": "either",
+    "panel_priority": 60
+  },
+  {
+    "key": "LLI_curve_proxy",
+    "title_ko": "LLI 곡선 proxy",
+    "unit": "%",
+    "family": "shape",
+    "description": "기준 대비 Q축 offset. 절대 LLI% 아님.",
+    "how": "fit_offset / Q_max × 100.",
+    "aging_hint": "either",
+    "panel_priority": 70
+  },
+  {
+    "key": "RCF",
+    "title_ko": "Rate capability factor",
+    "unit": "1",
+    "family": "transport",
+    "description": "0.5C 용량 / 가까운 C/3 RPT 용량. rate 손실 시 하락.",
+    "how": "Q_0.5C(N) / Q_C/3(nearest RPT).",
+    "aging_hint": "decrease",
+    "panel_priority": 10
+  },
+  {
+    "key": "PER",
+    "title_ko": "분극 효율 비",
+    "unit": "1",
+    "family": "transport",
+    "description": "과전위 대비 DCIR 스케일. 수송 제한 시 변화.",
+    "how": "η(SOC50) / (ΔI · R_DCIR_50).",
+    "aging_hint": "increase",
+    "panel_priority": 20
+  },
+  {
+    "key": "eta_max",
+    "title_ko": "최대 과전위 η",
+    "unit": "V",
+    "family": "transport",
+    "description": "C/3 vs 0.5C 동일 Q축 최대 전압차.",
+    "how": "동일 Q에서 |V_C3 − V_0.5C| 최댓값.",
+    "aging_hint": "increase",
+    "panel_priority": 30
+  },
+  {
+    "key": "eta_argmax_SOC",
+    "title_ko": "η 최댓값 SOC",
+    "unit": "%",
+    "family": "transport",
+    "description": "η가 최대인 SOC. 고SOC면 PE, 저SOC면 NE 쪽 힌트.",
+    "how": "argmax_SOC of η(SOC).",
+    "aging_hint": "either",
+    "panel_priority": 40
+  },
+  {
+    "key": "LAM_PE_pattern_score",
+    "title_ko": "PE activity 패턴",
+    "unit": "0–1",
+    "family": "mechanism",
+    "description": "NCM 이차 고립/activity 패턴. 절대 LAM% 금지.",
+    "how": "plateau·dQdV·LAM_curve_proxy·dQV_log_var 가중합 (mode_weights).",
+    "aging_hint": "increase",
+    "panel_priority": 10
+  },
+  {
+    "key": "contact_loss_score",
+    "title_ko": "접촉/스택 손실",
+    "unit": "0–1",
+    "family": "mechanism",
+    "description": "옴 성장·분율·mech/chem 증가 증거 합. 전극 미분해.",
+    "how": "R_ohmic_growth, ΔRΩ, RΩ_frac, EoC_10s, mech/chem 가중합.",
+    "aging_hint": "increase",
+    "panel_priority": 20
+  },
+  {
+    "key": "LLI_pattern_score",
+    "title_ko": "LLI 패턴",
+    "unit": "0–1",
+    "family": "mechanism",
+    "description": "CE·slippage·곡선 offset 기반 LLI 가설 점수.",
+    "how": "CE↓, CI↑, restV/cutoff margin, LLI_curve_proxy 등.",
+    "aging_hint": "increase",
+    "panel_priority": 30
+  },
+  {
+    "key": "interface_R_score",
+    "title_ko": "계면 R 패턴",
+    "unit": "0–1",
+    "family": "mechanism",
+    "description": "Rct·τ·VE 하락 등 계면저항 성장 가설.",
+    "how": "R_ct↑, tau_ct↑, VE↓, EoC_60s 등.",
+    "aging_hint": "increase",
+    "panel_priority": 40
+  },
+  {
+    "key": "solid_diffusion_score",
+    "title_ko": "고체확산 제한",
+    "unit": "0–1",
+    "family": "mechanism",
+    "description": "A_diff·PER·RCF 기반 확산/수송 제한.",
+    "how": "A_diff↑, PER↑, RCF↓ 등.",
+    "aging_hint": "increase",
+    "panel_priority": 50
+  },
+  {
+    "key": "PE_side_score",
+    "title_ko": "PE lean 점수",
+    "unit": "0–1",
+    "family": "electrode",
+    "description": "LAM_PE_pattern + feature boost + FC-OCP Δhits.",
+    "how": "0.75·LAM_PE + 0.20·PE_boost + peak_boost.",
+    "aging_hint": "increase",
+    "panel_priority": 10
+  },
+  {
+    "key": "contact_stack_score",
+    "title_ko": "contact_stack lean",
+    "unit": "0–1",
+    "family": "electrode",
+    "description": "contact_loss를 dominant 경쟁에 넣는 이름. ≈ contact_loss_score.",
+    "how": "clip(contact_loss_score, 0, 1).",
+    "aging_hint": "increase",
+    "panel_priority": 20
+  },
+  {
+    "key": "NE_side_score",
+    "title_ko": "NE 가설 점수",
+    "unit": "0–1",
+    "family": "electrode",
+    "description": "contact × Si chemo-mech co-sign. Si 없으면 NE 확정 금지.",
+    "how": "0.55·contact·(0.25+0.75·si) + 0.30·NE_boost·si.",
+    "aging_hint": "increase",
+    "panel_priority": 30
+  },
+  {
+    "key": "si_cosign",
+    "title_ko": "Si co-sign",
+    "unit": "0–1",
+    "family": "electrode",
+    "description": "저SOC hyst·Q_relax·mech/chem·CV 등 Si chemo-mech 동시 신호.",
+    "how": "SI_NE_COSIGN feature boost (baseline 대비 ↑ 비율).",
+    "aging_hint": "increase",
+    "panel_priority": 40
+  }
+]
