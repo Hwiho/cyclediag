@@ -49,8 +49,7 @@
 | 2026-08-06 | **BatteryML · PyBaMM 참고**를 로드맵에 반영 — 패키지 내장 없이 CellData/FeatureSet·ΔQ(V)·전극 SOH 스키마. 상세: `IMPROVEMENT_ROADMAP.md` §12 |
 | 2026-08-06 | **PyDMA · PyProBE · DiffCapAnalyzer** 추가 — DMA는 PyDMA 과학+PyProBE API; ICA peak descriptor는 DiffCapAnalyzer. §12.3–12.5 |
 | 2026-08-06 | **Full-cell 우선 스택 F1–F8** — ICA/DVA·peak·corr·R·change-point. 하프셀 없어도 MVP 완성. 상세: `IMPROVEMENT_ROADMAP.md` §0 |
-| 2026-08-06 | **Fixtures DOE 폴더 분리** — `DOE1` wet/dry, `DOE2` 900dry/1300dry, `DOE3` Bimodal/S83S. |
-| 2026-08-06 | **하프셀 BOL 데이터 있음** — `example/fixtures/halfcell/` (C/20, 음극 cycle 1–3). **Aged 하프셀은 없음.** |
+| 2026-08-06 | **DOE2 비교 CLI** — `compare-doe`: 양극 동일·음극 상이(SJ900 vs SJ1300) early params + mode contrast |
 
 ---
 
