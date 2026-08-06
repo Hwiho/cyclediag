@@ -1,33 +1,32 @@
 {
-  "diagnosis_version": "assb_si_v1",
+  "diagnosis_version": "assb_si_on_gr_v1_3",
   "diagnosis_method": "rule_pattern",
-  "diagnosis_model_version": "pattern_rule_assb_si_v1",
-  "chemistry": "ASSB_SJ900_Si_rich",
-  "layer_note": "Layer3 mechanisms are hypotheses; Layer2 states preferred",
+  "diagnosis_model_version": "pattern_rule_assb_si_on_gr_v1_3",
+  "chemistry": "ASSB_SJ900_Si_on_Gr",
+  "layer_note": "Si coating on graphite (exposed Gr possible); NCM82 secondary particles. Layer3 mechanisms are hypotheses. v1.3: R-centric contact_stack; Si co-sign decoupled; baseline-required R terms; PE activity≠stoichiometric LAM%.",
   "support_threshold": 0.25,
   "conflict_threshold": 0.25,
   "min_evidence_for_valid": 2,
   "mode_collision_score": 0.65,
   "modes": {
     "contact_loss": {
-      "description": "ASSB chemo-mechanical contact loss / void (Layer3) — primary path",
+      "description": "ASSB stack/contact ohmic growth (Layer3 — not electrode-resolved until Si co-sign)",
       "layer": 3,
       "evidence": [
-        {"feature": "R_ohmic_soc50", "direction": "increase", "weight": 1.5, "scale": 0.5},
-        {"feature": "R_ohmic_frac_soc50", "direction": "increase", "weight": 1.3, "scale": 0.1},
-        {"feature": "EoC_dchgR_10s_inc", "direction": "increase", "weight": 1.0, "scale": 25.0},
-        {"feature": "mech_vs_chem_ratio", "direction": "increase", "weight": 1.2, "scale": 0.5},
-        {"feature": "hyst_area_low", "direction": "increase", "weight": 0.8, "scale": 0.05},
-        {"feature": "Q_relax_pct", "direction": "increase", "weight": 0.6, "scale": 0.2}
+        {"feature": "R_ohmic_growth_100", "direction": "increase", "weight": 1.6, "scale": 0.3},
+        {"feature": "R_ohmic_soc50", "direction": "increase", "weight": 1.2, "scale": 0.5, "use_baseline": true, "baseline_ref": "R_ohmic_soc50"},
+        {"feature": "R_ohmic_frac_soc50", "direction": "increase", "weight": 1.1, "scale": 0.1, "use_baseline": true, "baseline_ref": "R_ohmic_frac_soc50"},
+        {"feature": "EoC_dchgR_10s_inc", "direction": "increase", "weight": 0.8, "scale": 25.0},
+        {"feature": "mech_vs_chem_ratio", "direction": "increase", "weight": 0.5, "scale": 0.5, "use_baseline": true, "baseline_ref": "mech_vs_chem_ratio"}
       ]
     },
     "interface_R": {
       "description": "SE|CAM / SE|AAM interfacial resistance growth (Layer2/3)",
       "layer": 2,
       "evidence": [
-        {"feature": "R_ct_soc50", "direction": "increase", "weight": 1.4, "scale": 0.5},
+        {"feature": "R_ct_soc50", "direction": "increase", "weight": 1.4, "scale": 0.5, "use_baseline": true, "baseline_ref": "R_ct_soc50"},
         {"feature": "tau_ct_soc50", "direction": "increase", "weight": 1.0, "scale": 2.0},
-        {"feature": "VE", "direction": "decrease", "weight": 1.1, "scale": 0.05},
+        {"feature": "VE", "direction": "decrease", "weight": 1.1, "scale": 0.05, "use_baseline": true, "baseline_ref": "VE"},
         {"feature": "EoC_dchgR_60s_inc", "direction": "increase", "weight": 0.9, "scale": 25.0},
         {"feature": "tau_CV", "direction": "increase", "weight": 0.7, "scale": 200.0}
       ]
@@ -37,9 +36,9 @@
       "layer": 3,
       "evidence": [
         {"feature": "CE", "direction": "decrease_from_100", "weight": 1.2, "scale": 2.0},
-        {"feature": "R_ct_soc50", "direction": "increase", "weight": 1.1, "scale": 0.5},
+        {"feature": "R_ct_soc50", "direction": "increase", "weight": 1.1, "scale": 0.5, "use_baseline": true, "baseline_ref": "R_ct_soc50"},
         {"feature": "CI_per_hour", "direction": "increase", "weight": 0.9, "scale": 0.5},
-        {"feature": "VE", "direction": "decrease", "weight": 0.7, "scale": 0.05}
+        {"feature": "VE", "direction": "decrease", "weight": 0.7, "scale": 0.05, "use_baseline": true, "baseline_ref": "VE"}
       ]
     },
     "microshort": {
@@ -52,13 +51,14 @@
       ]
     },
     "LAM_PE": {
-      "description": "Positive electrode active material loss (peak-based OK for ASSB)",
+      "description": "PE activity / isolation pattern (NCM82 secondary: may include cracking/electronic isolation — not stoichiometric LAM%)",
       "layer": 2,
       "evidence": [
-        {"feature": "delta_dchg_plateau_V", "direction": "either", "weight": 0.8, "scale": 0.02},
+        {"feature": "delta_dchg_plateau_V", "direction": "either", "weight": 0.8, "scale": 0.05},
         {"feature": "dchg_plateau_width", "direction": "decrease_vs_baseline", "weight": 1.0, "scale": 2.0, "baseline_ref": "dchg_plateau_width"},
-        {"feature": "delta_chg_V_avg", "direction": "decrease", "weight": 0.9, "scale": 0.02},
-        {"feature": "delta_chg_dQdV_peak1_V", "direction": "either", "weight": 0.5, "scale": 0.02}
+        {"feature": "delta_chg_dQdV_peak1_V", "direction": "either", "weight": 0.7, "scale": 0.04},
+        {"feature": "LAM_curve_proxy", "direction": "increase", "weight": 1.2, "scale": 5.0},
+        {"feature": "dQV_log_var", "direction": "increase", "weight": 0.6, "scale": 0.5, "use_baseline": true, "baseline_ref": "dQV_log_var"}
       ]
     },
     "LLI": {
@@ -69,17 +69,19 @@
         {"feature": "CI", "direction": "increase", "weight": 0.9, "scale": 2.0},
         {"feature": "delta_EoD_restV_end", "direction": "increase", "weight": 0.9, "scale": 0.05},
         {"feature": "delta_dchg_V_cutoff_margin", "direction": "decrease", "weight": 1.0, "scale": 0.05},
-        {"feature": "V_inf_est_soc50", "direction": "either", "weight": 0.5, "scale": 0.02}
+        {"feature": "V_inf_est_soc50", "direction": "either", "weight": 0.5, "scale": 0.02, "use_baseline": true, "baseline_ref": "V_inf_est_soc50"},
+        {"feature": "LLI_curve_proxy", "direction": "either", "weight": 0.8, "scale": 5.0}
       ]
     },
     "solid_diffusion": {
       "description": "Solid-state diffusion limitation (SE + particle)",
       "layer": 2,
       "evidence": [
-        {"feature": "A_diff_soc50", "direction": "increase", "weight": 1.3, "scale": 0.05},
-        {"feature": "PER", "direction": "increase", "weight": 1.1, "scale": 0.5},
-        {"feature": "RCF", "direction": "decrease", "weight": 1.0, "scale": 0.05},
-        {"feature": "R_recovery_tau2_soc50", "direction": "increase", "weight": 0.7, "scale": 100.0}
+        {"feature": "A_diff_soc50", "direction": "increase", "weight": 1.3, "scale": 0.05, "use_baseline": true, "baseline_ref": "A_diff_soc50"},
+        {"feature": "PER", "direction": "increase", "weight": 1.1, "scale": 0.5, "use_baseline": true, "baseline_ref": "PER"},
+        {"feature": "RCF", "direction": "decrease", "weight": 1.0, "scale": 0.05, "use_baseline": true, "baseline_ref": "RCF"},
+        {"feature": "R_recovery_tau2_soc50", "direction": "increase", "weight": 0.7, "scale": 100.0},
+        {"feature": "eta_argmax_SOC", "direction": "either", "weight": 0.4, "scale": 30.0}
       ]
     }
   }

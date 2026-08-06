@@ -3,7 +3,7 @@
 > **대상 셀:** ASSB SJ900 (S83S 양극 / SJ-ASG903-1300 Si-rich 음극), 2.5–4.2 V, 45 °C
 > **프로토콜:** routine 0.5C CC-CV · C/3 RPT 2사이클 (약 105 사이클 주기) · DC-IR (SOC 20/50/80, 방전, 1C, 30 s)
 > **기준 데이터:** SJ900 set4 Ch22 (564 cycles, SoHQ ~65 %), Ch25
-> **갱신:** 2026-08-06 — **§0 Full-cell 우선 스택** 추가 (하프셀 없이 ICA/DVA·peak·R·change-point). §12 OSS 참고 유지
+> **갱신:** 2026-08-06 — §0 Full-cell 우선 · §9.5 실현가능성 매트릭스 · BOL 하프셀 OCP · electrode-side hypothesis. Aged HC 없음.
 
 ---
 
@@ -33,6 +33,7 @@
 - [7. 아키텍처 개선](#7-아키텍처-개선)
 - [8. 검증 체계](#8-검증-체계)
 - [9. 실행 계획](#9-실행-계획)
+  - [9.5 실현가능성 매트릭스](#95-실현가능성-매트릭스-2026-08-06-재검토)
 - [10. 미해결 질문](#10-미해결-질문)
 - [11. 금지 사항](#11-금지-사항)
 - [12. 외부 오픈소스 참고 (BatteryML · PyBaMM · PyDMA · PyProBE · DiffCapAnalyzer)](#12-외부-오픈소스-참고-batteryml--pybamm)
@@ -58,7 +59,7 @@
 | F5 | **피크 면적 감소** | 불필요 | 부분 구현 | group_area · peak area trajectory · §5.8 | → LAM_PE **pattern** (Si: LAM_NE는 피크 단독 금지) |
 | F6 | **곡선 correlation** | 불필요 | 일부 | ΔQ(V) §5.7 · DTW/corr · fade_correlation | baseline vs cycle-N 형상 유사도 |
 | F7 | **저항·polarization 증가** | 불필요 | 부분~계획 | DC-IR · §5.3–5.5 · §5.9–5.10 PER | 접촉/계면/확산 분리 (ASSB 핵심) |
-| F8 | **change-point 탐지** | 불필요 | 계획 | §5.12 knee · §7.7 PELT/Bacon-Watts | fade·R·peak 궤적의 급변 시점 |
+| F8 | **change-point 탐지** | 불필요 | **부분 Done** | §5.12 knee · §7.7 PELT TBD | fade·R·peak 궤적의 급변 시점 |
 
 ```
 full-cell raw
@@ -1943,82 +1944,129 @@ RPT 주기 105 사이클이므로 이 검증이 특히 중요하다.
 ### 9.0 Full-cell 우선 (하프셀 불필요) — **현재 메인 트랙**
 
 §0의 F1–F8. 하프셀·PyDMA DMA는 §9.3 이후.
+BOL OCP (`example/fixtures/halfcell/`)로 DMA **프로토타입·peak attribution**은 가능; aged 검증은 보류.
 
-| 순서 | 기능 | 작업 | § |
-|---|---|---|---|
-| A | F1+F2 | ICA/DVA 생성 품질 고정 · 피크 검출 파라미터 스윕 | 5.1, 5.2 |
-| B | F3 | peak matching (assign + evolution) 안정화 | peak_tracking, 5.8 |
-| C | F4+F5 | 위치 이동 · 면적 감소 궤적 → pattern 입력 | peak_trajectory |
-| D | F7 | R(t) 3성분 · polarization / PER | 5.3, 5.10 |
-| E | F6 | ΔQ(V) · baseline curve correlation | 5.7, 5.6 |
-| F | F8 | knee · change-point (SoHQ / R / peak_V) | 5.12, 7.7 |
-| G | — | `mode_weights_assb_si_v1` + supporting_features 배선 | 7.1 |
+> **상태 갱신 2026-08-06 (실현가능성 재검토):**
+> - §9.1 전부 Done · §9.2 중 5.5–5.7·5.9–5.12·7.1·family anomaly Done/Partial
+> - **H (BOL HC):** OCP library + electrode-side **hypothesis** 구현
+> - `*_est_hc_calibrated` / 절대 stoich window: **aged HC 전까지 불가**
+> - Temp==0 → Arrhenius/DTV **불가** · §5.8 deconv: §5.1 verdict(A) 대기 **Blocked**
+
+| 순서 | 기능 | 작업 | § | 실현 |
+|---|---|---|---|---|
+| A | F1+F2 | ICA/DVA 품질 · 필터 스윕 | 5.1, 5.2 | 가능 (5.2 V축 전환은 단기) |
+| B | F3 | peak matching 안정화 | peak_tracking | 가능 |
+| C | F4+F5 | ΔV/Δarea → pattern | peak_trajectory | 가능 (PE pattern만) |
+| D | F7 | R 3성분 · PER | 5.3, 5.10 | **Done** |
+| E | F6 | ΔQ(V) · curve corr | 5.7, 5.6 | **Done** (proxy) |
+| F | F8 | knee · change-point | 5.12, 7.7 | **Partial** (bilinear knee Done; PELT TBD) |
+| G | — | mode_weights ASSB | 7.1 | **Done** |
+| H | BOL HC | OCP lib · PE/NE hypothesis | halfcell/ | **Done** (hypothesis only) |
 
 ### 9.1 즉시 (추가 실험 없이, 데이터 이미 존재)
 
-| # | 항목 | § | 근거 |
+| # | 항목 | § | 상태 |
 |---|---|---|---|
-| 1 | **dQ/dV 필터 스윕 진단** | 5.1 | §5.8 필요 여부를 결정. 다른 모든 피크 작업의 선행 |
-| 2 | **R(t) 3성분 분해** | 5.3 | ASSB 접촉 손실 vs 계면 화학 분리. 10 Hz 확보됨 |
-| 3 | **자가방전율** | 5.4 | 미탐지 실패 모드. rest 3600 s 이미 존재 |
-| 4 | **`Q_relax` 전 블록 집계** | 5.10 | 노이즈 하한 0.065 % 확정됨 |
-| 5 | **`chgCVcapa` 버그 수정** | 5.14 | Si 음극 수용 한계 프록시 복구 |
-| 6 | **SOC 분해 히스테리시스** | 5.11 | Si 열화 직접 지표 |
-| 7 | `R_ratio_20_50`, `R_SOC_slope` | 5.9 | 제한 전극 식별 |
-| 8 | `VE`, `CI_per_hour` | 4.3 | 분극/쿨롱 분리, 45 °C 캘린더 성분 |
-| 9 | 데이터 품질 지표 산출 | 5.13 | 이후 모든 진단의 전제. ADC 분해능도 역추정 |
-| 10 | baseline → formation 후 첫 RPT | 6.2 | 현행 cycle=1은 구조적 편향 |
+| 1 | **dQ/dV 필터 스윕 진단** | 5.1 | Done — `tools/diagnose_dqdv_filter_sweep.py` |
+| 2 | **R(t) 3성분 분해** | 5.3 | Done — `features/dcir_decompose.py` |
+| 3 | **자가방전율** | 5.4 | Done — `features/self_discharge.py` |
+| 4 | **`Q_relax` 전 블록 집계** | 5.10 | Done — `features/rpt_metrics.py` + enrich |
+| 5 | **`chgCVcapa` 버그 수정** | 5.14 | Done — `features/signal_cv.py` |
+| 6 | **SOC 분해 히스테리시스** | 5.11 | Done — `hysteresis_metrics` bands |
+| 7 | `R_ratio_20_50`, `R_SOC_slope` | 5.9 | Done — `soc_ratio_features` |
+| 8 | `VE`, `CI_per_hour` | 4.3 | Done — `lges_extract` |
+| 9 | 데이터 품질 지표 산출 | 5.13 | Done — `features/quality.py` (+ diagnosis blend) |
+| 10 | baseline → formation 후 첫 RPT | 6.2 | Done — `first_capa_baseline` / auto_baseline |
 
 ### 9.2 단기
 
-| # | 항목 | § |
-|---|---|---|
-| 11 | 적응형 스무딩 / V축 보간 전환 | 5.2 |
-| 12 | `R_recovery_tau` + `V_inf_est` | 5.5 |
-| 13 | 3-파라미터 곡선 정합 | 5.6 |
-| 14 | ΔQ(V) 통계 | 5.7 |
-| 15 | η(SOC) × DC-IR 결합 | 5.9 |
-| 16 | RCF, PER | 5.10 |
-| 17 | 페이드 지수 · knee | 5.12 |
-| 18 | 프로토콜 자동 구조 인식 | 6.2 |
-| 19 | `mode_weights_assb_si_v1.json` 작성 | 7.1 |
-| 20 | 합성 데이터 검증 하네스 | 8.1 |
-| 21 | Q-domain 제약 디컨볼루션 | 5.8 **(§5.1이 (A)일 때만)** |
+| # | 항목 | § | 상태 | 실현성 |
+|---|---|---|---|---|
+| 11 | 적응형 스무딩 / V축 보간 전환 | 5.2 | Planned (default still Q-axis) | **가능** — 데이터만으로 |
+| 12 | `R_recovery_tau` + `V_inf_est` | 5.5 | Done — `dcir_decompose.fit_recovery_tau` | Done |
+| 13 | 3-파라미터 곡선 정합 | 5.6 | Done — `features/curve_fit.py` (**proxies only**) | Done |
+| 14 | ΔQ(V) 통계 | 5.7 | Done — `features/dqv_stats.py` | Done |
+| 15 | η(SOC) × DC-IR 결합 | 5.9 | Done — `features/overpotential.py` | Done |
+| 16 | RCF, PER | 5.10 | Done — `attach_rcf` / `attach_per` | Done |
+| 17 | 페이드 지수 · knee | 5.12 | **Done** — `fade_trajectory.py` (power-law + bilinear); full Bacon-Watts / PELT optional | **가능** |
+| 17b | feature family → anomaly 제한 | 4.1 | **Done** — `family_registry` + `predict` | **가능** |
+| 17c | BOL OCP library · electrode-side hypothesis | H / DM | **Done** — `ocp_library` · `electrode_side` · CLI | **가능** (hypothesis) |
+| 18 | 프로토콜 자동 구조 인식 | 6.2 | Partial — rule-based roles | **가능** |
+| 19 | `mode_weights_assb_si_v1.json` | 7.1 | Done | Done |
+| 20 | 합성 데이터 검증 하네스 | 8.1 | Planned | **가능** (공개셋/합성; ASSB 물리 검증은 별도) |
+| 21 | Q-domain 제약 디컨볼루션 | 5.8 | **Blocked** — §5.1 verdict (A) 대기 | **조건부** |
 
-### 9.3 중기
+### 9.3 중기 (실현성 재분류)
 
-| # | 항목 |
-|---|---|
-| 22 | 불확실성 전파 전면 도입 (§7.2) |
-| 23 | 참조 코호트 관리 (§7.3) |
-| 24 | 반증 실험 추천 엔진 (§7.4) |
-| 25 | 인간 라벨 루프 (§7.5) |
-| 26 | 재현성 인프라 (§7.6) |
-| 27 | 공개셋 벤치마크 (§8.2) |
-| 28 | 반쪽셀 확보 → forward/inverse fit → 실제 `*_est` |
-| 29 | **BatteryML형 CellData→CycleData→FeatureSet 계층** (§7.8, §12.1) |
-| 30 | **YAML 실험 설정 + train/val/test 평가 파이프라인** (§12.1) |
-| 31 | **ΔQ(V) → RUL 예측 경로** (§5.7 + §12.1, Severson 재현 포함) |
-| 32 | **전극 SOH 상태 벡터** (Q_PE / Q_NE / n_Li) — 스키마만, PyBaMM 비내장 (§12.2) |
-| 33 | **OCP / CompositeOCP + fit_target(OCV/ICA/DVA)** — PyProBE API (§12.4) |
-| 34 | **Batch DMA + warm-start + quantify_degradation_modes** — PyDMA 과학 (§12.3–12.4) |
-| 35 | **stoich window · utilization · blend phase** 출력 스키마 (§12.3) |
-| 36 | **ICA peak descriptor 스키마 정렬** — DiffCapAnalyzer (§12.5) |
+| # | 항목 | 실현성 | 조건 / 비고 |
+|---|---|---|---|
+| 22 | 불확실성 전파 (§7.2) | **가능** | 데이터만; 스키마·σ 전파 |
+| 23 | 참조 코호트 (§7.3) | **조건부** | 코호트 규모 미확정 (§10.3 #9) |
+| 24 | 반증 실험 추천 (§7.4) | **가능** | 규칙 엔진; 실험 실행은 외부 |
+| 25 | 인간 라벨 루프 (§7.5) | **조건부** | 라벨 프로세스·UI 필요 |
+| 26 | 재현성 인프라 (§7.6) | **가능** | config_hash 등 |
+| 27 | 공개셋 벤치마크 (§8.2) | **가능** (수치) | ASSB 해석은 사내만 |
+| 28 | aged 하프셀 → `*_est` | **불가 (현재)** | **aged HC 필요** — BOL만으로는 Level 3 채우지 않음 |
+| 29 | CellData→FeatureSet (§7.8) | **가능** | 스키마 리팩터 |
+| 30 | YAML train/val/test (§12.1) | **가능** | RUL 경로와 묶음 |
+| 31 | ΔQ(V)→RUL (§5.7) | **가능** | Severson 재현 후 ASSB 전이 |
+| 32 | 전극 SOH 스키마 (§12.2) | **가능 (스키마)** / **추정 불가** | Q_PE/Q_NE 절대값은 aged OCP 후 |
+| 33 | OCP/CompositeOCP API (§12.4) | **부분 가능** | BOL library Done; CompositeOCP fit은 aged/템플릿 후 |
+| 34 | Batch DMA quantify (§12.3) | **불가 (현재)** | aged HC 또는 검증 템플릿 |
+| 35 | stoich/utilization 절대값 | **불가 (현재)** | aged OCP |
+| 36 | ICA peak descriptor 정렬 | **가능** | DiffCapAnalyzer 개념만 |
 
-> **철칙: 반쪽셀 또는 검증된 템플릿 확보 전까지 `*_est` / `*_est_hc_calibrated` 컬럼을 채우지 않는다.**
-> null placeholder가 근거 없는 숫자보다 안전하다.
-> **PyBaMM / PyDMA / PyProBE를 cyclediag 필수 의존성으로 내장하지 않는다** — 개념·API·알고리즘만 참고 (§12).
+> **철칙: aged 하프셀 또는 검증된 템플릿 확보 전까지 `*_est` / `*_est_hc_calibrated` 컬럼을 채우지 않는다.**
+> BOL OCP는 `hypothesis_bol_ocp` 수준만 허용 (`bol_ocp_prototype_status`).
+> **PyBaMM / PyDMA / PyProBE를 cyclediag 필수 의존성으로 내장하지 않는다.**
 
 ### 9.4 프로토콜 변경 제안 (외부 협의 필요)
 
-| 항목 | 얻는 것 | 비용 |
-|---|---|---|
-| **충전 펄스 SOC 50, 30 s 1발** | `ASR_asym` → plating/관통 위험 직접 지표 | **1분 미만. 가성비 1순위** |
-| **0.5C 펄스 1회 병행** | 1C 비선형성 검증 (§5.3) | 1분 |
-| **온도 로그 export 복구** | Arrhenius, DTV, 셀 간 비교 | 설정 변경 |
-| **구속 압력 기록** | `contact_loss_score` 해석의 전제 | 계측 추가 |
-| 중간 경량 RPT (C/3 1사이클) | 앵커 간격 105 → 50 단축 | 사이클당 ~4 h |
-| C/20 pseudo-OCV (RPT 5회당 1회) | 열역학 절대 기준, 반쪽셀 대체 부분 가능 | 고비용 |
+| 항목 | 얻는 것 | 비용 | 실현성 |
+|---|---|---|---|
+| **충전 펄스 SOC 50, 30 s 1발** | `ASR_asym` | **1분 미만** | 외부 협의 |
+| **0.5C 펄스 1회 병행** | 1C 비선형성 검증 | 1분 | 외부 협의 |
+| **온도 로그 export 복구** | Arrhenius, DTV | 설정 | **필수** (없으면 Temp 경로 영구 불가) |
+| **구속 압력 기록** | contact_loss 해석 | 계측 | **필수** (ASSB) |
+| 중간 경량 RPT | 앵커 105→50 | ~4 h/회 | 외부 협의 |
+| C/20 pseudo-OCV | 열역학 기준 | 고비용 | 선택 |
+| **Aged/harvested 하프셀** | Level 3 DMA | 제작·측정 | **Level 3 게이트** |
+
+### 9.5 실현가능성 매트릭스 (2026-08-06 재검토)
+
+판정 기준: **가능** = 현재 full-cell(+BOL OCP) 데이터로 코드 완성 가능 · **부분** = proxy/hypothesis만 · **불가** = 추가 데이터·프로토콜·제품결정 없이 과학적으로 성립 안 함 · **Blocked** = 선행 항목 대기.
+
+| 영역 | 항목 | 판정 | 근거 | 수정 계획 |
+|---|---|---|---|---|
+| F1–F5 | ICA/피크/궤적 | **가능** | raw 있음 | 계속 품질 고정 (§5.1→5.2) |
+| F6–F7 | ΔQ(V)·R·PER·η | **Done** | enrich 반영 | 유지·교차검증 §8.3 |
+| F8 | fade/knee | **Done (bilinear)** | SoHQ 시계열 | PELT/Bacon-Watts는 선택 |
+| §4.1 | family anomaly | **Done** | 중복 지표 축소 | predict에 대표만 |
+| Electrode | PE/NE 분리 | **부분** | BOL OCP+pattern | `hypothesis_bol_ocp`; 절대 % 금지 |
+| §5.8 | peak deconv | **Blocked** | §5.1 A 대기 | verdict 전 강제 분리 금지 |
+| §5.2 | V축 스무딩 | **가능** | 미착수 | 단기 Planned |
+| Temp/DTV | Arrhenius | **불가** | Temp=0 | 로그 복구 전 비활성 |
+| Level 2 `*_est` | LLI/LAM % | **불가** | aged HC 없음 | null 유지 |
+| Level 3 DMA | hc_calibrated | **불가** | aged HC 없음 | BOL=prototype only |
+| LAM_NE via peak | — | **불가** | ASSB Si 정책 | contact_loss→NE hypothesis만 |
+| RUL | ΔQ(V) 회귀 | **가능** | feature Done | 중기 #31 |
+| PyDMA fit | quantify | **불가** | aged/템플릿 | API 스케치만 |
+| §9.4 압력 | contact 해석 | **조건부** | UNKNOWN | 계측 전 hypothesis 표기 |
+
+#### 이번 사이클에서 코드로 닫는 것 (수정 계획 → 구현)
+
+1. BOL OCP library + PE peak attribution + electrode-side hypothesis CLI
+2. fade exponent + bilinear knee → enrich
+3. family registry → anomaly 입력 제한
+4. `bol_ocp_prototype_status` — aged 전까지 calibrate stub 유지
+5. 본 절(§9.5)로 중기 항목 재분류 (28/34/35 = aged 게이트)
+
+#### 명시적으로 미룸 (불가능이 아니라 게이트)
+
+- `*_est_hc_calibrated`, stoich absolute, Batch DMA quantify → **aged half-cell**
+- Arrhenius / DTV → **온도 로그**
+- peak 강제 8-분해 → **§5.1 verdict A**
+- contact_loss 절대 해석 → **구속 압력**
 
 ---
 

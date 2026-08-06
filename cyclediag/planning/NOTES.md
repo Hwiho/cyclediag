@@ -15,12 +15,13 @@
 
 # Full-cell 기반 LLI·LAM 진단 활성 — 하프셀은 Phase 3 검증·교정용 (필수조건 아님)
 '''
-- 정책 문서: planning/LLI_LAM_DIAGNOSIS.md
+- 정책 문서: planning/LLI_LAM_DIAGNOSIS.md · 개선 로드맵: IMPROVEMENT_ROADMAP.md (2026-08-05/06)
 - 스펙: specs/degradation-mode-diagnosis.md
-- 현재: Level 1 pattern score 우선 (+ 검증된 범위의 Level 2 est)
+- 현재: Level 1 pattern score + full-cell proxies (curve_fit / η / ΔQ(V) / R 분해)
+- `*_est` / `*_est_hc_calibrated` 는 하프셀·템플릿 확보 전까지 null 유지
 - 하프셀 부재를 이유로 LLI/LAM_PE/LAM_NE 진단을 끄지 않음
 - 확정값처럼 무조건 출력 금지 — confidence / supporting_features / diagnosis_version 동반
-- diagnosis_version: fullcell_v1 → 이후 hc_calibrated_v1 (교체가 아니라 병행·교정)
+- diagnosis_version: assb_si_v1 (full-cell) → 이후 hc_calibrated_v1 (교체가 아니라 병행·교정)
 '''
 
 # 설계가 달라도 **동일 활물질(chemistry)** 이면 유사한 열화 거동이 나타날 수 있음
@@ -46,10 +47,13 @@
 | 2026-07-09 | **M01Ch025** 1차 기준 채널; golden TC **10, 15, 12, 58, 149** (Tier 1), TC **14·69** 조건부 → `GOLDEN_CYCLES.md` |
 | 2026-07-09 | 사이클 간 추적: **V-anchor assign** + **H_norm** (세기 변화는 정규화·시계열로) |
 | 2026-07-27 | **Full-cell LLI·LAM 진단** 채택. 하프셀은 Phase 3 검증·교정. 정책: `LLI_LAM_DIAGNOSIS.md` |
+| 2026-08-05 | ASSB 전제 IMPROVEMENT_ROADMAP 재작성 + ANSWERS 실측 확인 |
+| 2026-08-06 | Full-cell-only 갭 반영: η/PER, ΔQ(V), curve_fit proxies, mech_vs_chem, quality blend |
 | 2026-08-06 | **BatteryML · PyBaMM 참고**를 로드맵에 반영 — 패키지 내장 없이 CellData/FeatureSet·ΔQ(V)·전극 SOH 스키마. 상세: `IMPROVEMENT_ROADMAP.md` §12 |
 | 2026-08-06 | **PyDMA · PyProBE · DiffCapAnalyzer** 추가 — DMA는 PyDMA 과학+PyProBE API; ICA peak descriptor는 DiffCapAnalyzer. §12.3–12.5 |
 | 2026-08-06 | **Full-cell 우선 스택 F1–F8** — ICA/DVA·peak·corr·R·change-point. 하프셀 없어도 MVP 완성. 상세: `IMPROVEMENT_ROADMAP.md` §0 |
 | 2026-08-06 | **하프셀 BOL 데이터 있음** — `example/fixtures/halfcell/` (C/20, 음극 cycle 1–3). **Aged 하프셀은 없음.** |
+| 2026-08-06 | **실현가능성 재검토 (§9.5)** — Level 3/`*_est`·DMA quantify·절대 stoich = aged HC 게이트; fade/knee·electrode hypothesis·family anomaly = 지금 구현. Temp/Arrhenius = 불가. |
 
 ---
 
@@ -87,6 +91,7 @@
 |------|------|------|
 | 2026-06-26 | ML VP 진단 도구 로드맵·노트 제작 | Done — planning 초안 |
 | 2026-07-27 | LLI·LAM / 하프셀 정책 수정 (full-cell 진단 활성) | Done — `LLI_LAM_DIAGNOSIS.md` + spec |
+| 2026-08-06 | IMPROVEMENT_ROADMAP full-cell-only 갭 코드 반영 | Done — η/PER/ΔQ/curve/quality |
 
 ---
 

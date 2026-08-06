@@ -2,8 +2,10 @@
 
 **갱신:** 2026-08-06 · 버전: [VERSIONS.md](VERSIONS.md)
 
-> **코드 상태:** **v0.1 (Planning)** — planning/specs + 최소 패키지 골격만 존재.  
-> **다음:** Phase 0 완료 → Phase 1 feature 추출 MVP
+> **코드 상태:** full-cell ASSB 진단 + BOL electrode-side hypothesis + fade/knee.  
+> **제약:** aged 하프셀 없음 → Level-2/3 `*_est` null; Temp=0 → DM-P2 Blocked; §5.8 deconv 보류.  
+> **실현성:** [IMPROVEMENT_ROADMAP §9.5](IMPROVEMENT_ROADMAP.md#95-실현가능성-매트릭스-2026-08-06-재검토).  
+> **다음:** §5.1 스윕 판정 → §5.2; 합성 검증(§8.1); aged HC → Level 3.
 
 ---
 
@@ -51,9 +53,11 @@ DM-P1 Full-cell pattern/est ──► DM-P2 온도 ──► DM-P3 Half-cell cal
 
 | DM Phase | 내용 | 상태 |
 |----------|------|------|
-| **1** | `vp_lges_cycle_v2` · LLI/LAM pattern score · confidence · calibration schema | **현재 범위** |
-| **2** | 온도 동특성 · R 정규화 · 진단 안정성 | Planned |
-| **3** | Half-cell OCV library · `*_est_hc_calibrated` · peak mapping · **DMA fit** (PyDMA 과학 + PyProBE API, §12.3–12.4) | Planned |
+| **1** | `vp_lges_cycle_v2` · LLI/LAM pattern score · confidence · calibration schema | **Done (full-cell)** |
+| **1b** | ASSB metrics: R 3성분, η/PER, ΔQ(V), curve proxies, quality gate | **Done 2026-08-06** |
+| **1c** | fade/knee (§5.12) · family anomaly · BOL OCP + PE/NE hypothesis | **Done 2026-08-06** |
+| **2** | 온도 동특성 · R 정규화 · 진단 안정성 | **불가 (현재)** — Temp 로그 0.0 |
+| **3** | Half-cell OCV library · peak attribution (**BOL Done**). DMA `*_est_hc_calibrated`는 **aged 후** | **BOL Done / aged Blocked** |
 | **4** | full-cell + T + half-cell + post-mortem 통합 | Planned |
 
 **원칙:** 하프셀 부재 ≠ LLI·LAM 진단 비활성. Level 1 pattern을 먼저 내고, Level 3은 검증·교정 인터페이스로 병행한다.

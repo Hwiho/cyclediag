@@ -11,11 +11,46 @@
 - Full-cell **LLI / LAM_PE / LAM_NE** diagnosis is in scope for `vp_lges_cycle_v2` (Level 1 pattern scores first).
 - Half-cell is **Phase 3 calibration**, not a prerequisite. See [LLI_LAM_DIAGNOSIS.md](LLI_LAM_DIAGNOSIS.md).
 
+## Policy note (2026-08-06)
+
+- ASSB SJ900 full-cell metrics from [IMPROVEMENT_ROADMAP.md](IMPROVEMENT_ROADMAP.md) §9.1–§9.2 are wired into `enrich_assb` + `mode_weights_assb_si_v1.json`.
+- Still **no** `*_est` fill without half-cell / validated template. Curve-fit outputs are `*_curve_proxy` only.
+- Temperature-dependent paths remain disabled (Temp column all zeros in fixtures).
+
+---
+
+## v1.1 — Electrode-side hypothesis + fade/knee (2026-08-06)
+
+**상태:** Current on `cursor/electrode-side-diagnosis-60f9`
+
+- BOL OCP library (`diagnosis/halfcell/ocp_library.py`) + PE peak attribution
+- PE/NE electrode-side **hypothesis** (`diagnosis/electrode_side.py`, level=`hypothesis_bol_ocp`)
+- CLI: `tools/diagnose_electrode_sides.py`
+- §5.12 fade exponent + bilinear knee → `enrich_assb`
+- §4.1 family registry → anomaly input de-dup in `predict`
+- `bol_ocp_prototype_status` — aged HC 전 calibrate stub 유지
+- Roadmap §9.5 feasibility matrix (가능 / 부분 / 불가 / Blocked)
+
+**다음:** §5.1 verdict → §5.2 V-axis; synthetic harness §8.1; aged HC → Level 3
+
+---
+
+## v1.0 — Full-cell ASSB diagnose (2026-08-06)
+
+**상태:** Superseded by v1.1 for electrode/fade paths
+
+- Standalone CV / dQ/dV (no `pne_studio` required)
+- ASSB Level-1 modes: contact_loss, interface_R, SE_decomposition, microshort, LAM_PE, LLI, solid_diffusion
+- Enrichment: DCIR 3-comp, self-discharge, Q_relax, RCF/PER, η(SOC), ΔQ(V), curve proxies, quality blend
+- CLI: `python run_cyclediag.py diagnose --input … --out-dir …`
+
+**다음:** §5.1 verdict → peak path; synthetic reverse-recovery (§8.1); fade exponent / Bacon-Watts
+
 ---
 
 ## v0.1 — Planning (2026-06-26)
 
-**상태:** Current
+**상태:** Superseded by v1.0 package landing
 
 - `planning/` 로드맵·feature catalog·데이터 스키마·라벨 taxonomy
 - `specs/` feature extraction / model pipeline / evaluation 초안
@@ -26,7 +61,7 @@
 
 ---
 
-## v0.2 — Feature MVP (planned)
+## v0.2 — Feature MVP (planned → largely landed in v1.0)
 
 - PNE CSV loader
 - CC/CV split
@@ -50,7 +85,7 @@
 
 ---
 
-## v1.0 — Batch + report (planned)
+## v1.0 batch report (planned extension)
 
 - manifest 배치
 - HTML 리포트

@@ -580,6 +580,13 @@ def extract_lges_features_table(
             cfg.baseline_cycle = int(enrich_meta["baseline_cycle_auto"])
 
     table = apply_lges_delta_features(table, baseline_cycle=cfg.baseline_cycle)
+    # §5.12 fade/knee after SoHQ exists; prefer routine_05c when cycle_role present
+    try:
+        from cyclediag.features.fade_trajectory import attach_fade_trajectory
+
+        table = attach_fade_trajectory(table)
+    except Exception:
+        pass
     if cfg.with_diagnosis:
         from cyclediag.diagnosis import diagnose_feature_table
 

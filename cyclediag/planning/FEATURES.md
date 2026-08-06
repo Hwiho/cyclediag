@@ -197,7 +197,9 @@ Full-cell 기반 LLI·LAM 진단. 하프셀은 Phase 3 교정용 — 정책: [LL
 |------|------|------|
 | `LLI_pattern_score`, `LAM_PE_pattern_score`, `LAM_NE_pattern_score` | Level 1 | 상대 정합도 (우선 구현) |
 | `impedance_pattern_score`, `transport_limitation_score`, `plating_risk_score`, `contact_loss_score` | Level 1 | |
-| `LLI_est`, `LAM_PE_est`, `LAM_NE_est`, `electrode_slippage_est` | Level 2 | 정의·검증 후에만 |
+| `LLI_est`, `LAM_PE_est`, `LAM_NE_est`, `electrode_slippage_est` | Level 2 | 정의·검증 후에만 (현재 null) |
+| `LAM_curve_proxy`, `LLI_curve_proxy`, `R_curve_proxy` | Level 2 proxy | full-cell 3-param fit (§5.6); not `*_est` |
+| `eta_SOC*`, `PER`, `dQV_log_var`, `mech_vs_chem_ratio` | observation/state | ASSB enrich (§5.7/5.9/5.10) |
 | `*_confidence`, `diagnosis_quality_score`, `diagnosis_valid` | meta | 불확실성 필수 |
 | `*_est_hc_calibrated` | Level 3 | Phase 3 |
 

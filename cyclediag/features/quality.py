@@ -117,16 +117,22 @@ def cycle_quality_metrics(
         out["dqdv_snr"] = (float(np.nanmax(finite_v)) - float(np.nanmin(finite_v))) / out["v_noise_sigma"]
 
     # weighted geometric mean of clipped ratios
+    # pulse_stability only applies to real DC-IR pulses (≥8 samples in first 1 s)
+    pulse_stab_term = None
+    if (
+        out["pulse_current_stability"] is not None
+        and out["pulse_sample_count_1s"] is not None
+        and int(out["pulse_sample_count_1s"]) >= 8
+    ):
+        pulse_stab_term = max(0.0, 1.0 - float(out["pulse_current_stability"]) / 0.02)
+
     targets = {
-        "samples_per_mV": (out["samples_per_mV"], 0.5, 0.25),
+        # routine SJ900 sampling is sparse (~0.3 /mV); target 0.3 not 0.5
+        "samples_per_mV": (out["samples_per_mV"], 0.3, 0.25),
         "dqdv_snr": (out["dqdv_snr"], 10.0, 0.25),
         "leg_completeness": (out["leg_completeness"], 0.9, 0.2),
         "rest_sufficiency": (out["rest_sufficiency"], 3.0, 0.15),
-        "pulse_stability": (
-            None if out["pulse_current_stability"] is None else max(0.0, 1.0 - out["pulse_current_stability"] / 0.02),
-            1.0,
-            0.15,
-        ),
+        "pulse_stability": (pulse_stab_term, 1.0, 0.15),
     }
     failed = []
     score = 1.0

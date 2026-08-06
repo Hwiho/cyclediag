@@ -44,6 +44,8 @@ def load_mode_weights(path: str | Path | None = None) -> dict[str, Any]:
         data = json.loads(text)
     if not isinstance(data, dict) or "modes" not in data:
         raise ValueError(f"Invalid diagnosis weight config: {cfg_path}")
+    # Invalidate cached default when configs are reloaded from disk
+    _cached_default_config.cache_clear()
     return data
 
 
@@ -75,17 +77,30 @@ def _signed_evidence(
     d = (direction or "increase").lower()
 
     if d == "increase":
-        raw = value / s
+        if baseline is not None and math.isfinite(baseline):
+            raw = (value - baseline) / s
+        else:
+            raw = value / s
     elif d == "decrease":
-        raw = -value / s
+        if baseline is not None and math.isfinite(baseline):
+            raw = (baseline - value) / s
+        else:
+            raw = -value / s
     elif d == "either":
-        raw = abs(value) / s
+        if baseline is not None and math.isfinite(baseline):
+            raw = abs(value - baseline) / s
+        else:
+            raw = abs(value) / s
     elif d == "decrease_from_100":
         raw = (100.0 - value) / s
     elif d == "decrease_vs_baseline":
         if baseline is None or not math.isfinite(baseline) or abs(baseline) < 1e-15:
             return 0.0
         raw = (baseline - value) / (abs(baseline) * 0.1 + s * 0.1)
+    elif d == "increase_vs_baseline":
+        if baseline is None or not math.isfinite(baseline):
+            return 0.0
+        raw = (value - baseline) / s
     else:
         raw = value / s
 
@@ -102,13 +117,29 @@ def _evidence_for_term(
     val = _finite(row.get(feat))
     if val is None:
         return feat, None
+    # Guard invalid coulombic efficiency extracts (often >100% on mismatched Ah)
+    if feat in ("CE", "CE_rev", "CE_local_20") and (val > 102.0 or val < 85.0):
+        return feat, None
+    direction = str(term.get("direction", "increase"))
+    # Non-positive curve proxies are not supportive "increase" evidence
+    if feat.endswith("_curve_proxy") and direction in ("increase", "increase_vs_baseline") and val <= 0:
+        return feat, None
+
     baseline = None
-    if term.get("direction") == "decrease_vs_baseline" and baseline_row is not None:
+    use_base = bool(term.get("use_baseline")) or direction in (
+        "decrease_vs_baseline", "increase_vs_baseline",
+    ) or term.get("baseline_ref") is not None
+    if use_base:
+        if baseline_row is None:
+            # Required baseline missing → skip (do not absolute-score FF'd R etc.)
+            return feat, None
         ref = term.get("baseline_ref") or feat
         baseline = _finite(baseline_row.get(ref))
+        if baseline is None:
+            return feat, None
     signed = _signed_evidence(
         val,
-        direction=str(term.get("direction", "increase")),
+        direction=direction,
         scale=float(term.get("scale", 1.0)),
         baseline=baseline,
     )
