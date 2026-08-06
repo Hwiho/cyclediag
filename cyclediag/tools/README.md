@@ -6,6 +6,7 @@
 
 | Script | Purpose |
 |--------|---------|
+| `run_doe2_compare.py` | **DOE2: SJ900 vs SJ1300** early params + mode contrast |
 | `export_cycle_indicators.py` | **사이클별 Rest V / 저항 / SoHQ·CE → Excel + overview PNG (GUI 없이 점검)** |
 | `export_degradation_diagnosis.py` | **Full-cell LLI/LAM/impedance pattern diagnosis (하프셀 불필요)** |
 | `export_peak_feature_table.py` | Peak feature CSV export (기본: band assign, RPT 제외) |

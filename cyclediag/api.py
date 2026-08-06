@@ -117,3 +117,27 @@ def screen_problems(features: pd.DataFrame, *, n: int = 15) -> pd.DataFrame:
     """Convenience: ranked problem indicators for one feature table."""
     screened = screen_indicators_by_file(features)
     return top_problem_indicators(screened, n=n)
+
+
+def compare_doe(
+    *,
+    doe: str = "DOE2",
+    fixtures_root: str | Path | None = None,
+    out_dir: str | Path | None = None,
+    early_cycles: int = 30,
+    run_diagnosis: bool = True,
+    write_plots: bool = True,
+) -> Mapping[str, Any]:
+    """Compare DOE arms (DOE2 = SJ900 vs SJ1300, same cathode / different anode)."""
+    from cyclediag.analysis.doe_compare import DoeCompareConfig, run_doe_compare
+
+    return run_doe_compare(
+        DoeCompareConfig(
+            doe_id=doe,
+            fixtures_root=Path(fixtures_root) if fixtures_root else None,
+            out_dir=Path(out_dir) if out_dir else None,
+            early_cycles=early_cycles,
+            run_diagnosis=run_diagnosis,
+            write_plots=write_plots,
+        )
+    )

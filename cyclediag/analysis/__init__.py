@@ -1,5 +1,9 @@
-"""Analysis helpers for cycle indicator screening."""
-
+from cyclediag.analysis.doe_compare import (
+    DoeCompareConfig,
+    early_parameter_summary,
+    load_doe2_arms,
+    run_doe_compare,
+)
 from cyclediag.analysis.dqdv_screen import (
     compare_cells_dqdv,
     dqdv_trajectory_long,
@@ -14,9 +18,13 @@ from cyclediag.analysis.indicator_screen import (
 )
 
 __all__ = [
+    "DoeCompareConfig",
     "compare_cells",
     "compare_cells_dqdv",
     "dqdv_trajectory_long",
+    "early_parameter_summary",
+    "load_doe2_arms",
+    "run_doe_compare",
     "screen_dqdv_by_file",
     "screen_indicators",
     "screen_indicators_by_file",

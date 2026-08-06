@@ -97,6 +97,30 @@ def build_parser() -> argparse.ArgumentParser:
     report.add_argument("--encoding", default="cp949")
     report.add_argument("--top-n", type=int, default=12)
 
+    compare_doe = sub.add_parser(
+        "compare-doe",
+        help="Compare DOE arms (DOE2: SJ900 vs SJ1300, same cathode / different anode)",
+    )
+    compare_doe.add_argument("--doe", default="DOE2", help="DOE id (default DOE2)")
+    compare_doe.add_argument(
+        "--fixtures-root",
+        default="",
+        help="Path to example/fixtures (default: auto-detect)",
+    )
+    compare_doe.add_argument(
+        "--out",
+        default="",
+        help="Output directory (default: example/output/<DOE>_compare)",
+    )
+    compare_doe.add_argument("--early-cycles", type=int, default=30)
+    compare_doe.add_argument("--no-diagnosis", action="store_true")
+    compare_doe.add_argument("--no-plots", action="store_true")
+    compare_doe.add_argument(
+        "--cycles",
+        default="",
+        help="Optional cycle list e.g. 1,5,10,20,50 (smoke/faster). Default: all",
+    )
+
     return p
 
 
@@ -325,6 +349,30 @@ def main(argv: list[str] | None = None) -> int:
         print(f"Report written → {odir}")
         print(f"  HTML: {odir}/diagnosis_report.html")
         print(f"  Cells: {summary['n_cells_ok']}/{summary['n_files']}")
+        return 0
+
+    if args.command == "compare-doe":
+        from cyclediag.analysis.doe_compare import DoeCompareConfig, run_doe_compare
+
+        cycles = None
+        if getattr(args, "cycles", ""):
+            cycles = [int(x.strip()) for x in args.cycles.split(",") if x.strip()]
+        cfg = DoeCompareConfig(
+            doe_id=args.doe,
+            fixtures_root=Path(args.fixtures_root) if args.fixtures_root else None,
+            out_dir=Path(args.out) if args.out else None,
+            early_cycles=args.early_cycles,
+            run_diagnosis=not args.no_diagnosis,
+            write_plots=not args.no_plots,
+            cycles=cycles,
+        )
+        summary = run_doe_compare(cfg)
+        print(f"DOE compare written → {summary['out_dir']}")
+        print(f"  arms: {[a['arm_id'] for a in summary['arms']]}")
+        print(f"  feature rows: {summary['n_feature_rows']}")
+        print(f"  narrative: {summary['out_dir']}/narrative.txt")
+        for line in summary.get("narrative", [])[:12]:
+            print(f"  · {line}")
         return 0
 
     print("Unknown command — run with --help")

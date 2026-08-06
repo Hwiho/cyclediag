@@ -56,6 +56,7 @@ python run_cyclediag.py extract --input raw.csv --out features.csv
 python run_cyclediag.py diagnose --input raw.csv --out-dir out/diag
 python run_cyclediag.py predict --features features.csv --out scores.csv
 python run_cyclediag.py report --input-dir path/to/folder
+python run_cyclediag.py compare-doe --doe DOE2 --out example/output/DOE2_compare
 python run_cyclediag.py peaks export --input raw.csv --out-dir example/docs/features --cell-id Cell01
 ```
 
