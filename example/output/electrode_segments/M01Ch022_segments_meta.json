@@ -1,0 +1,14 @@
+{
+  "cell_id": "M01Ch022",
+  "n_cycles_sampled": 70,
+  "n_feature_rows": 70,
+  "n_segments": 13,
+  "baseline_cycle": 2,
+  "ocp_meta": {
+    "root": "/workspace/example/fixtures/halfcell",
+    "aged_data": false,
+    "rate": "C/20",
+    "n_anode_curves": 18,
+    "n_cathode_curves": 2
+  }
+}
