@@ -312,3 +312,157 @@ def attach_electrode_side_diagnosis(
                 continue
             out.at[idx, k] = v
     return out
+
+
+def _label_side(row: pd.Series) -> str:
+    dom = str(row.get("dominant_electrode") or "unknown")
+    if dom in ("PE", "NE", "shared", "mixed"):
+        return dom
+    return "unknown"
+
+
+def segment_electrode_trajectory(
+    features: pd.DataFrame,
+    *,
+    min_segment_cycles: int = 2,
+    margin_flip: float = 0.05,
+    lean_eps: float = 0.02,
+) -> pd.DataFrame:
+    """Split diagnosed rows into contiguous PE/NE dominance segments.
+
+    Uses relative lean (PE−NE) even when absolute margin is small, plus optional
+    knee break from ``knee_cycle_bw``. Labels:
+    - PE / NE when |Δ| ≥ lean_eps
+    - mixed when nearly tied
+    """
+    if features is None or features.empty or "cycle" not in features.columns:
+        return pd.DataFrame()
+
+    d = features.sort_values("cycle").copy()
+    sohq = pd.to_numeric(d.get("SoHQ"), errors="coerce")
+    d = d[sohq.fillna(0) >= 50.0]
+    if d.empty:
+        d = features.sort_values("cycle").copy()
+
+    pe = pd.to_numeric(d.get("PE_side_score"), errors="coerce")
+    ne = pd.to_numeric(d.get("NE_side_score"), errors="coerce")
+    delta = pe - ne
+
+    def _lean(dv: float) -> str:
+        if not np.isfinite(dv):
+            return "unknown"
+        if dv >= lean_eps:
+            return "PE"
+        if dv <= -lean_eps:
+            return "NE"
+        return "mixed"
+
+    d = d.assign(
+        _pe=pe, _ne=ne, _delta=delta,
+        _lean=delta.map(_lean),
+        _side=d.apply(_label_side, axis=1),
+        _pe_mode=d.get("PE_top_modes", pd.Series([""] * len(d))).astype(str).str.split(",").str[0],
+        _ne_mode=d.get("NE_top_modes", pd.Series([""] * len(d))).astype(str).str.split(",").str[0],
+        _lam=pd.to_numeric(d.get("LAM_PE_pattern_score"), errors="coerce"),
+        _cl=pd.to_numeric(d.get("contact_loss_score"), errors="coerce"),
+    )
+
+    knee = None
+    if "knee_cycle_bw" in d.columns and d["knee_cycle_bw"].notna().any():
+        knee = float(d["knee_cycle_bw"].dropna().iloc[0])
+
+    breaks = [0]
+    for i in range(1, len(d)):
+        prev, cur = d.iloc[i - 1], d.iloc[i]
+        changed = False
+        if prev["_lean"] != cur["_lean"] and "unknown" not in (prev["_lean"], cur["_lean"]):
+            changed = True
+        elif (
+            np.isfinite(prev["_delta"]) and np.isfinite(cur["_delta"])
+            and abs(float(prev["_delta"])) >= margin_flip
+            and abs(float(cur["_delta"])) >= margin_flip
+            and np.sign(prev["_delta"]) != np.sign(cur["_delta"])
+        ):
+            changed = True
+        # mode-score regime: contact vs LAM_PE who leads flips
+        if (
+            np.isfinite(prev["_lam"]) and np.isfinite(prev["_cl"])
+            and np.isfinite(cur["_lam"]) and np.isfinite(cur["_cl"])
+            and np.sign(prev["_lam"] - prev["_cl"]) != np.sign(cur["_lam"] - cur["_cl"])
+            and abs(float(cur["_lam"] - cur["_cl"])) >= 0.08
+        ):
+            changed = True
+        if knee is not None:
+            pc, cc = float(prev["cycle"]), float(cur["cycle"])
+            if pc < knee <= cc:
+                changed = True
+        if changed:
+            breaks.append(i)
+    breaks.append(len(d))
+
+    rows: list[dict[str, Any]] = []
+    seg_id = 0
+    for a, b in zip(breaks[:-1], breaks[1:]):
+        chunk = d.iloc[a:b]
+        if chunk.empty:
+            continue
+        if len(chunk) < min_segment_cycles and rows:
+            # absorb tiny segment into previous
+            rows[-1]["cycle_end"] = int(chunk["cycle"].iloc[-1])
+            rows[-1]["n_points"] = int(rows[-1]["n_points"] + len(chunk))
+            if "SoHQ" in chunk:
+                rows[-1]["SoHQ_end"] = float(chunk["SoHQ"].iloc[-1])
+            all_idx = d[(d["cycle"] >= rows[-1]["cycle_start"]) & (d["cycle"] <= rows[-1]["cycle_end"])]
+            pe_m = float(np.nanmean(all_idx["_pe"]))
+            ne_m = float(np.nanmean(all_idx["_ne"]))
+            rows[-1]["PE_side_score_mean"] = pe_m
+            rows[-1]["NE_side_score_mean"] = ne_m
+            rows[-1]["shared_side_score_mean"] = float(
+                np.nanmean(pd.to_numeric(all_idx.get("shared_side_score"), errors="coerce"))
+            )
+            rows[-1]["dominance_margin_mean"] = abs(pe_m - ne_m)
+            rows[-1]["dominant_electrode"] = _lean(pe_m - ne_m)
+            rows[-1]["relative_dominant"] = "PE" if pe_m >= ne_m else "NE"
+            continue
+        seg_id += 1
+        pe_m = float(np.nanmean(chunk["_pe"]))
+        ne_m = float(np.nanmean(chunk["_ne"]))
+        sh_m = float(np.nanmean(pd.to_numeric(chunk.get("shared_side_score"), errors="coerce")))
+        dom = _lean(pe_m - ne_m)
+        if sh_m >= max(pe_m, ne_m) + 0.10 and sh_m >= 0.40:
+            dom = "shared"
+        lean_vote = chunk["_lean"].value_counts()
+        rows.append({
+            "segment": seg_id,
+            "cycle_start": int(chunk["cycle"].iloc[0]),
+            "cycle_end": int(chunk["cycle"].iloc[-1]),
+            "n_points": int(len(chunk)),
+            "SoHQ_start": float(chunk["SoHQ"].iloc[0]) if "SoHQ" in chunk else None,
+            "SoHQ_end": float(chunk["SoHQ"].iloc[-1]) if "SoHQ" in chunk else None,
+            "dominant_electrode": dom,
+            "relative_dominant": "PE" if pe_m >= ne_m else "NE",
+            "dominant_vote": str(lean_vote.index[0]) if len(lean_vote) else dom,
+            "PE_side_score_mean": pe_m,
+            "NE_side_score_mean": ne_m,
+            "shared_side_score_mean": sh_m,
+            "dominance_margin_mean": abs(pe_m - ne_m),
+            "PE_top_modes": str(chunk["PE_top_modes"].dropna().iloc[0]) if chunk.get("PE_top_modes") is not None and chunk["PE_top_modes"].notna().any() else None,
+            "NE_top_modes": str(chunk["NE_top_modes"].dropna().iloc[0]) if chunk.get("NE_top_modes") is not None and chunk["NE_top_modes"].notna().any() else None,
+            "shared_top_modes": str(chunk["shared_top_modes"].dropna().iloc[0]) if chunk.get("shared_top_modes") is not None and chunk["shared_top_modes"].notna().any() else None,
+            "electrode_confidence_mean": float(
+                np.nanmean(pd.to_numeric(chunk.get("electrode_confidence"), errors="coerce"))
+            ),
+            "LAM_PE_mean": float(np.nanmean(chunk["_lam"])),
+            "contact_loss_mean": float(np.nanmean(chunk["_cl"])),
+            "LLI_mean": float(
+                np.nanmean(pd.to_numeric(chunk.get("LLI_pattern_score"), errors="coerce"))
+            ) if "LLI_pattern_score" in chunk else None,
+            "fade_exponent_b": (
+                float(chunk["fade_exponent_b"].iloc[0])
+                if "fade_exponent_b" in chunk and pd.notna(chunk["fade_exponent_b"].iloc[0])
+                else None
+            ),
+            "knee_cycle_bw": knee,
+            "crosses_knee": bool(knee is not None and chunk["cycle"].min() <= knee <= chunk["cycle"].max()),
+        })
+    return pd.DataFrame(rows)

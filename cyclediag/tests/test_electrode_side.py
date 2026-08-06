@@ -63,3 +63,36 @@ def test_electrode_side_pe_dominance_lam():
     res = diagnose_electrode_side(row, baseline_row=base)
     assert res.dominant_electrode == "PE"
     assert res.PE_side_score > res.NE_side_score
+
+
+def test_segment_electrode_trajectory_detects_flip():
+    from cyclediag.diagnosis.electrode_side import segment_electrode_trajectory
+
+    rows = []
+    for cyc, pe, ne, dom in [
+        (10, 0.25, 0.55, "NE"),
+        (50, 0.28, 0.52, "NE"),
+        (100, 0.30, 0.50, "NE"),
+        (200, 0.55, 0.35, "PE"),
+        (300, 0.60, 0.32, "PE"),
+        (400, 0.62, 0.30, "PE"),
+    ]:
+        rows.append({
+            "cycle": cyc,
+            "SoHQ": 100 - cyc * 0.05,
+            "PE_side_score": pe,
+            "NE_side_score": ne,
+            "shared_side_score": 0.1,
+            "dominant_electrode": dom,
+            "PE_top_modes": "LAM_PE",
+            "NE_top_modes": "contact_loss",
+            "shared_top_modes": "LLI",
+            "electrode_confidence": 0.6,
+            "LAM_PE_pattern_score": pe,
+            "contact_loss_score": ne,
+            "LLI_pattern_score": 0.2,
+        })
+    segs = segment_electrode_trajectory(pd.DataFrame(rows), min_segment_cycles=2)
+    assert len(segs) >= 2
+    assert segs.iloc[0]["dominant_electrode"] == "NE"
+    assert segs.iloc[-1]["dominant_electrode"] == "PE"
