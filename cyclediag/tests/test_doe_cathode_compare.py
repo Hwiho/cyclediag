@@ -48,3 +48,12 @@ def test_compare_arms_effect_size():
     cmp = compare_arms(aa, bb, name_a="S83S", name_b="Bimodal")
     assert not cmp.empty
     assert "diff_Bimodal_minus_S83S" in cmp.columns
+
+
+def test_parse_arm_allows_letter_prefix():
+    from cyclediag.tools.compare_doe_cathodes import parse_arm
+    name, path = parse_arm("A=S83S:example/fixtures/doe/DOE3/S83S")
+    assert name == "S83S"
+    assert path.name == "S83S"
+    name2, _ = parse_arm("Bimodal:example/fixtures/doe/DOE3/Bimodal")
+    assert name2 == "Bimodal"

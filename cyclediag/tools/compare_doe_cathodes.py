@@ -78,11 +78,16 @@ def fp(size=10, weight="normal"):
 
 
 def parse_arm(spec: str) -> tuple[str, Path]:
-    # Name:path
+    # Name:path  or  A=Name:path / B=Name:path
     if ":" not in spec:
         raise SystemExit(f"--arm needs Name:path, got {spec}")
     name, path = spec.split(":", 1)
-    return name.strip(), Path(path.strip())
+    name = name.strip()
+    if "=" in name:
+        name = name.split("=", 1)[1].strip()
+    if not name:
+        raise SystemExit(f"--arm name empty in {spec}")
+    return name, Path(path.strip())
 
 
 def list_raw_csvs(folder: Path) -> list[Path]:
@@ -180,8 +185,8 @@ def build_pdf(
              "목적: 초반(BOL/early) 파라미터 fingerprint와 수명 중 열화기작 "
              "(PE activity / contact_stack / LLI / Si co-sign)이 양극 타입에 따라 "
              "어떻게 갈라지는지 비교한다.\n\n"
-             f"Arm A = {name_a} (M02Ch103–105)\n"
-             f"Arm B = {name_b} (M02Ch109–111)\n\n"
+             f"Arm A = {name_a}\n"
+             f"Arm B = {name_b}\n\n"
              "방법: routine 0.5C 궤적 + C/3 RPT 앵커 + DCIR R forward-fill · "
              "electrode_side_v1.3 hypothesis_bol_ocp (절대 LAM% 금지).",
              width=88, size=9.5)
