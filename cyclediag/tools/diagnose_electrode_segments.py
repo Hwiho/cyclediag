@@ -66,15 +66,23 @@ def _dcir_triplet_cycles(raw: pd.DataFrame, *, expected_pulse_current: float = 7
     return out
 
 
-def _capa_sample_cycles(raw: pd.DataFrame, *, step: int = 10) -> list[int]:
+def _capa_sample_cycles(
+    raw: pd.DataFrame,
+    *,
+    step: int = 10,
+    q_nominal_ah: float | None = None,
+    expected_pulse_current: float | None = None,
+) -> list[int]:
     """Sample routine 0.5C densely; keep C/3 RPT anchors; include DCIR pulses for R features.
 
     Fade/lean/segments later filter to routine_05c only. DCIR must still be extracted
     so ohmic/ct growth can forward-fill onto routine cycles.
     """
     all_c = sorted(int(c) for c in raw["cycle"].dropna().unique())
-    roles = classify_cycle_currents(raw).set_index("cycle")
-    dcir = _dcir_triplet_cycles(raw)
+    role_kw = {} if q_nominal_ah is None else {"q_nominal_ah": float(q_nominal_ah)}
+    roles = classify_cycle_currents(raw, **role_kw).set_index("cycle")
+    pulse = 70.0 if expected_pulse_current is None else float(expected_pulse_current)
+    dcir = _dcir_triplet_cycles(raw, expected_pulse_current=pulse)
     rpt = set(
         int(c) for c in roles.index
         if str(roles.loc[c, "cycle_role"]) == "rpt_c3"

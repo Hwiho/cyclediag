@@ -5,3 +5,4 @@ example/fixtures/raw/**/*.csv filter=lfs diff=lfs merge=lfs -text
 example/fixtures/halfcell/**/*.csv filter=lfs diff=lfs merge=lfs -text
 example/fixtures/halfcell/source/**/*.xlsx filter=lfs diff=lfs merge=lfs -text
 
+example/fixtures/doe/**/*.csv filter=lfs diff=lfs merge=lfs -text
