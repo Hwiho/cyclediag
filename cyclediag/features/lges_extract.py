@@ -20,6 +20,7 @@ from .dqdv_peaks import (
 from .lges_extra_indicators import (
     correct_r_to_25c,
     dtw_distance,
+    extract_absolute_dvdq_indicators,
     extract_shape_indicators,
     fit_rest_tau,
     rolling_slope,
@@ -400,10 +401,11 @@ def extract_lges_cycle_row(
         row.update(peaks_to_columns("chg", find_dvdq_peaks(chg_q, v, config=dqdv_cfg), "dvdq"))
 
     dchg_q = _capacity_series(dchg, "discharge")
+    dchg_v = None
     if dchg_q is not None and not dchg.empty and "voltage" in dchg.columns:
-        v = pd.to_numeric(dchg["voltage"], errors="coerce").to_numpy(dtype=float)
-        row.update(peaks_to_columns("dchg", find_dqdv_peaks(v, dchg_q, config=dqdv_cfg), "dqdv"))
-        row.update(peaks_to_columns("dchg", find_dvdq_peaks(dchg_q, v, config=dqdv_cfg), "dvdq"))
+        dchg_v = pd.to_numeric(dchg["voltage"], errors="coerce").to_numpy(dtype=float)
+        row.update(peaks_to_columns("dchg", find_dqdv_peaks(dchg_v, dchg_q, config=dqdv_cfg), "dqdv"))
+        row.update(peaks_to_columns("dchg", find_dvdq_peaks(dchg_q, dchg_v, config=dqdv_cfg), "dvdq"))
 
     # SOC bands, V_avg, energy, hysteresis, plateau, IC area, IR proxy, cliff/margin
     row.update(
@@ -413,6 +415,8 @@ def extract_lges_cycle_row(
             dchg_v_cutoff=row.get("dchg_V_cutoff"),
         )
     )
+    if dchg_q is not None and dchg_v is not None:
+        row.update(extract_absolute_dvdq_indicators(dchg_q, dchg_v, config=dqdv_cfg))
     row.update(
         discharge_band_capacity(
             dchg,

@@ -16,11 +16,19 @@ from cyclediag.analysis.indicator_screen import (
     screen_indicators_by_file,
     top_problem_indicators,
 )
+from cyclediag.analysis.si_gr_mechanism import (
+    classify_mechanism,
+    compare_arms_bol_normalized,
+    compute_mechanism_indicators,
+)
 
 __all__ = [
     "DoeCompareConfig",
+    "classify_mechanism",
+    "compare_arms_bol_normalized",
     "compare_cells",
     "compare_cells_dqdv",
+    "compute_mechanism_indicators",
     "dqdv_trajectory_long",
     "early_parameter_summary",
     "load_doe2_arms",

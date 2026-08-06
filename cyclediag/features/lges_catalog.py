@@ -103,7 +103,21 @@ DVDQ_SOC_COLS = [
     "dchg_dVdQ_SOC0", "dchg_dVdQ_SOC0_Q",
     "dchg_dVdQ_SOC5", "dchg_dVdQ_SOC10", "dchg_dVdQ_SOCmid",
     "dchg_dVdQ_SOC0_cliff_width", "dchg_dVdQ_SOC0_to_mid_ratio",
+    "dchg_dVdQ_SOC0_cliff_width_abs",
+    "dchg_dVdQ_at_Qabs_2", "dchg_dVdQ_at_Qabs_5", "dchg_dVdQ_at_Qabs_10",
     "chg_dVdQ_SOC100",
+]
+
+CLIFF_COLS = [
+    "dchg_Q_cliff_abs", "dchg_Q_cliff_norm", "dchg_Q_tail_abs",
+    "dchg_V_at_cliff", "dchg_dVdQ_post_cliff", "dchg_cliff_valid",
+]
+
+CURVE_FIT_COLS = [
+    "dchg_fit_scale", "dchg_fit_offset", "dchg_fit_dR",
+    "dchg_fit_residual_rms", "dchg_fit_residual_max",
+    "dchg_fit_residual_argmax_SOC", "dchg_fit_r2",
+    "dchg_fit_corr_s_o", "dchg_fit_degenerate_flag", "LLI_vs_R_ratio",
 ]
 
 TRAJECTORY_COLS = [
@@ -153,6 +167,7 @@ def all_lges_feature_columns() -> list[str]:
         + CAPACITY_COLS + BAND_CAPACITY_COLS + ["delta_chgCapa_CCratio"]
         + SHAPE_COLS
         + dqdv_peak_column_names()
+        + CLIFF_COLS + CURVE_FIT_COLS
         + TRAJECTORY_COLS
         + DIAGNOSIS_COLS
         + delta_cols

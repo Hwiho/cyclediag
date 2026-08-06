@@ -280,6 +280,87 @@ def safe_diff(a: float | None, b: float | None) -> float | None:
     return float(a - b)
 
 
+def dvdq_at_q_from_end(
+    q: np.ndarray,
+    v: np.ndarray,
+    *,
+    ah_from_end: float,
+    config: DqdvPeakConfig | None = None,
+) -> dict[str, float | None]:
+    """|dV/dQ| at absolute Q = Qmax − ah_from_end (no SOC normalization)."""
+    qx, dvdq = compute_dvdq(q, v, config)
+    empty = {"intensity": None, "Q": None, "n": 0}
+    if len(qx) < 5:
+        return empty
+    qmax = float(np.nanmax(qx))
+    q_target = qmax - float(ah_from_end)
+    if q_target < float(np.nanmin(qx)):
+        return empty
+    mag = np.abs(dvdq)
+    fin = np.isfinite(qx) & np.isfinite(mag)
+    if fin.sum() < 3:
+        return empty
+    qx, mag = qx[fin], mag[fin]
+    order = np.argsort(qx)
+    qx, mag = qx[order], mag[order]
+    intensity = float(np.interp(q_target, qx, mag))
+    return {"intensity": intensity, "Q": q_target, "n": int(len(qx))}
+
+
+def soc0_cliff_width_abs(
+    q: np.ndarray,
+    v: np.ndarray,
+    *,
+    ah_window_from_end: float = 10.0,
+    thr_factor: float = 2.0,
+    config: DqdvPeakConfig | None = None,
+) -> float | None:
+    """Cliff width in absolute Ah within last ``ah_window_from_end`` Ah of discharge."""
+    qx, dvdq = compute_dvdq(q, v, config)
+    if len(qx) < 10:
+        return None
+    qmax = float(np.nanmax(qx))
+    qmin = float(np.nanmin(qx))
+    mag = np.abs(dvdq)
+    mid_lo = qmin + 0.4 * (qmax - qmin)
+    mid_hi = qmin + 0.6 * (qmax - qmin)
+    mid = (qx >= mid_lo) & (qx <= mid_hi) & np.isfinite(mag)
+    if mid.sum() < 5:
+        return None
+    thr = float(np.nanmedian(mag[mid])) * thr_factor
+    if not np.isfinite(thr) or thr <= 0:
+        return None
+    end = (qx >= qmax - ah_window_from_end) & np.isfinite(mag) & (mag >= thr)
+    if not end.any():
+        return 0.0
+    return float(np.nanmax(qx[end]) - np.nanmin(qx[end]))
+
+
+def extract_absolute_dvdq_indicators(
+    dchg_q: np.ndarray,
+    dchg_v: np.ndarray,
+    *,
+    config: DqdvPeakConfig | None = None,
+) -> dict:
+    """Absolute-Ah dV/dQ landmarks + cliff metrics (additive; does not replace SOC-norm cols)."""
+    from cyclediag.features.cliff_metrics import compute_cliff_metrics
+
+    out: dict = {}
+    if dchg_q is None or dchg_v is None or len(dchg_q) < 10:
+        return out
+    for ah in (2.0, 5.0, 10.0):
+        s = dvdq_at_q_from_end(dchg_q, dchg_v, ah_from_end=ah, config=config)
+        key = f"dchg_dVdQ_at_Qabs_{int(ah)}" if ah == int(ah) else f"dchg_dVdQ_at_Qabs_{ah}"
+        out[key] = s.get("intensity")
+    out["dchg_dVdQ_SOC0_cliff_width_abs"] = soc0_cliff_width_abs(
+        dchg_q, dchg_v, config=config,
+    )
+    cliff = compute_cliff_metrics(dchg_q, dchg_v, config=config)
+    for k, v in cliff.items():
+        out[f"dchg_{k}"] = v
+    return out
+
+
 def soc0_cliff_width(
     q: np.ndarray,
     v: np.ndarray,
