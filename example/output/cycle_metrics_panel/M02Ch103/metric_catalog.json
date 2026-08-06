@@ -50,6 +50,136 @@
     "panel_priority": 50
   },
   {
+    "key": "EoC_restV_init",
+    "title_ko": "충전후 휴지 초기 V",
+    "unit": "V",
+    "family": "rest",
+    "description": "충전(EoC) 직후 휴지 시작 전압.",
+    "how": "charge 종료 후 rest step 첫 샘플 전압.",
+    "aging_hint": "either",
+    "panel_priority": 10
+  },
+  {
+    "key": "EoC_restV_60s",
+    "title_ko": "충전후 휴지 60s V",
+    "unit": "V",
+    "family": "rest",
+    "description": "충전 후 휴지 60초 시점 전압.",
+    "how": "rest step_time ≈ 60 s 보간.",
+    "aging_hint": "either",
+    "panel_priority": 20
+  },
+  {
+    "key": "EoC_restV_30m",
+    "title_ko": "충전후 휴지 30분 V",
+    "unit": "V",
+    "family": "rest",
+    "description": "충전 후 휴지 30분 시점 전압. OCV에 가까운 EoC rest.",
+    "how": "rest step_time ≈ 1800 s 보간.",
+    "aging_hint": "either",
+    "panel_priority": 30
+  },
+  {
+    "key": "EoC_restV_end",
+    "title_ko": "충전후 휴지 종료 V",
+    "unit": "V",
+    "family": "rest",
+    "description": "충전 후 휴지 스텝 마지막 전압.",
+    "how": "rest step 끝 샘플.",
+    "aging_hint": "either",
+    "panel_priority": 40
+  },
+  {
+    "key": "EoC_restV_relax",
+    "title_ko": "충전후 휴지 완화량",
+    "unit": "V",
+    "family": "rest",
+    "description": "휴지 동안 전압 변화 (end − init). 분극 완화.",
+    "how": "EoC_restV_end − EoC_restV_init.",
+    "aging_hint": "either",
+    "panel_priority": 50
+  },
+  {
+    "key": "EoC_restV_relax_60s",
+    "title_ko": "충전후 60s 완화량",
+    "unit": "V",
+    "family": "rest",
+    "description": "휴지 첫 60초 완화량.",
+    "how": "EoC_restV_60s − EoC_restV_init.",
+    "aging_hint": "either",
+    "panel_priority": 55
+  },
+  {
+    "key": "delta_EoC_restV_30m",
+    "title_ko": "충전후 30분 V Δvs기준",
+    "unit": "V",
+    "family": "rest",
+    "description": "기준 사이클 대비 충전후 30분 rest V 이동 (slippage/LLI 힌트).",
+    "how": "EoC_restV_30m(cycle) − EoC_restV_30m(baseline).",
+    "aging_hint": "either",
+    "panel_priority": 60
+  },
+  {
+    "key": "EoD_restV_init",
+    "title_ko": "방전후 휴지 초기 V",
+    "unit": "V",
+    "family": "rest",
+    "description": "방전(EoD) 직후 휴지 시작 전압.",
+    "how": "discharge 종료 후 rest step 첫 샘플.",
+    "aging_hint": "either",
+    "panel_priority": 70
+  },
+  {
+    "key": "EoD_restV_60s",
+    "title_ko": "방전후 휴지 60s V",
+    "unit": "V",
+    "family": "rest",
+    "description": "방전 후 휴지 60초 전압.",
+    "how": "rest ≈ 60 s 보간.",
+    "aging_hint": "either",
+    "panel_priority": 80
+  },
+  {
+    "key": "EoD_restV_30m",
+    "title_ko": "방전후 휴지 30분 V",
+    "unit": "V",
+    "family": "rest",
+    "description": "방전 후 휴지 30분 전압. OCV에 가까운 EoD rest.",
+    "how": "rest ≈ 1800 s 보간.",
+    "aging_hint": "either",
+    "panel_priority": 90
+  },
+  {
+    "key": "EoD_restV_end",
+    "title_ko": "방전후 휴지 종료 V",
+    "unit": "V",
+    "family": "rest",
+    "description": "방전 후 휴지 스텝 마지막 전압.",
+    "how": "rest step 끝 샘플.",
+    "aging_hint": "either",
+    "panel_priority": 100
+  },
+  {
+    "key": "EoD_restV_relax",
+    "title_ko": "방전후 휴지 완화량",
+    "unit": "V",
+    "family": "rest",
+    "description": "방전 후 휴지 완화 (end − init).",
+    "how": "EoD_restV_end − EoD_restV_init.",
+    "aging_hint": "either",
+    "panel_priority": 110
+  },
+  {
+    "key": "delta_EoD_restV_30m",
+    "title_ko": "방전후 30분 V Δvs기준",
+    "unit": "V",
+    "family": "rest",
+    "description": "기준 대비 방전후 30분 rest V 이동.",
+    "how": "EoD_restV_30m(cycle) − baseline.",
+    "aging_hint": "either",
+    "panel_priority": 120
+  },
+  {
     "key": "R_ohmic_soc50",
     "title_ko": "옴 저항 (SOC50)",
     "unit": "mΩ",
@@ -115,9 +245,39 @@
     "unit": "mΩ",
     "family": "resistance",
     "description": "충전 종료 후 방전 시작 10초 시점 ΔV/I. Rct·확산 포함 총 DCIR.",
-    "how": "|V0−V(10s)|/|I|×1000. 순수 RΩ 아님.",
+    "how": "|V0-V(10s)|/|I|*1000. 순수 RΩ 아님.",
     "aging_hint": "increase",
     "panel_priority": 70
+  },
+  {
+    "key": "EoC_dchgR_30s",
+    "title_ko": "EoC 방전 30s DCIR",
+    "unit": "mΩ",
+    "family": "resistance",
+    "description": "충전 후 방전 30초 시점 DCIR.",
+    "how": "|V0-V(30s)|/|I|*1000.",
+    "aging_hint": "increase",
+    "panel_priority": 75
+  },
+  {
+    "key": "EoC_dchgR_60s",
+    "title_ko": "EoC 방전 60s DCIR",
+    "unit": "mΩ",
+    "family": "resistance",
+    "description": "충전 후 방전 60초 시점 DCIR.",
+    "how": "|V0-V(60s)|/|I|*1000.",
+    "aging_hint": "increase",
+    "panel_priority": 80
+  },
+  {
+    "key": "EoD_chgR_10s",
+    "title_ko": "EoD 충전 10s DCIR",
+    "unit": "mΩ",
+    "family": "resistance",
+    "description": "방전 종료 후 충전 시작 10초 DCIR.",
+    "how": "|V0-V(10s)|/|I|*1000.",
+    "aging_hint": "increase",
+    "panel_priority": 85
   },
   {
     "key": "hyst_area_low",

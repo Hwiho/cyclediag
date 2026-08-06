@@ -21,6 +21,7 @@ class MetricSpec:
 # Ordered display groups for multi-panel pages
 PANEL_GROUPS: tuple[tuple[str, str], ...] = (
     ("capacity", "용량 · 효율"),
+    ("rest", "휴지 전압 (충전/방전 후)"),
     ("resistance", "저항 · 분해"),
     ("shape", "곡선 형상 · dQ/dV"),
     ("transport", "수송 · rate"),
@@ -60,6 +61,85 @@ METRICS: tuple[MetricSpec, ...] = (
         "DCIR/RPT 전후 휴지로 회복되는 용량 분율. Si chemo-mech co-sign.",
         "DCIR 블록 전후 Q 차이 / Q × 100, routine에 forward-fill.",
         "increase", 50,
+    ),
+    # --- rest voltages (charge / discharge end) ---
+    MetricSpec(
+        "EoC_restV_init", "충전후 휴지 초기 V", "V", "rest",
+        "충전(EoC) 직후 휴지 시작 전압.",
+        "charge 종료 후 rest step 첫 샘플 전압.",
+        "either", 10,
+    ),
+    MetricSpec(
+        "EoC_restV_60s", "충전후 휴지 60s V", "V", "rest",
+        "충전 후 휴지 60초 시점 전압.",
+        "rest step_time ≈ 60 s 보간.",
+        "either", 20,
+    ),
+    MetricSpec(
+        "EoC_restV_30m", "충전후 휴지 30분 V", "V", "rest",
+        "충전 후 휴지 30분 시점 전압. OCV에 가까운 EoC rest.",
+        "rest step_time ≈ 1800 s 보간.",
+        "either", 30,
+    ),
+    MetricSpec(
+        "EoC_restV_end", "충전후 휴지 종료 V", "V", "rest",
+        "충전 후 휴지 스텝 마지막 전압.",
+        "rest step 끝 샘플.",
+        "either", 40,
+    ),
+    MetricSpec(
+        "EoC_restV_relax", "충전후 휴지 완화량", "V", "rest",
+        "휴지 동안 전압 변화 (end − init). 분극 완화.",
+        "EoC_restV_end − EoC_restV_init.",
+        "either", 50,
+    ),
+    MetricSpec(
+        "EoC_restV_relax_60s", "충전후 60s 완화량", "V", "rest",
+        "휴지 첫 60초 완화량.",
+        "EoC_restV_60s − EoC_restV_init.",
+        "either", 55,
+    ),
+    MetricSpec(
+        "delta_EoC_restV_30m", "충전후 30분 V Δvs기준", "V", "rest",
+        "기준 사이클 대비 충전후 30분 rest V 이동 (slippage/LLI 힌트).",
+        "EoC_restV_30m(cycle) − EoC_restV_30m(baseline).",
+        "either", 60,
+    ),
+    MetricSpec(
+        "EoD_restV_init", "방전후 휴지 초기 V", "V", "rest",
+        "방전(EoD) 직후 휴지 시작 전압.",
+        "discharge 종료 후 rest step 첫 샘플.",
+        "either", 70,
+    ),
+    MetricSpec(
+        "EoD_restV_60s", "방전후 휴지 60s V", "V", "rest",
+        "방전 후 휴지 60초 전압.",
+        "rest ≈ 60 s 보간.",
+        "either", 80,
+    ),
+    MetricSpec(
+        "EoD_restV_30m", "방전후 휴지 30분 V", "V", "rest",
+        "방전 후 휴지 30분 전압. OCV에 가까운 EoD rest.",
+        "rest ≈ 1800 s 보간.",
+        "either", 90,
+    ),
+    MetricSpec(
+        "EoD_restV_end", "방전후 휴지 종료 V", "V", "rest",
+        "방전 후 휴지 스텝 마지막 전압.",
+        "rest step 끝 샘플.",
+        "either", 100,
+    ),
+    MetricSpec(
+        "EoD_restV_relax", "방전후 휴지 완화량", "V", "rest",
+        "방전 후 휴지 완화 (end − init).",
+        "EoD_restV_end − EoD_restV_init.",
+        "either", 110,
+    ),
+    MetricSpec(
+        "delta_EoD_restV_30m", "방전후 30분 V Δvs기준", "V", "rest",
+        "기준 대비 방전후 30분 rest V 이동.",
+        "EoD_restV_30m(cycle) − baseline.",
+        "either", 120,
     ),
     # --- resistance ---
     MetricSpec(
@@ -101,8 +181,26 @@ METRICS: tuple[MetricSpec, ...] = (
     MetricSpec(
         "EoC_dchgR_10s", "EoC 방전 10s DCIR", "mΩ", "resistance",
         "충전 종료 후 방전 시작 10초 시점 ΔV/I. Rct·확산 포함 총 DCIR.",
-        "|V0−V(10s)|/|I|×1000. 순수 RΩ 아님.",
+        "|V0-V(10s)|/|I|*1000. 순수 RΩ 아님.",
         "increase", 70,
+    ),
+    MetricSpec(
+        "EoC_dchgR_30s", "EoC 방전 30s DCIR", "mΩ", "resistance",
+        "충전 후 방전 30초 시점 DCIR.",
+        "|V0-V(30s)|/|I|*1000.",
+        "increase", 75,
+    ),
+    MetricSpec(
+        "EoC_dchgR_60s", "EoC 방전 60s DCIR", "mΩ", "resistance",
+        "충전 후 방전 60초 시점 DCIR.",
+        "|V0-V(60s)|/|I|*1000.",
+        "increase", 80,
+    ),
+    MetricSpec(
+        "EoD_chgR_10s", "EoD 충전 10s DCIR", "mΩ", "resistance",
+        "방전 종료 후 충전 시작 10초 DCIR.",
+        "|V0-V(10s)|/|I|*1000.",
+        "increase", 85,
     ),
     # --- shape ---
     MetricSpec(

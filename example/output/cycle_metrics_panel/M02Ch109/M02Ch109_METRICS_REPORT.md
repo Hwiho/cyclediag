@@ -2,7 +2,7 @@
 
 ## 트렌드 요약 — M02Ch109
 
-- 유효 지표: 32개 · aging 방향 일치 15 · 반대 1
+- 유효 지표: 48개 · aging 방향 일치 17 · 반대 1
 
 ### 하락 트렌드 (상위)
 - LAM 곡선 proxy: early=-2.01 → late=-12.04 (Δ=-10.03, -4.231%/100cyc) → decreasing · context
@@ -52,6 +52,73 @@
 - 계산: DCIR 블록 전후 Q 차이 / Q × 100, routine에 forward-fill.
 - 트렌드: 완화 용량 회복: early=-0.4599 → late=0.1079 (Δ=+0.5678, +0.2924%/100cyc) → increasing · matches_aging
 
+### 휴지 전압 (충전/방전 후)
+
+**충전후 휴지 초기 V** (`EoC_restV_init`)
+- 의미: 충전(EoC) 직후 휴지 시작 전압.
+- 계산: charge 종료 후 rest step 첫 샘플 전압.
+- 트렌드: 충전후 휴지 초기 V: early=4.2 → late=4.2 (Δ=+3.1e-05, +7.909e-06V/100cyc) → flat · context
+
+**충전후 휴지 60s V** (`EoC_restV_60s`)
+- 의미: 충전 후 휴지 60초 시점 전압.
+- 계산: rest step_time ≈ 60 s 보간.
+- 트렌드: 충전후 휴지 60s V: early=4.192 → late=4.18 (Δ=-0.01169, -0.004764V/100cyc) → flat · context
+
+**충전후 휴지 30분 V** (`EoC_restV_30m`)
+- 의미: 충전 후 휴지 30분 시점 전압. OCV에 가까운 EoC rest.
+- 계산: rest step_time ≈ 1800 s 보간.
+- 트렌드: 충전후 휴지 30분 V: early=4.18 → late=4.147 (Δ=-0.03277, -0.01371V/100cyc) → flat · context
+
+**충전후 휴지 종료 V** (`EoC_restV_end`)
+- 의미: 충전 후 휴지 스텝 마지막 전압.
+- 계산: rest step 끝 샘플.
+- 트렌드: 충전후 휴지 종료 V: early=4.18 → late=4.147 (Δ=-0.03277, -0.01371V/100cyc) → flat · context
+
+**충전후 휴지 완화량** (`EoC_restV_relax`)
+- 의미: 휴지 동안 전압 변화 (end − init). 분극 완화.
+- 계산: EoC_restV_end − EoC_restV_init.
+- 트렌드: 충전후 휴지 완화량: early=-0.01979 → late=-0.05251 (Δ=-0.03272, -0.01372V/100cyc) → decreasing · context
+
+**충전후 60s 완화량** (`EoC_restV_relax_60s`)
+- 의미: 휴지 첫 60초 완화량.
+- 계산: EoC_restV_60s − EoC_restV_init.
+- 트렌드: 충전후 60s 완화량: early=-0.007971 → late=-0.0196 (Δ=-0.01163, -0.004772V/100cyc) → decreasing · context
+
+**충전후 30분 V Δvs기준** (`delta_EoC_restV_30m`)
+- 의미: 기준 사이클 대비 충전후 30분 rest V 이동 (slippage/LLI 힌트).
+- 계산: EoC_restV_30m(cycle) − EoC_restV_30m(baseline).
+- 트렌드: 충전후 30분 V Δvs기준: early=-0.001037 → late=-0.03381 (Δ=-0.03277, -0.01371V/100cyc) → decreasing · context
+
+**방전후 휴지 초기 V** (`EoD_restV_init`)
+- 의미: 방전(EoD) 직후 휴지 시작 전압.
+- 계산: discharge 종료 후 rest step 첫 샘플.
+- 트렌드: 방전후 휴지 초기 V: early=2.5 → late=2.5 (Δ=+5e-06, -1.773e-07V/100cyc) → flat · context
+
+**방전후 휴지 60s V** (`EoD_restV_60s`)
+- 의미: 방전 후 휴지 60초 전압.
+- 계산: rest ≈ 60 s 보간.
+- 트렌드: 방전후 휴지 60s V: early=2.88 → late=2.947 (Δ=+0.06707, +0.0321V/100cyc) → flat · context
+
+**방전후 휴지 30분 V** (`EoD_restV_30m`)
+- 의미: 방전 후 휴지 30분 전압. OCV에 가까운 EoD rest.
+- 계산: rest ≈ 1800 s 보간.
+- 트렌드: 방전후 휴지 30분 V: early=3.015 → late=3.074 (Δ=+0.05874, +0.02552V/100cyc) → flat · context
+
+**방전후 휴지 종료 V** (`EoD_restV_end`)
+- 의미: 방전 후 휴지 스텝 마지막 전압.
+- 계산: rest step 끝 샘플.
+- 트렌드: 방전후 휴지 종료 V: early=3.015 → late=3.074 (Δ=+0.05874, +0.02552V/100cyc) → flat · context
+
+**방전후 휴지 완화량** (`EoD_restV_relax`)
+- 의미: 방전 후 휴지 완화 (end − init).
+- 계산: EoD_restV_end − EoD_restV_init.
+- 트렌드: 방전후 휴지 완화량: early=0.5149 → late=0.5737 (Δ=+0.05873, +0.02552V/100cyc) → flat · context
+
+**방전후 30분 V Δvs기준** (`delta_EoD_restV_30m`)
+- 의미: 기준 대비 방전후 30분 rest V 이동.
+- 계산: EoD_restV_30m(cycle) − baseline.
+- 트렌드: 방전후 30분 V Δvs기준: early=0.0396 → late=0.09834 (Δ=+0.05874, +0.02552V/100cyc) → increasing · context
+
 ### 저항 · 분해
 
 **옴 저항 (SOC50)** (`R_ohmic_soc50`)
@@ -86,8 +153,23 @@
 
 **EoC 방전 10s DCIR** (`EoC_dchgR_10s`)
 - 의미: 충전 종료 후 방전 시작 10초 시점 ΔV/I. Rct·확산 포함 총 DCIR.
-- 계산: |V0−V(10s)|/|I|×1000. 순수 RΩ 아님.
+- 계산: |V0-V(10s)|/|I|*1000. 순수 RΩ 아님.
 - 트렌드: EoC 방전 10s DCIR: early=0.1673 → late=0.2312 (Δ=+0.06388, +0.02024mΩ/100cyc) → increasing · matches_aging
+
+**EoC 방전 30s DCIR** (`EoC_dchgR_30s`)
+- 의미: 충전 후 방전 30초 시점 DCIR.
+- 계산: |V0-V(30s)|/|I|*1000.
+- 트렌드: EoC 방전 30s DCIR: early=0.4659 → late=0.5895 (Δ=+0.1236, +0.03882mΩ/100cyc) → increasing · matches_aging
+
+**EoC 방전 60s DCIR** (`EoC_dchgR_60s`)
+- 의미: 충전 후 방전 60초 시점 DCIR.
+- 계산: |V0-V(60s)|/|I|*1000.
+- 트렌드: EoC 방전 60s DCIR: early=0.8369 → late=0.9792 (Δ=+0.1423, +0.0423mΩ/100cyc) → flat · stable
+
+**EoD 충전 10s DCIR** (`EoD_chgR_10s`)
+- 의미: 방전 종료 후 충전 시작 10초 DCIR.
+- 계산: |V0-V(10s)|/|I|*1000.
+- 트렌드: EoD 충전 10s DCIR: early=0.2951 → late=0.3938 (Δ=+0.09867, +0.03026mΩ/100cyc) → increasing · matches_aging
 
 ### 곡선 형상 · dQ/dV
 

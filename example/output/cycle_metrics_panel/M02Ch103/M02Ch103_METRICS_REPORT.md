@@ -2,7 +2,7 @@
 
 ## 트렌드 요약 — M02Ch103
 
-- 유효 지표: 32개 · aging 방향 일치 14 · 반대 1
+- 유효 지표: 48개 · aging 방향 일치 17 · 반대 1
 
 ### 하락 트렌드 (상위)
 - LAM 곡선 proxy: early=-3.11 → late=-17.48 (Δ=-14.37, -5.717%/100cyc) → decreasing · context
@@ -52,6 +52,73 @@
 - 계산: DCIR 블록 전후 Q 차이 / Q × 100, routine에 forward-fill.
 - 트렌드: 완화 용량 회복: early=-0.5139 → late=0.106 (Δ=+0.6199, +0.3169%/100cyc) → increasing · matches_aging
 
+### 휴지 전압 (충전/방전 후)
+
+**충전후 휴지 초기 V** (`EoC_restV_init`)
+- 의미: 충전(EoC) 직후 휴지 시작 전압.
+- 계산: charge 종료 후 rest step 첫 샘플 전압.
+- 트렌드: 충전후 휴지 초기 V: early=4.2 → late=4.2 (Δ=+0.0001249, +5.205e-05V/100cyc) → flat · context
+
+**충전후 휴지 60s V** (`EoC_restV_60s`)
+- 의미: 충전 후 휴지 60초 시점 전압.
+- 계산: rest step_time ≈ 60 s 보간.
+- 트렌드: 충전후 휴지 60s V: early=4.188 → late=4.183 (Δ=-0.005418, -0.002028V/100cyc) → flat · context
+
+**충전후 휴지 30분 V** (`EoC_restV_30m`)
+- 의미: 충전 후 휴지 30분 시점 전압. OCV에 가까운 EoC rest.
+- 계산: rest step_time ≈ 1800 s 보간.
+- 트렌드: 충전후 휴지 30분 V: early=4.174 → late=4.164 (Δ=-0.009361, -0.003801V/100cyc) → flat · context
+
+**충전후 휴지 종료 V** (`EoC_restV_end`)
+- 의미: 충전 후 휴지 스텝 마지막 전압.
+- 계산: rest step 끝 샘플.
+- 트렌드: 충전후 휴지 종료 V: early=4.174 → late=4.164 (Δ=-0.009361, -0.003801V/100cyc) → flat · context
+
+**충전후 휴지 완화량** (`EoC_restV_relax`)
+- 의미: 휴지 동안 전압 변화 (end − init). 분극 완화.
+- 계산: EoC_restV_end − EoC_restV_init.
+- 트렌드: 충전후 휴지 완화량: early=-0.02615 → late=-0.03556 (Δ=-0.009415, -0.003853V/100cyc) → decreasing · context
+
+**충전후 60s 완화량** (`EoC_restV_relax_60s`)
+- 의미: 휴지 첫 60초 완화량.
+- 계산: EoC_restV_60s − EoC_restV_init.
+- 트렌드: 충전후 60s 완화량: early=-0.01144 → late=-0.0169 (Δ=-0.005465, -0.00208V/100cyc) → decreasing · context
+
+**충전후 30분 V Δvs기준** (`delta_EoC_restV_30m`)
+- 의미: 기준 사이클 대비 충전후 30분 rest V 이동 (slippage/LLI 힌트).
+- 계산: EoC_restV_30m(cycle) − EoC_restV_30m(baseline).
+- 트렌드: 충전후 30분 V Δvs기준: early=-0.0005831 → late=-0.009945 (Δ=-0.009361, -0.003801V/100cyc) → decreasing · context
+
+**방전후 휴지 초기 V** (`EoD_restV_init`)
+- 의미: 방전(EoD) 직후 휴지 시작 전압.
+- 계산: discharge 종료 후 rest step 첫 샘플.
+- 트렌드: 방전후 휴지 초기 V: early=2.5 → late=2.5 (Δ=+3.28e-05, +9.062e-06V/100cyc) → flat · context
+
+**방전후 휴지 60s V** (`EoD_restV_60s`)
+- 의미: 방전 후 휴지 60초 전압.
+- 계산: rest ≈ 60 s 보간.
+- 트렌드: 방전후 휴지 60s V: early=2.907 → late=2.986 (Δ=+0.07914, +0.035V/100cyc) → flat · context
+
+**방전후 휴지 30분 V** (`EoD_restV_30m`)
+- 의미: 방전 후 휴지 30분 전압. OCV에 가까운 EoD rest.
+- 계산: rest ≈ 1800 s 보간.
+- 트렌드: 방전후 휴지 30분 V: early=3.035 → late=3.106 (Δ=+0.07055, +0.02831V/100cyc) → flat · context
+
+**방전후 휴지 종료 V** (`EoD_restV_end`)
+- 의미: 방전 후 휴지 스텝 마지막 전압.
+- 계산: rest step 끝 샘플.
+- 트렌드: 방전후 휴지 종료 V: early=3.035 → late=3.106 (Δ=+0.07055, +0.02831V/100cyc) → flat · context
+
+**방전후 휴지 완화량** (`EoD_restV_relax`)
+- 의미: 방전 후 휴지 완화 (end − init).
+- 계산: EoD_restV_end − EoD_restV_init.
+- 트렌드: 방전후 휴지 완화량: early=0.5351 → late=0.6056 (Δ=+0.07057, +0.0283V/100cyc) → flat · context
+
+**방전후 30분 V Δvs기준** (`delta_EoD_restV_30m`)
+- 의미: 기준 대비 방전후 30분 rest V 이동.
+- 계산: EoD_restV_30m(cycle) − baseline.
+- 트렌드: 방전후 30분 V Δvs기준: early=0.04166 → late=0.1122 (Δ=+0.07055, +0.02831V/100cyc) → increasing · context
+
 ### 저항 · 분해
 
 **옴 저항 (SOC50)** (`R_ohmic_soc50`)
@@ -86,8 +153,23 @@
 
 **EoC 방전 10s DCIR** (`EoC_dchgR_10s`)
 - 의미: 충전 종료 후 방전 시작 10초 시점 ΔV/I. Rct·확산 포함 총 DCIR.
-- 계산: |V0−V(10s)|/|I|×1000. 순수 RΩ 아님.
+- 계산: |V0-V(10s)|/|I|*1000. 순수 RΩ 아님.
 - 트렌드: EoC 방전 10s DCIR: early=0.1614 → late=0.1868 (Δ=+0.02544, +0.01702mΩ/100cyc) → increasing · matches_aging
+
+**EoC 방전 30s DCIR** (`EoC_dchgR_30s`)
+- 의미: 충전 후 방전 30초 시점 DCIR.
+- 계산: |V0-V(30s)|/|I|*1000.
+- 트렌드: EoC 방전 30s DCIR: early=0.4343 → late=0.5117 (Δ=+0.0774, +0.04427mΩ/100cyc) → increasing · matches_aging
+
+**EoC 방전 60s DCIR** (`EoC_dchgR_60s`)
+- 의미: 충전 후 방전 60초 시점 DCIR.
+- 계산: |V0-V(60s)|/|I|*1000.
+- 트렌드: EoC 방전 60s DCIR: early=0.757 → late=0.8939 (Δ=+0.137, +0.0728mΩ/100cyc) → increasing · matches_aging
+
+**EoD 충전 10s DCIR** (`EoD_chgR_10s`)
+- 의미: 방전 종료 후 충전 시작 10초 DCIR.
+- 계산: |V0-V(10s)|/|I|*1000.
+- 트렌드: EoD 충전 10s DCIR: early=0.2829 → late=0.3339 (Δ=+0.05099, +0.01935mΩ/100cyc) → increasing · matches_aging
 
 ### 곡선 형상 · dQ/dV
 
