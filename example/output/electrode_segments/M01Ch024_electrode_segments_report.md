@@ -1,170 +1,163 @@
-# 열화 구간별 양·음극 가설 진단 — M01Ch024
+# 열화 구간별 전극 가설 진단 v1.1 — M01Ch024
 
 - Level: **hypothesis_bol_ocp** (aged 하프셀 교정 아님)
+- Methodology: electrode_side_v1_1 · FC-OCP peak Δhits · contact_stack vs NE(Si co-sign)
 - OCP library: anode=18 cathode=2 aged=False
-- 분석 포인트: 66 cycles sampled; 세그먼트는 SoHQ≥50 capa-like
+- 분석 포인트: 66 cycles sampled; 세그먼트 SoHQ≥50
 
-## 구간 요약 (패턴·양음극 지배 전환)
+## 구간 요약
 
-### Seg 1: cycle 2–10 · 양극(PE) 지배
-- SoHQ: 100.6% → 95.7% (3 points)
-- 점수: PE=0.32 / NE=0.29 / shared=0.03 (Δ=0.02, conf=0.62)
-- **이 구간 상대 지배: 양극(PE)** (강도: 약함/근소, 가설)
-- 모드: PE=`LAM_PE` · NE=`contact_loss` · shared=`LLI,interface_R,SE_decomposition,microshort`
-- pattern: LAM_PE=0.21, contact_loss=0.31, LLI=0.00
+### Seg 1: cycle 2–130 · 접촉/스택 저항 패턴 우위
+- SoHQ: 100.6% → 90.6% (16 points)
+- 점수: PE=0.26 / contact_stack=0.46 / NE_hyp=0.10 / shared=0.10 (conf=0.71)
+- **상대 lean 라벨: 접촉/스택 저항 패턴 우위** · si_cosign≈0.05
+- 모드: PE=`LAM_PE` · contact=`contact_loss` · shared=`LLI,interface_R,SE_decomposition,solid_diffusion`
+- pattern: LAM_PE=0.31, contact_loss=0.46, LLI=0.39
 
-### Seg 2: cycle 20–90 · 양극(PE) 지배
-- SoHQ: 94.9% → 92.3% (8 points)
-- 점수: PE=0.42 / NE=0.37 / shared=0.09 (Δ=0.05, conf=0.59)
-- **이 구간 상대 지배: 양극(PE)** (강도: 중간, 가설)
-- 모드: PE=`LAM_PE` · NE=`contact_loss` · shared=`LLI,interface_R,SE_decomposition,microshort`
-- pattern: LAM_PE=0.28, contact_loss=0.42, LLI=0.35
+### Seg 2: cycle 140–160 · 접촉/스택 저항 패턴 우위
+- SoHQ: 90.2% → 89.3% (3 points)
+- 점수: PE=0.51 / contact_stack=0.57 / NE_hyp=0.11 / shared=0.14 (conf=0.54)
+- **상대 lean 라벨: 접촉/스택 저항 패턴 우위** · si_cosign≈0.00
+- 모드: PE=`LAM_PE` · contact=`contact_loss` · shared=`LLI,interface_R,SE_decomposition,solid_diffusion`
+- pattern: LAM_PE=0.61, contact_loss=0.57, LLI=0.58
 
-### Seg 3: cycle 100–200 · 양·음극 혼합(근소)
-- SoHQ: 91.8% → 87.3% (12 points)
-- 점수: PE=0.40 / NE=0.41 / shared=0.10 (Δ=0.01, conf=0.49)
-- **이 구간 상대 지배: 음극(NE)** (강도: 약함/근소, 가설)
-- 모드: PE=`LAM_PE` · NE=`contact_loss` · shared=`LLI,interface_R,SE_decomposition,microshort`
-- pattern: LAM_PE=0.16, contact_loss=0.40, LLI=0.27
+### Seg 3: cycle 170–210 · 혼합/근소
+- SoHQ: 88.8% → 86.7% (5 points)
+- 점수: PE=0.54 / contact_stack=0.57 / NE_hyp=0.11 / shared=0.14 (conf=0.48)
+- **상대 lean 라벨: 접촉·NE 쪽 lean** · si_cosign≈0.00
+- 모드: PE=`LAM_PE` · contact=`contact_loss` · shared=`LLI,interface_R,SE_decomposition,solid_diffusion`
+- pattern: LAM_PE=0.65, contact_loss=0.57, LLI=0.56
 
-### Seg 4: cycle 210–230 · 양극(PE) 지배
-- SoHQ: 86.7% → 85.7% (5 points)
-- 점수: PE=0.41 / NE=0.39 / shared=0.10 (Δ=0.02, conf=0.60)
-- **이 구간 상대 지배: 양극(PE)** (강도: 약함/근소, 가설)
-- 모드: PE=`LAM_PE` · NE=`contact_loss` · shared=`LLI,interface_R,SE_decomposition,microshort`
-- pattern: LAM_PE=0.29, contact_loss=0.39, LLI=0.39
+### Seg 4: cycle 212–300 · 혼합/근소
+- SoHQ: 92.1% → 80.2% (11 points)
+- 점수: PE=0.53 / contact_stack=0.52 / NE_hyp=0.12 / shared=0.15 (conf=0.53)
+- **상대 lean 라벨: 양극(PE) 가설 우위** · si_cosign≈0.07
+- 모드: PE=`LAM_PE` · contact=`contact_loss` · shared=`LLI,interface_R,SE_decomposition,solid_diffusion`
+- pattern: LAM_PE=0.65, contact_loss=0.52, LLI=0.58
 
-### Seg 5: cycle 240–260 · 음극(NE) 지배
-- SoHQ: 85.0% → 83.8% (3 points)
-- 점수: PE=0.38 / NE=0.47 / shared=0.13 (Δ=0.09, conf=0.64)
-- **이 구간 상대 지배: 음극(NE)** (강도: 명확, 가설)
-- 모드: PE=`LAM_PE` · NE=`contact_loss` · shared=`LLI,interface_R,SE_decomposition,microshort`
-- pattern: LAM_PE=0.31, contact_loss=0.59, LLI=0.44
+### Seg 5: cycle 310–318 · 혼합/근소
+- SoHQ: 79.1% → 85.7% (3 points)
+- 점수: PE=0.50 / contact_stack=0.52 / NE_hyp=0.17 / shared=0.17 (conf=0.61)
+- **상대 lean 라벨: 접촉·NE 쪽 lean** · si_cosign≈0.20
+- 모드: PE=`LAM_PE` · contact=`contact_loss` · shared=`LLI,interface_R,SE_decomposition,solid_diffusion`
+- pattern: LAM_PE=0.62, contact_loss=0.52, LLI=0.56
 
-### Seg 6: cycle 270–317 · 양·음극 혼합(근소)
-- SoHQ: 83.0% → 85.2% (6 points)
-- 점수: PE=0.42 / NE=0.42 / shared=0.13 (Δ=0.00, conf=0.49)
-- **이 구간 상대 지배: 음극(NE)** (강도: 약함/근소, 가설)
-- 모드: PE=`LAM_PE` · NE=`contact_loss` · shared=`LLI,interface_R,SE_decomposition,microshort`
-- pattern: LAM_PE=0.31, contact_loss=0.55, LLI=0.50
+### Seg 6: cycle 330–350 · 혼합/근소
+- SoHQ: 77.8% → 75.3% (3 points)
+- 점수: PE=0.51 / contact_stack=0.46 / NE_hyp=0.11 / shared=0.17 (conf=0.53)
+- **상대 lean 라벨: 양극(PE) 가설 우위** · si_cosign≈0.07
+- 모드: PE=`LAM_PE` · contact=`contact_loss` · shared=`LLI,interface_R,SE_decomposition,solid_diffusion`
+- pattern: LAM_PE=0.61, contact_loss=0.46, LLI=0.70
 
-### Seg 7: cycle 318–330 · 양·음극 혼합(근소)
-- SoHQ: 85.7% → 77.8% (2 points)
-- 점수: PE=0.42 / NE=0.42 / shared=0.11 (Δ=0.00, conf=0.49)
-- **이 구간 상대 지배: 음극(NE)** (강도: 약함/근소, 가설)
-- 모드: PE=`LAM_PE` · NE=`contact_loss` · shared=`LLI,interface_R,SE_decomposition,microshort`
-- pattern: LAM_PE=0.30, contact_loss=0.51, LLI=0.46
+### Seg 7: cycle 360–400 · 양극(PE) 가설 우위
+- SoHQ: 74.1% → 70.4% (5 points)
+- 점수: PE=0.52 / contact_stack=0.43 / NE_hyp=0.08 / shared=0.13 (conf=0.55)
+- **상대 lean 라벨: 양극(PE) 가설 우위** · si_cosign≈0.00
+- 모드: PE=`LAM_PE` · contact=`contact_loss` · shared=`LLI,interface_R,SE_decomposition,solid_diffusion`
+- pattern: LAM_PE=0.67, contact_loss=0.43, LLI=0.53
 
-### Seg 8: cycle 340–350 · 음극(NE) 지배
-- SoHQ: 76.5% → 75.3% (2 points)
-- 점수: PE=0.26 / NE=0.37 / shared=0.13 (Δ=0.10, conf=0.64)
-- **이 구간 상대 지배: 음극(NE)** (강도: 명확, 가설)
-- 모드: PE=`LAM_PE` · NE=`contact_loss` · shared=`LLI,interface_R,SE_decomposition,microshort`
-- pattern: LAM_PE=0.22, contact_loss=0.43, LLI=0.54
+### Seg 8: cycle 410–423 · 혼합/근소
+- SoHQ: 69.7% → 74.9% (4 points)
+- 점수: PE=0.48 / contact_stack=0.51 / NE_hyp=0.13 / shared=0.12 (conf=0.51)
+- **상대 lean 라벨: 접촉·NE 쪽 lean** · si_cosign≈0.10
+- 모드: PE=`LAM_PE` · contact=`contact_loss` · shared=`LLI,interface_R,SE_decomposition,solid_diffusion`
+- pattern: LAM_PE=0.64, contact_loss=0.51, LLI=0.46
 
-### Seg 9: cycle 360–410 · 양극(PE) 지배
-- SoHQ: 74.1% → 69.7% (6 points)
-- 점수: PE=0.37 / NE=0.29 / shared=0.10 (Δ=0.08, conf=0.60)
-- **이 구간 상대 지배: 양극(PE)** (강도: 중간, 가설)
-- 모드: PE=`LAM_PE` · NE=`contact_loss` · shared=`LLI,interface_R,SE_decomposition,microshort`
-- pattern: LAM_PE=0.31, contact_loss=0.41, LLI=0.41
+### Seg 9: cycle 430–500 · 양극(PE) 가설 우위
+- SoHQ: 69.2% → 65.0% (8 points)
+- 점수: PE=0.51 / contact_stack=0.43 / NE_hyp=0.09 / shared=0.12 (conf=0.52)
+- **상대 lean 라벨: 양극(PE) 가설 우위** · si_cosign≈0.03
+- 모드: PE=`LAM_PE` · contact=`contact_loss` · shared=`LLI,interface_R,SE_decomposition,solid_diffusion`
+- pattern: LAM_PE=0.68, contact_loss=0.43, LLI=0.45
 
-### Seg 10: cycle 420–480 · 양극(PE) 지배
-- SoHQ: 69.0% → 66.0% (9 points)
-- 점수: PE=0.37 / NE=0.33 / shared=0.10 (Δ=0.04, conf=0.50)
-- **이 구간 상대 지배: 양극(PE)** (강도: 약함/근소, 가설)
-- 모드: PE=`LAM_PE` · NE=`contact_loss` · shared=`LLI,interface_R,SE_decomposition,microshort`
-- pattern: LAM_PE=0.31, contact_loss=0.46, LLI=0.36
+### Seg 10: cycle 510–526 · 혼합/근소
+- SoHQ: 64.6% → 63.9% (3 points)
+- 점수: PE=0.51 / contact_stack=0.47 / NE_hyp=0.09 / shared=0.11 (conf=0.44)
+- **상대 lean 라벨: 양극(PE) 가설 우위** · si_cosign≈0.00
+- 모드: PE=`LAM_PE` · contact=`contact_loss` · shared=`LLI,interface_R,SE_decomposition,solid_diffusion`
+- pattern: LAM_PE=0.68, contact_loss=0.47, LLI=0.45
 
-### Seg 11: cycle 490–520 · 양극(PE) 지배
-- SoHQ: 65.5% → 64.1% (4 points)
-- 점수: PE=0.34 / NE=0.31 / shared=0.09 (Δ=0.03, conf=0.48)
-- **이 구간 상대 지배: 양극(PE)** (강도: 약함/근소, 가설)
-- 모드: PE=`LAM_PE` · NE=`contact_loss` · shared=`LLI,interface_R,SE_decomposition,microshort`
-- pattern: LAM_PE=0.31, contact_loss=0.42, LLI=0.36
-
-### Seg 12: cycle 526–533 · 양·음극 혼합(근소)
-- SoHQ: 63.9% → 64.3% (5 points)
-- 점수: PE=0.39 / NE=0.38 / shared=0.08 (Δ=0.01, conf=0.45)
-- **이 구간 상대 지배: 양극(PE)** (강도: 약함/근소, 가설)
-- 모드: PE=`LAM_PE` · NE=`contact_loss` · shared=`LLI,interface_R,SE_decomposition,microshort`
-- pattern: LAM_PE=0.31, contact_loss=0.57, LLI=0.35
+### Seg 11: cycle 527–533 · 접촉/스택 저항 패턴 우위
+- SoHQ: 68.5% → 64.3% (4 points)
+- 점수: PE=0.50 / contact_stack=0.56 / NE_hyp=0.15 / shared=0.11 (conf=0.54)
+- **상대 lean 라벨: 접촉/스택 저항 패턴 우위** · si_cosign≈0.10
+- 모드: PE=`LAM_PE` · contact=`contact_loss` · shared=`LLI,interface_R,SE_decomposition,solid_diffusion`
+- pattern: LAM_PE=0.67, contact_loss=0.56, LLI=0.39
 
 ## 수명 단계 롤업
 
-- **early (1/3)** cyc 2–180: PE=0.39 NE=0.38 → **양극(PE)** (SoHQ 101→88%)
-- **mid (1/3)** cyc 190–370: PE=0.40 NE=0.40 → **음극(NE)** (SoHQ 88→73%)
-- **late (1/3)** cyc 380–533: PE=0.36 NE=0.33 → **양극(PE)** (SoHQ 72→64%)
+- **early (1/3)** cyc 2–180: PE=0.33 contact=0.49 NE_hyp=0.10 → majority **접촉/스택 저항 패턴 우위** (SoHQ 101→88%)
+- **mid (1/3)** cyc 190–370: PE=0.53 contact=0.51 NE_hyp=0.12 → majority **혼합/근소** (SoHQ 88→73%)
+- **late (1/3)** cyc 380–533: PE=0.50 contact=0.47 NE_hyp=0.11 → majority **양극(PE) 가설 우위** (SoHQ 72→64%)
 
-## 사이클 궤적 (용량 사이클)
+## 사이클 궤적
 
-| cycle | SoHQ | lean | PE | NE | Δ | LAM_PE | contact | note |
-|------:|-----:|:-----|---:|---:|--:|-------:|--------:|:-----|
-| 2 | 100.6 | PE | 0.39 | 0.26 | +0.13 | 0.21 | 0.31 | PE-side hypothesis dominates (PE=0.39 > NE=0.26).  |
-| 3 | 100.0 | NE | 0.25 | 0.31 | -0.06 | 0.00 | 0.32 | Mixed PE/NE signals (PE=0.25, NE=0.31, Δ=0.06). Bo |
-| 10 | 95.7 | ~ | 0.30 | 0.31 | -0.01 | 0.29 | 0.39 | Mixed PE/NE signals (PE=0.30, NE=0.31, Δ=0.01). Bo |
-| 20 | 94.9 | PE | 0.34 | 0.31 | +0.03 | 0.27 | 0.38 | Mixed PE/NE signals (PE=0.34, NE=0.31, Δ=0.03). Bo |
-| 30 | 94.5 | PE | 0.41 | 0.31 | +0.10 | 0.28 | 0.38 | PE-side hypothesis dominates (PE=0.41 > NE=0.31).  |
-| 40 | 94.1 | PE | 0.42 | 0.31 | +0.11 | 0.29 | 0.38 | PE-side hypothesis dominates (PE=0.42 > NE=0.31).  |
-| 50 | 93.8 | PE | 0.40 | 0.31 | +0.10 | 0.27 | 0.38 | PE-side hypothesis dominates (PE=0.40 > NE=0.31).  |
-| 60 | 93.4 | PE | 0.47 | 0.31 | +0.16 | 0.29 | 0.38 | PE-side hypothesis dominates (PE=0.47 > NE=0.31).  |
-| 70 | 93.1 | PE | 0.50 | 0.48 | +0.02 | 0.27 | 0.63 | Mixed PE/NE signals (PE=0.50, NE=0.48, Δ=0.02). Bo |
-| 80 | 92.7 | ~ | 0.46 | 0.47 | -0.01 | 0.28 | 0.61 | Mixed PE/NE signals (PE=0.46, NE=0.47, Δ=0.01). Bo |
-| 90 | 92.3 | NE | 0.38 | 0.45 | -0.07 | 0.31 | 0.58 | Mixed PE/NE signals (PE=0.38, NE=0.45, Δ=0.07). Bo |
-| 100 | 91.8 | ~ | 0.47 | 0.46 | +0.01 | 0.29 | 0.59 | Mixed PE/NE signals (PE=0.47, NE=0.46, Δ=0.01). Bo |
-| 107 | 95.3 | ~ | 0.29 | 0.30 | -0.01 | 0.05 | 0.31 | Mixed PE/NE signals (PE=0.29, NE=0.30, Δ=0.01). Bo |
-| 108 | 95.3 | ~ | 0.30 | 0.30 | -0.00 | 0.14 | 0.31 | Mixed PE/NE signals (PE=0.30, NE=0.30, Δ=0.00). Bo |
-| 120 | 91.1 | PE | 0.47 | 0.44 | +0.03 | 0.30 | 0.57 | Mixed PE/NE signals (PE=0.47, NE=0.44, Δ=0.03). Bo |
-| 130 | 90.6 | NE | 0.26 | 0.43 | -0.17 | 0.22 | 0.55 | NE-side hypothesis dominates (NE=0.43 > PE=0.26).  |
-| 140 | 90.2 | ~ | 0.43 | 0.42 | +0.00 | 0.31 | 0.55 | Mixed PE/NE signals (PE=0.43, NE=0.42, Δ=0.00). Bo |
-| 150 | 89.7 | PE | 0.47 | 0.41 | +0.06 | 0.30 | 0.53 | Mixed PE/NE signals (PE=0.47, NE=0.41, Δ=0.06). Bo |
-| 160 | 89.3 | NE | 0.38 | 0.45 | -0.07 | 0.31 | 0.58 | Mixed PE/NE signals (PE=0.38, NE=0.45, Δ=0.07). Bo |
-| 170 | 88.8 | ~ | 0.43 | 0.42 | +0.01 | 0.31 | 0.54 | Mixed PE/NE signals (PE=0.43, NE=0.42, Δ=0.01). Bo |
-| 180 | 88.3 | NE | 0.38 | 0.44 | -0.06 | 0.31 | 0.57 | Mixed PE/NE signals (PE=0.38, NE=0.44, Δ=0.06). Bo |
-| 190 | 87.7 | PE | 0.49 | 0.39 | +0.10 | 0.31 | 0.55 | PE-side hypothesis dominates (PE=0.49 > NE=0.39).  |
-| 200 | 87.3 | ~ | 0.43 | 0.43 | -0.01 | 0.31 | 0.56 | Mixed PE/NE signals (PE=0.43, NE=0.43, Δ=0.01). Bo |
-| 210 | 86.7 | PE | 0.48 | 0.43 | +0.05 | 0.31 | 0.56 | Mixed PE/NE signals (PE=0.48, NE=0.43, Δ=0.05). Bo |
-| 212 | 92.1 | PE | 0.39 | 0.29 | +0.09 | 0.25 | 0.30 | PE-side hypothesis dominates (PE=0.39 > NE=0.29).  |
-| 213 | 92.0 | PE | 0.38 | 0.34 | +0.04 | 0.31 | 0.30 | Mixed PE/NE signals (PE=0.38, NE=0.34, Δ=0.04). Bo |
-| 220 | 86.2 | NE | 0.38 | 0.44 | -0.06 | 0.31 | 0.56 | Mixed PE/NE signals (PE=0.38, NE=0.44, Δ=0.06). Bo |
-| 230 | 85.7 | ~ | 0.43 | 0.44 | -0.01 | 0.31 | 0.56 | Mixed PE/NE signals (PE=0.43, NE=0.44, Δ=0.01). Bo |
-| 240 | 85.0 | NE | 0.38 | 0.52 | -0.14 | 0.31 | 0.59 | NE-side hypothesis dominates (NE=0.52 > PE=0.38).  |
-| 250 | 84.4 | NE | 0.38 | 0.45 | -0.07 | 0.31 | 0.59 | Mixed PE/NE signals (PE=0.38, NE=0.45, Δ=0.07). Bo |
-| 260 | 83.8 | NE | 0.38 | 0.45 | -0.07 | 0.31 | 0.58 | Mixed PE/NE signals (PE=0.38, NE=0.45, Δ=0.07). Bo |
-| 270 | 83.0 | ~ | 0.43 | 0.44 | -0.01 | 0.31 | 0.56 | Mixed PE/NE signals (PE=0.43, NE=0.44, Δ=0.01). Bo |
-| 280 | 82.2 | ~ | 0.43 | 0.42 | +0.01 | 0.31 | 0.54 | Mixed PE/NE signals (PE=0.43, NE=0.42, Δ=0.01). Bo |
-| 290 | 81.3 | NE | 0.38 | 0.41 | -0.03 | 0.31 | 0.52 | Mixed PE/NE signals (PE=0.38, NE=0.41, Δ=0.03). Bo |
-| 300 | 80.2 | ~ | 0.38 | 0.39 | -0.02 | 0.31 | 0.50 | Mixed PE/NE signals (PE=0.38, NE=0.39, Δ=0.02). Bo |
-| 310 | 79.1 | NE | 0.38 | 0.42 | -0.04 | 0.31 | 0.45 | Mixed PE/NE signals (PE=0.38, NE=0.42, Δ=0.04). Bo |
-| 317 | 85.2 | PE | 0.52 | 0.46 | +0.06 | 0.30 | 0.54 | Mixed PE/NE signals (PE=0.52, NE=0.46, Δ=0.06). Bo |
-| 318 | 85.7 | ~ | 0.46 | 0.47 | -0.01 | 0.30 | 0.54 | Mixed PE/NE signals (PE=0.46, NE=0.47, Δ=0.01). Bo |
-| 330 | 77.8 | ~ | 0.38 | 0.37 | +0.01 | 0.31 | 0.47 | Mixed PE/NE signals (PE=0.38, NE=0.37, Δ=0.01). Bo |
-| 340 | 76.5 | NE | 0.26 | 0.34 | -0.08 | 0.22 | 0.43 | Mixed PE/NE signals (PE=0.26, NE=0.34, Δ=0.08). Bo |
-| 350 | 75.3 | NE | 0.26 | 0.39 | -0.13 | 0.22 | 0.44 | NE-side hypothesis dominates (NE=0.39 > PE=0.26).  |
-| 360 | 74.1 | PE | 0.49 | 0.30 | +0.19 | 0.31 | 0.43 | PE-side hypothesis dominates (PE=0.49 > NE=0.30).  |
-| 370 | 73.2 | PE | 0.38 | 0.28 | +0.10 | 0.31 | 0.40 | PE-side hypothesis dominates (PE=0.38 > NE=0.28).  |
-| 380 | 72.3 | PE | 0.43 | 0.29 | +0.14 | 0.31 | 0.41 | PE-side hypothesis dominates (PE=0.43 > NE=0.29).  |
-| 390 | 71.4 | PE | 0.38 | 0.27 | +0.11 | 0.31 | 0.38 | PE-side hypothesis dominates (PE=0.38 > NE=0.27).  |
-| 400 | 70.4 | PE | 0.33 | 0.31 | +0.02 | 0.31 | 0.44 | Mixed PE/NE signals (PE=0.33, NE=0.31, Δ=0.02). Bo |
-| 410 | 69.7 | NE | 0.21 | 0.30 | -0.08 | 0.22 | 0.42 | NE-side hypothesis dominates (NE=0.30 > PE=0.21).  |
-| 420 | 69.0 | PE | 0.33 | 0.30 | +0.03 | 0.31 | 0.43 | Mixed PE/NE signals (PE=0.33, NE=0.30, Δ=0.03). Bo |
-| 422 | 74.5 | PE | 0.48 | 0.44 | +0.04 | 0.31 | 0.57 | Mixed PE/NE signals (PE=0.48, NE=0.44, Δ=0.04). Bo |
-| 423 | 74.9 | PE | 0.48 | 0.43 | +0.05 | 0.31 | 0.55 | Mixed PE/NE signals (PE=0.48, NE=0.43, Δ=0.05). Bo |
-| 430 | 69.2 | PE | 0.33 | 0.30 | +0.03 | 0.31 | 0.43 | Mixed PE/NE signals (PE=0.33, NE=0.30, Δ=0.03). Bo |
-| 440 | 68.3 | PE | 0.33 | 0.30 | +0.03 | 0.31 | 0.43 | Mixed PE/NE signals (PE=0.33, NE=0.30, Δ=0.03). Bo |
-| 450 | 67.6 | PE | 0.38 | 0.29 | +0.08 | 0.31 | 0.42 | PE-side hypothesis dominates (PE=0.38 > NE=0.29).  |
-| 460 | 67.0 | PE | 0.33 | 0.28 | +0.04 | 0.31 | 0.41 | Mixed PE/NE signals (PE=0.33, NE=0.28, Δ=0.04). Bo |
-| 470 | 66.5 | PE | 0.33 | 0.29 | +0.04 | 0.31 | 0.42 | Mixed PE/NE signals (PE=0.33, NE=0.29, Δ=0.04). Bo |
-| 480 | 66.0 | NE | 0.33 | 0.35 | -0.02 | 0.31 | 0.42 | Mixed PE/NE signals (PE=0.33, NE=0.35, Δ=0.02). Bo |
-| 490 | 65.5 | PE | 0.33 | 0.29 | +0.04 | 0.31 | 0.41 | Mixed PE/NE signals (PE=0.33, NE=0.29, Δ=0.04). Bo |
-| 500 | 65.0 | PE | 0.33 | 0.30 | +0.02 | 0.31 | 0.44 | Mixed PE/NE signals (PE=0.33, NE=0.30, Δ=0.02). Bo |
-| 510 | 64.6 | ~ | 0.33 | 0.32 | +0.01 | 0.31 | 0.45 | Mixed PE/NE signals (PE=0.33, NE=0.32, Δ=0.01). Bo |
-| 520 | 64.1 | PE | 0.38 | 0.33 | +0.05 | 0.31 | 0.47 | Mixed PE/NE signals (PE=0.38, NE=0.33, Δ=0.05). Bo |
-| 526 | 63.9 | ~ | 0.33 | 0.33 | +0.00 | 0.31 | 0.47 | Mixed PE/NE signals (PE=0.33, NE=0.33, Δ=0.00). Bo |
-| 527 | 68.5 | ~ | 0.48 | 0.48 | +0.00 | 0.31 | 0.62 | Mixed PE/NE signals (PE=0.48, NE=0.48, Δ=0.00). Bo |
-| 528 | 68.9 | ~ | 0.43 | 0.44 | -0.01 | 0.31 | 0.63 | Mixed PE/NE signals (PE=0.43, NE=0.44, Δ=0.01). Bo |
-| 532 | 64.5 | PE | 0.38 | 0.34 | +0.04 | 0.31 | 0.48 | Mixed PE/NE signals (PE=0.38, NE=0.34, Δ=0.04). Bo |
-| 533 | 64.3 | ~ | 0.33 | 0.34 | -0.01 | 0.31 | 0.48 | Mixed PE/NE signals (PE=0.33, NE=0.34, Δ=0.01). Bo |
+| cycle | SoHQ | dominant | PE | contact | NE_hyp | LAM_PE | contact_loss | note |
+|------:|-----:|:---------|---:|--------:|-------:|-------:|-------------:|:-----|
+| 2 | 100.6 | contact_stack | 0.16 | 0.34 | 0.12 | 0.21 | 0.34 | Contact/stack ohmic pattern leads (contact=0.34) |
+| 3 | 100.0 | contact_stack | 0.00 | 0.34 | 0.12 | 0.00 | 0.34 | Contact/stack ohmic pattern leads (contact=0.34) |
+| 10 | 95.7 | contact_stack | 0.27 | 0.41 | 0.08 | 0.36 | 0.41 | Contact/stack ohmic pattern leads (contact=0.41) |
+| 20 | 94.9 | contact_stack | 0.20 | 0.41 | 0.08 | 0.26 | 0.41 | Contact/stack ohmic pattern leads (contact=0.41) |
+| 30 | 94.5 | contact_stack | 0.26 | 0.41 | 0.08 | 0.28 | 0.41 | Contact/stack ohmic pattern leads (contact=0.41) |
+| 40 | 94.1 | contact_stack | 0.33 | 0.40 | 0.08 | 0.37 | 0.40 | Contact/stack ohmic pattern leads (contact=0.40) |
+| 50 | 93.8 | contact_stack | 0.25 | 0.40 | 0.08 | 0.26 | 0.40 | Contact/stack ohmic pattern leads (contact=0.40) |
+| 60 | 93.4 | contact_stack | 0.34 | 0.40 | 0.08 | 0.38 | 0.40 | Contact/stack ohmic pattern leads (contact=0.40) |
+| 70 | 93.1 | contact_stack | 0.27 | 0.64 | 0.12 | 0.30 | 0.64 | Contact/stack ohmic pattern leads (contact=0.64) |
+| 80 | 92.7 | contact_stack | 0.30 | 0.62 | 0.12 | 0.33 | 0.62 | Contact/stack ohmic pattern leads (contact=0.62) |
+| 90 | 92.3 | contact_stack | 0.47 | 0.60 | 0.11 | 0.56 | 0.60 | Contact/stack ohmic pattern leads (contact=0.60) |
+| 100 | 91.8 | contact_stack | 0.41 | 0.60 | 0.12 | 0.48 | 0.60 | Contact/stack ohmic pattern leads (contact=0.60) |
+| 107 | 95.3 | contact_stack | 0.02 | 0.33 | 0.12 | 0.03 | 0.33 | Contact/stack ohmic pattern leads (contact=0.33) |
+| 108 | 95.3 | contact_stack | 0.09 | 0.33 | 0.12 | 0.11 | 0.33 | Contact/stack ohmic pattern leads (contact=0.33) |
+| 120 | 91.1 | contact_stack | 0.45 | 0.58 | 0.11 | 0.53 | 0.58 | Contact/stack ohmic pattern leads (contact=0.58) |
+| 130 | 90.6 | contact_stack | 0.43 | 0.57 | 0.11 | 0.50 | 0.57 | Contact/stack ohmic pattern leads (contact=0.57) |
+| 140 | 90.2 | mixed | 0.52 | 0.56 | 0.11 | 0.62 | 0.56 | Mixed signals (PE=0.52, contact=0.56, NE_hyp=0.1 |
+| 150 | 89.7 | contact_stack | 0.47 | 0.54 | 0.10 | 0.56 | 0.54 | Contact/stack ohmic pattern leads (contact=0.54) |
+| 160 | 89.3 | contact_stack | 0.53 | 0.59 | 0.11 | 0.64 | 0.59 | Contact/stack ohmic pattern leads (contact=0.59) |
+| 170 | 88.8 | mixed | 0.53 | 0.56 | 0.11 | 0.65 | 0.56 | Mixed signals (PE=0.53, contact=0.56, NE_hyp=0.1 |
+| 180 | 88.3 | mixed | 0.54 | 0.58 | 0.11 | 0.65 | 0.58 | Mixed signals (PE=0.54, contact=0.58, NE_hyp=0.1 |
+| 190 | 87.7 | mixed | 0.54 | 0.57 | 0.11 | 0.65 | 0.57 | Mixed signals (PE=0.54, contact=0.57, NE_hyp=0.1 |
+| 200 | 87.3 | mixed | 0.54 | 0.57 | 0.11 | 0.66 | 0.57 | Mixed signals (PE=0.54, contact=0.57, NE_hyp=0.1 |
+| 210 | 86.7 | mixed | 0.55 | 0.57 | 0.11 | 0.66 | 0.57 | Mixed signals (PE=0.55, contact=0.57, NE_hyp=0.1 |
+| 212 | 92.1 | PE | 0.39 | 0.32 | 0.12 | 0.46 | 0.32 | PE-side hypothesis leads (PE=0.39, contact=0.32, |
+| 213 | 92.0 | PE | 0.52 | 0.33 | 0.17 | 0.63 | 0.33 | PE-side hypothesis leads (PE=0.52, contact=0.33, |
+| 220 | 86.2 | mixed | 0.55 | 0.57 | 0.11 | 0.66 | 0.57 | Mixed signals (PE=0.55, contact=0.57, NE_hyp=0.1 |
+| 230 | 85.7 | mixed | 0.55 | 0.57 | 0.11 | 0.66 | 0.57 | Mixed signals (PE=0.55, contact=0.57, NE_hyp=0.1 |
+| 240 | 85.0 | mixed | 0.55 | 0.60 | 0.19 | 0.67 | 0.60 | Mixed signals (PE=0.55, contact=0.60, NE_hyp=0.1 |
+| 250 | 84.4 | mixed | 0.55 | 0.60 | 0.11 | 0.67 | 0.60 | Mixed signals (PE=0.55, contact=0.60, NE_hyp=0.1 |
+| 260 | 83.8 | mixed | 0.55 | 0.59 | 0.11 | 0.67 | 0.59 | Mixed signals (PE=0.55, contact=0.59, NE_hyp=0.1 |
+| 270 | 83.0 | mixed | 0.55 | 0.57 | 0.11 | 0.67 | 0.57 | Mixed signals (PE=0.55, contact=0.57, NE_hyp=0.1 |
+| 280 | 82.2 | mixed | 0.55 | 0.55 | 0.11 | 0.67 | 0.55 | Mixed signals (PE=0.55, contact=0.55, NE_hyp=0.1 |
+| 290 | 81.3 | mixed | 0.55 | 0.53 | 0.10 | 0.67 | 0.53 | Mixed signals (PE=0.55, contact=0.53, NE_hyp=0.1 |
+| 300 | 80.2 | mixed | 0.56 | 0.51 | 0.10 | 0.67 | 0.51 | Mixed signals (PE=0.56, contact=0.51, NE_hyp=0.1 |
+| 310 | 79.1 | PE | 0.56 | 0.46 | 0.15 | 0.67 | 0.46 | PE-side hypothesis leads (PE=0.56, contact=0.46, |
+| 317 | 85.2 | mixed | 0.50 | 0.55 | 0.18 | 0.60 | 0.55 | Mixed signals (PE=0.50, contact=0.55, NE_hyp=0.1 |
+| 318 | 85.7 | contact_stack | 0.44 | 0.56 | 0.18 | 0.58 | 0.56 | Contact/stack ohmic pattern leads (contact=0.56) |
+| 330 | 77.8 | PE | 0.56 | 0.48 | 0.09 | 0.68 | 0.48 | PE-side hypothesis leads (PE=0.56, contact=0.48, |
+| 340 | 76.5 | mixed | 0.49 | 0.44 | 0.09 | 0.58 | 0.44 | Mixed signals (PE=0.49, contact=0.44, NE_hyp=0.0 |
+| 350 | 75.3 | mixed | 0.49 | 0.45 | 0.15 | 0.58 | 0.45 | Mixed signals (PE=0.49, contact=0.45, NE_hyp=0.1 |
+| 360 | 74.1 | PE | 0.55 | 0.45 | 0.09 | 0.67 | 0.45 | PE-side hypothesis leads (PE=0.55, contact=0.45, |
+| 370 | 73.2 | PE | 0.51 | 0.42 | 0.08 | 0.68 | 0.42 | PE-side hypothesis leads (PE=0.51, contact=0.42, |
+| 380 | 72.3 | PE | 0.50 | 0.43 | 0.08 | 0.67 | 0.43 | PE-side hypothesis leads (PE=0.50, contact=0.43, |
+| 390 | 71.4 | PE | 0.50 | 0.40 | 0.08 | 0.67 | 0.40 | PE-side hypothesis leads (PE=0.50, contact=0.40, |
+| 400 | 70.4 | mixed | 0.51 | 0.45 | 0.09 | 0.68 | 0.45 | Mixed signals (PE=0.51, contact=0.45, NE_hyp=0.0 |
+| 410 | 69.7 | mixed | 0.44 | 0.44 | 0.08 | 0.58 | 0.44 | Mixed signals (PE=0.44, contact=0.44, NE_hyp=0.0 |
+| 420 | 69.0 | PE | 0.51 | 0.44 | 0.09 | 0.67 | 0.44 | PE-side hypothesis leads (PE=0.51, contact=0.44, |
+| 422 | 74.5 | contact_stack | 0.49 | 0.58 | 0.18 | 0.66 | 0.58 | Contact/stack ohmic pattern leads (contact=0.58) |
+| 423 | 74.9 | contact_stack | 0.48 | 0.56 | 0.18 | 0.64 | 0.56 | Contact/stack ohmic pattern leads (contact=0.56) |
+| 430 | 69.2 | PE | 0.51 | 0.44 | 0.08 | 0.67 | 0.44 | PE-side hypothesis leads (PE=0.51, contact=0.44, |
+| 440 | 68.3 | PE | 0.51 | 0.44 | 0.09 | 0.67 | 0.44 | PE-side hypothesis leads (PE=0.51, contact=0.44, |
+| 450 | 67.6 | PE | 0.51 | 0.43 | 0.08 | 0.68 | 0.43 | PE-side hypothesis leads (PE=0.51, contact=0.43, |
+| 460 | 67.0 | PE | 0.51 | 0.42 | 0.08 | 0.68 | 0.42 | PE-side hypothesis leads (PE=0.51, contact=0.42, |
+| 470 | 66.5 | PE | 0.51 | 0.43 | 0.08 | 0.68 | 0.43 | PE-side hypothesis leads (PE=0.51, contact=0.43, |
+| 480 | 66.0 | PE | 0.51 | 0.43 | 0.14 | 0.68 | 0.43 | PE-side hypothesis leads (PE=0.51, contact=0.43, |
+| 490 | 65.5 | PE | 0.51 | 0.42 | 0.08 | 0.68 | 0.42 | PE-side hypothesis leads (PE=0.51, contact=0.42, |
+| 500 | 65.0 | PE | 0.51 | 0.45 | 0.09 | 0.68 | 0.45 | PE-side hypothesis leads (PE=0.51, contact=0.45, |
+| 510 | 64.6 | mixed | 0.51 | 0.47 | 0.09 | 0.68 | 0.47 | Mixed signals (PE=0.51, contact=0.47, NE_hyp=0.0 |
+| 520 | 64.1 | mixed | 0.51 | 0.48 | 0.09 | 0.68 | 0.48 | Mixed signals (PE=0.51, contact=0.48, NE_hyp=0.0 |
+| 526 | 63.9 | mixed | 0.51 | 0.48 | 0.09 | 0.68 | 0.48 | Mixed signals (PE=0.51, contact=0.48, NE_hyp=0.0 |
+| 527 | 68.5 | contact_stack | 0.50 | 0.63 | 0.20 | 0.67 | 0.63 | Contact/stack ohmic pattern leads (contact=0.63) |
+| 528 | 68.9 | contact_stack | 0.50 | 0.64 | 0.20 | 0.67 | 0.64 | Contact/stack ohmic pattern leads (contact=0.64) |
+| 532 | 64.5 | mixed | 0.51 | 0.49 | 0.09 | 0.68 | 0.49 | Mixed signals (PE=0.51, contact=0.49, NE_hyp=0.0 |
+| 533 | 64.3 | mixed | 0.51 | 0.49 | 0.09 | 0.68 | 0.49 | Mixed signals (PE=0.51, contact=0.49, NE_hyp=0.0 |
 
-
-> ASSB Si-rich: 관측 피크≈PE; `contact_loss`→NE(기계적 접촉) 가설. 절대 LAM%는 aged 하프셀 전까지 보고하지 않음. lean은 PE−NE 상대 비교.
+> v1.1: `contact_stack` = 전극 미분해 접촉/스택 저항 패턴. `NE`는 Si co-sign(hyst_low·mech/chem·Q_relax)이 있을 때만. 절대 LAM% 금지. peak attribution은 synth FC-OCP 도메인.

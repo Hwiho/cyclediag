@@ -1,0 +1,25 @@
+{
+  "lam_pe": {
+    "n": 65,
+    "ceiling_frac": 0.0,
+    "nunique": 65,
+    "min": 0.0,
+    "max": 0.6771048704049313,
+    "mean": 0.5682028197571924
+  },
+  "lean_sensitivity": {
+    "n": 66,
+    "corr_delta_contact": 0.3760937817259787,
+    "corr_delta_lam_pe": 0.9542924399865346,
+    "note": "\u0394 lean should not be a near-proxy of contact alone after v1.1"
+  },
+  "peak_attribution": {
+    "available": true,
+    "mean_hits": 0.24242424242424243,
+    "mean_hits_delta": 0.0,
+    "early_mean_delta": 0.0,
+    "late_mean_delta": 0.0
+  },
+  "n_rows": 66,
+  "methodology_version": "electrode_side_v1_1"
+}

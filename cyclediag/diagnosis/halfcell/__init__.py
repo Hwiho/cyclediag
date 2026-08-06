@@ -6,7 +6,12 @@ from .calibration_schema import (
     validate_calibration_record,
 )
 from .calibrate import HalfCellCalibrationNotReady, bol_ocp_prototype_status, calibrate
-from .ocp_library import OcpLibrary, load_ocp_library, synthesize_fullcell_ocp
+from .ocp_library import (
+    OcpLibrary,
+    fullcell_ocp_peak_voltages,
+    load_ocp_library,
+    synthesize_fullcell_ocp,
+)
 
 __all__ = [
     "CALIBRATION_SCHEMA_VERSION",
@@ -18,4 +23,5 @@ __all__ = [
     "OcpLibrary",
     "load_ocp_library",
     "synthesize_fullcell_ocp",
+    "fullcell_ocp_peak_voltages",
 ]

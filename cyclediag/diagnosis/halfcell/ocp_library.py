@@ -225,3 +225,23 @@ def synthesize_fullcell_ocp(
         "anode_source": ne.cell_id,
         "note": "Q-normalized shape only; absolute Ah not comparable across coin/pouch fixtures",
     }
+
+
+def fullcell_ocp_peak_voltages(
+    library: OcpLibrary,
+    *,
+    max_peaks: int = 6,
+) -> list[float]:
+    """dQ/dV peak voltages on synthetic full-cell OCP (correct voltage domain).
+
+    Do **not** match full-cell peaks to raw cathode-vs-Li OCP voltages.
+    """
+    synth = synthesize_fullcell_ocp(library)
+    if synth is None:
+        return []
+    q = np.asarray(synth["q_norm"], dtype=float)
+    v = np.asarray(synth["voltage"], dtype=float)
+    # Capacity proxy on [0,1] grid for peak finder
+    peaks = find_dqdv_peaks(v, q, max_peaks=max_peaks)
+    return [float(p["V"]) for p in peaks if np.isfinite(p.get("V", np.nan))]
+

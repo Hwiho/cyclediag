@@ -143,8 +143,9 @@ def fit_curve_params(
         "fit_residual_argmax_SOC": (q_arg / float(np.nanmax(q_n))) * 100.0,
         "fit_r2": (1.0 - ss_res / ss_tot) if ss_tot > 1e-15 else None,
         "fit_corr_s_o": corr_so,
-        "fit_degenerate_flag": deg,
-        "LAM_curve_proxy": (1.0 - s) * 100.0,
+        "fit_degenerate_flag": deg or (s >= 1.199) or (s <= 0.501),
+        # Bound-saturated scale is not usable LAM evidence — leave null
+        "LAM_curve_proxy": (None if (s >= 1.199 or s <= 0.501) else (1.0 - s) * 100.0),
         "LLI_curve_proxy": (o / q_max) * 100.0,
         "R_curve_proxy": dr_ohm * 1000.0,
     }

@@ -2,7 +2,7 @@
   "cell_id": "M01Ch022",
   "n_cycles_sampled": 70,
   "n_feature_rows": 70,
-  "n_segments": 13,
+  "n_segments": 6,
   "baseline_cycle": 2,
   "ocp_meta": {
     "root": "/workspace/example/fixtures/halfcell",

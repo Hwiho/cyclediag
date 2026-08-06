@@ -36,15 +36,32 @@ def _find_pulse_cycles(
     raw_df: pd.DataFrame,
     *,
     expected_pulse_current: float,
+    fraction: float = 0.75,
 ) -> list[int]:
+    """Cycles with |I| near 1C pulse (not routine 0.5C).
+
+    Routine 0.5C ≈ 0.5×1C, so ``fraction`` must be >0.5 (default 0.75).
+    """
+    thr = float(fraction) * float(expected_pulse_current)
     out: list[int] = []
     for cyc, g in raw_df.groupby("cycle"):
         i = pd.to_numeric(g.get("current"), errors="coerce")
         if i is None or i.isna().all():
             continue
-        if float(i.abs().max()) >= 0.5 * expected_pulse_current:
+        if float(i.abs().max()) >= thr:
             out.append(int(cyc))
     return sorted(set(out))
+
+
+def find_dcir_pulse_cycles(
+    raw_df: pd.DataFrame,
+    *,
+    expected_pulse_current: float = 70.0,
+) -> list[int]:
+    """Public helper — same thr as enrich (0.75×1C)."""
+    return _find_pulse_cycles(
+        raw_df, expected_pulse_current=expected_pulse_current, fraction=0.75,
+    )
 
 
 def _group_consecutive(cycles: list[int], *, min_len: int = 1) -> list[list[int]]:
