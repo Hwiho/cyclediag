@@ -1,25 +1,43 @@
 {
   "lam_pe": {
-    "n": 69,
+    "n": 90,
     "ceiling_frac": 0.0,
-    "nunique": 69,
+    "nunique": 90,
     "min": 0.0,
-    "max": 0.6770179736198553,
-    "mean": 0.5799860289791691
+    "max": 0.9999729271159846,
+    "mean": 0.7461141755678133
   },
   "lean_sensitivity": {
-    "n": 70,
-    "corr_delta_contact": 0.595777185199143,
-    "corr_delta_lam_pe": 0.9514692141910936,
+    "n": 90,
+    "corr_delta_contact": 0.4392916652339679,
+    "corr_delta_lam_pe": 0.9069786297093677,
     "note": "\u0394 lean should not be a near-proxy of contact alone after v1.1"
   },
   "peak_attribution": {
     "available": true,
-    "mean_hits": 0.22857142857142856,
-    "mean_hits_delta": 0.0,
-    "early_mean_delta": 0.0,
+    "mean_hits": 0.3,
+    "mean_hits_delta": 0.3,
+    "early_mean_delta": 1.4,
     "late_mean_delta": 0.0
   },
-  "n_rows": 70,
-  "methodology_version": "electrode_side_v1_1"
+  "n_rows": 90,
+  "methodology_version": "electrode_side_v1_1",
+  "protocol": {
+    "routine_n": 60,
+    "rpt_c3_n": 12,
+    "rpt_c3_cycles": [
+      2,
+      3,
+      107,
+      108,
+      212,
+      213,
+      317,
+      318,
+      422,
+      423,
+      527,
+      528
+    ]
+  }
 }

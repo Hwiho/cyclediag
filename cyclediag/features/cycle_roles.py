@@ -51,13 +51,15 @@ def classify_cycle_currents(
         role = "unknown"
         if np.isfinite(imax) and imax >= 0.75 * i1c:
             role = "dcir_pulse"
-        elif np.isfinite(imed):
+        elif np.isfinite(imed) and imed >= 5.0:
             if abs(imed - i_rpt) <= abs(imed - i_rout) and imed < 0.85 * i_rout:
                 role = "rpt_c3"
             elif imed >= 0.85 * i_rout * 0.9:
                 role = "routine_05c"
             else:
                 role = "other_rate"
+        elif np.isfinite(imed) and imed < 5.0:
+            role = "rest_or_idle"
         rows.append({
             "cycle": int(cyc),
             "I_abs_max": imax,

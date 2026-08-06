@@ -1,25 +1,43 @@
 {
   "lam_pe": {
-    "n": 65,
+    "n": 88,
     "ceiling_frac": 0.0,
-    "nunique": 65,
-    "min": 0.0,
-    "max": 0.6771048704049313,
-    "mean": 0.5682028197571924
+    "nunique": 88,
+    "min": 0.13343563104677453,
+    "max": 0.9999940000779178,
+    "mean": 0.7227836179509555
   },
   "lean_sensitivity": {
-    "n": 66,
-    "corr_delta_contact": 0.3760937817259787,
-    "corr_delta_lam_pe": 0.9542924399865346,
+    "n": 88,
+    "corr_delta_contact": -0.02479525366202877,
+    "corr_delta_lam_pe": 0.9150291996086665,
     "note": "\u0394 lean should not be a near-proxy of contact alone after v1.1"
   },
   "peak_attribution": {
     "available": true,
-    "mean_hits": 0.24242424242424243,
-    "mean_hits_delta": 0.0,
-    "early_mean_delta": 0.0,
-    "late_mean_delta": 0.0
+    "mean_hits": 0.3181818181818182,
+    "mean_hits_delta": 0.03409090909090909,
+    "early_mean_delta": 0.2,
+    "late_mean_delta": 0.4
   },
-  "n_rows": 66,
-  "methodology_version": "electrode_side_v1_1"
+  "n_rows": 88,
+  "methodology_version": "electrode_side_v1_1",
+  "protocol": {
+    "routine_n": 58,
+    "rpt_c3_n": 12,
+    "rpt_c3_cycles": [
+      2,
+      3,
+      107,
+      108,
+      212,
+      213,
+      317,
+      318,
+      422,
+      423,
+      527,
+      528
+    ]
+  }
 }

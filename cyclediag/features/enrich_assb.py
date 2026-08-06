@@ -9,7 +9,6 @@ import pandas as pd
 
 from cyclediag.features.curve_fit import attach_curve_fit
 from cyclediag.features.cycle_roles import attach_cycle_roles
-from cyclediag.features.fade_trajectory import attach_fade_trajectory
 from cyclediag.features.dcir_decompose import (
     decompose_pulse_cycle,
     result_to_dict,
@@ -474,7 +473,5 @@ def enrich_feature_table(
         if not role_table.empty else []
     )
 
-    # §5.12 fade exponent + bilinear knee on routine SoHQ only
-    out = attach_fade_trajectory(out)
-
+    # Fade/knee need SoHQ from apply_lges_delta_features — attach later in extract.
     return out, meta

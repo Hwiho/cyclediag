@@ -67,7 +67,11 @@ def _dcir_triplet_cycles(raw: pd.DataFrame, *, expected_pulse_current: float = 7
 
 
 def _capa_sample_cycles(raw: pd.DataFrame, *, step: int = 10) -> list[int]:
-    """Sample routine 0.5C densely; always include C/3 RPT anchors; skip DCIR pulses."""
+    """Sample routine 0.5C densely; keep C/3 RPT anchors; include DCIR pulses for R features.
+
+    Fade/lean/segments later filter to routine_05c only. DCIR must still be extracted
+    so ohmic/ct growth can forward-fill onto routine cycles.
+    """
     all_c = sorted(int(c) for c in raw["cycle"].dropna().unique())
     roles = classify_cycle_currents(raw).set_index("cycle")
     dcir = _dcir_triplet_cycles(raw)
@@ -94,9 +98,11 @@ def _capa_sample_cycles(raw: pd.DataFrame, *, step: int = 10) -> list[int]:
             c % step == 0 or c in anchors or c in milestones or c <= 5
         )
     ]
-    # Always keep RPT dual-track points + early/late routine
     rout_sorted = [c for c in all_c if c in routine]
-    grid = sorted(set(grid) | set(rpt) | set(rout_sorted[:3]) | set(rout_sorted[-5:]) | anchors)
+    # Include DCIR pulse triplets so enrich can stamp R_* and forward-fill
+    grid = sorted(
+        set(grid) | set(rpt) | set(dcir) | set(rout_sorted[:3]) | set(rout_sorted[-5:]) | anchors
+    )
     return grid
 
 

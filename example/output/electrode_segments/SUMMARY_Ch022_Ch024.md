@@ -1,17 +1,20 @@
-# Ch022 / Ch024 전극 가설 진단 요약 (v1.1 검증개정)
+# Ch022 / Ch024 전극 가설 진단 요약 (v1.2 · C/3 RPT dual-track)
 
 - PDF: `ASSB_SJ900_Ch022_Ch024_electrode_diagnosis_report.pdf`
-- 계획: `cyclediag/planning/VALIDATION_IMPROVEMENT_PLAN.md`
-- Level: `hypothesis_bol_ocp` · methodology `electrode_side_v1_1`
+- Level: `hypothesis_bol_ocp` · methodology `electrode_side_v1_2`
 
-## 검증으로 고친 것
-| 이슈 | 조치 | 결과 |
-|---|---|---|
-| pulse 0.5×I | thr 0.75×I | pulse_frac ≈ 3% (구 ~98%) |
-| LAM_PE≈0.31 천장 | weights/proxy/baseline | ceiling_frac=0, nunique≈전 구간 |
-| FC↔cathode V 매칭 | synth FC-OCP + Δhits | 허위 PE pad 제거 |
-| contact→NE 원형 | contact_stack + Si co-sign | NE_hyp 낮음, 과신 서사 제거 |
+## 핵심 인식
+중간 SoHQ “스파이크”는 노이즈가 아니라 **C/3 (~0.33C) RPT 용량**이다  
+(|I|≈25.8 A vs routine 0.5C |I|≈38.7 A). Δ(RPT−routine) ≈ **+3~7%p**.
 
-## 개정 결론
-- **Ch022:** 초·중반 **contact_stack** 우위 → 후반 PE와 경합(mixed). “중기 음극 확정” 아님.
-- **Ch024:** contact/mixed 후 후반(**≈360+**) PE 구간이 더 분명.
+## 알고리즘 변경
+| 트랙 | 용도 |
+|---|---|
+| `routine_05c` | fade / knee / lean / 세그먼트 |
+| `rpt_c3` | SoHQ_rpt 앵커 · RCF · η(SOC) |
+| `dcir_pulse` | R_ohmic/R_ct 분해 후 routine에 forward-fill (궤적 제외) |
+
+## 개정 결론 (routine only)
+- **Ch022:** 중기 **contact_stack** 고원 → knee≈350 이후 mixed → 후기(≈500+) **PE lean**. NE는 Si co-sign 있을 때만.
+- **Ch024:** 초·중기 contact_stack → ≈410+ **PE**가 더 이름. fade≈1.28, knee≈290.
+- 절대 LAM% / “중기 음극 확정” 서사 금지.

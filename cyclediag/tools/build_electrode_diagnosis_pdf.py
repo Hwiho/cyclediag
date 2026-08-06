@@ -422,7 +422,7 @@ def page_scatter_phase(pdf: PdfPages, d22: pd.DataFrame, d24: pd.DataFrame):
         ax.set_ylabel("LAM_PE (PE)", fontproperties=fp(9))
         ax.set_title(title, fontproperties=fp(10, "bold"))
         ax.set_xlim(0.2, 0.75)
-        ax.set_ylim(0.0, 0.45)
+        ax.set_ylim(0.0, 1.0)
         ax.grid(True, alpha=0.25)
         for label in ax.get_xticklabels() + ax.get_yticklabels():
             label.set_fontproperties(fp(8))
@@ -437,25 +437,22 @@ def page_scatter_phase(pdf: PdfPages, d22: pd.DataFrame, d24: pd.DataFrame):
 def page_interpretation_ch022(pdf: PdfPages):
     fig = new_page(pdf, "8. Ch022 — 해석 스토리 (상황 설명)")
     text = (
-        "단계 A · 형성~조기 (≈2–70)\n"
-        "SoHQ는 100%→93%로 완만. PE/NE 점수가 모두 낮고 Δ가 ±0.05 안에서 흔들린다. "
-        "이 구간은 ‘어느 전극이 지배적’이라기보다 기준선 확립과 약한 초기 신호 단계다. "
-        "40–70에서 일시적 PE lean이 보이지만 contact_loss는 아직 0.4 미만이다.\n\n"
-        "단계 B · 중기 음극 지배 (≈80–380) — 가장 중요한 구간\n"
-        "cycle 80 부근에서 contact_loss가 ~0.67로 점프하고, 이후 중기 대부분 0.6대를 유지한다. "
-        "동시에 NE_side가 PE_side를 지속 상회(Δ≈−0.08~−0.20). ASSB Si-rich 정책상 "
-        "이 패턴을 ‘음극 기계적 접촉 손실 가설이 우세’로 읽는다. "
-        "구속 압력 로그가 없어 절대 원인 단정은 불가하나, R_ohmic/mech 계열 증거가 "
-        "NE 버킷에 매핑되어 점수가 올라간 상황이다. LLI도 중기 후반 상승해 공유 모드가 "
-        "병행되지만, lean의 부호를 바꾼 주인공은 contact_loss다.\n\n"
-        "단계 C · 전환 (~390)\n"
-        "cycle 390 전후 Δ가 음→양으로 바뀐다. contact_loss가 소폭 완화(0.6→0.5대)되고 "
-        "PE_side가 0.48–0.53으로 올라가 PE lean이 열린다. ‘양극이 갑자기 나빠졌다’기보다 "
-        "음극 측 상대 증거가 한 풀 꺾이며 양극 패턴이 전면에 드러난 전환으로 해석한다.\n\n"
-        "단계 D · 후기 양극 우위 (≈390–550) & EOL\n"
-        "SoHQ 76%→66%. PE lean이 유지되며 LAM_PE pattern은 ~0.31로 고원. "
-        "EOL(560+)에서는 Δ가 다시 소폭 음으로 돌아가 마진이 작아진다 — 후기에도 "
-        "양·음극 신호가 공존함을 보여 주며, 단정 대신 ‘후기 PE 우세 후 EOL 근소 혼합’으로 기술한다."
+        "프로토콜 전제\n"
+        "중간 SoHQ 상승(예: cyc 107/212/317/422/527)은 C/3 RPT 용량이다. "
+        "Δ(RPT−routine)≈+3~7%p로 rate gap이 커지며, fade/lean은 0.5C routine만 사용한다.\n\n"
+        "단계 A · 조기 (≈7–60)\n"
+        "routine SoHQ 96%→94%. contact_stack와 PE가 근소 경합. "
+        "‘어느 전극 확정’보다 기준선·초기 ohmic 신호 단계.\n\n"
+        "단계 B · 중기 contact_stack (≈100–310) — 핵심\n"
+        "contact_loss≈0.61–0.66 고원, PE와 경합하되 lean은 contact/스택 쪽이 잦다. "
+        "Si co-sign이 약하면 NE 라벨이 아니라 contact_stack으로 둔다. "
+        "RPT 앵커의 SoHQ bump는 이 구간의 ‘회복’이 아니다.\n\n"
+        "단계 C · knee 전후 (~350) · 전환 (~390+)\n"
+        "routine knee≈350. 이후 PE↔contact 마진이 줄고 mixed. "
+        "후기(500+)에서 PE_side가 올라가 상대 PE lean이 열린다 "
+        "(절대 LAM% 아님).\n\n"
+        "단계 D · EOL\n"
+        "SoHQ≈65%. PE 상대 우위와 contact 증거가 공존 — 단정 대신 후기 PE lean으로 기술."
     )
     draw_wrapped(fig, 0.08, 0.90, text, width=92, size=9)
     pdf.savefig(fig)
@@ -465,22 +462,21 @@ def page_interpretation_ch022(pdf: PdfPages):
 def page_interpretation_ch024(pdf: PdfPages):
     fig = new_page(pdf, "9. Ch024 — 해석 스토리 (상황 설명)")
     text = (
-        "단계 A · 초반 양극 경향 (≈2–90)\n"
-        "Ch022와 달리 초반부터 PE_side가 NE_side보다 높은 구간이 많다(Δ>0). "
-        "SoHQ 100%→92%. LAM_PE와 contact가 동시에 완만히 오르지만 lean은 PE 쪽이다.\n\n"
-        "단계 B · 중기 혼재 + 짧은 NE 포켓 (≈100–350)\n"
-        "100–230은 PE↔NE가 교차하는 mixed. 240–260과 340–350에서 contact_loss가 "
-        "올라가 NE 지배가 명확해지는 ‘포켓’이 생긴다. Ch022의 긴 NE 고원(~300 cyc)과 "
-        "비교하면 Ch024의 음극 우위는 짧고 단속적이다.\n\n"
-        "단계 C · 후기 양극 (~360–EOL)\n"
-        "≈360 이후 Δ가 다시 양수로 기울고 PE 상대 지배가 이어진다. SoHQ 74%→64%. "
-        "수명 롤업도 early PE · mid NE 근소 · late PE로, Ch022와 ‘후기 PE’는 공유하되 "
-        "중기 NE의 길이·강도가 다르다.\n\n"
-        "셀 간 함의\n"
-        "동일 화학(SJ900)·유사 fade 깊이(~65% SoHQ)에서도 전극 lean 타임라인이 다르다. "
-        "이는 full-cell 패턴 진단이 셀별 기구 서사를 구분할 수 있음을 시사하나, "
-        "압력·온도·로트 공변량이 비어 있어 원인 단정은 보류한다. aged 하프셀이 오면 "
-        "이 lean을 절대 LAM_PE/NE%로 검증하는 것이 다음 단계다."
+        "프로토콜 전제\n"
+        "Ch022와 동일하게 C/3 RPT가 ~105 cyc 주기로 SoHQ 스파이크를 만든다. "
+        "이중 트랙 분리 후 routine fade 지수≈1.28, knee≈290.\n\n"
+        "단계 A–B · 초·중기 contact_stack (≈7–210)\n"
+        "contact_stack 우위가 길게 이어진다. Ch022와 같이 ‘중기 음극 확정’이 아니라 "
+        "전극 미분해 접촉/스택 패턴이다.\n\n"
+        "단계 C · 중후기 mixed (≈220–400)\n"
+        "PE와 contact 마진이 좁아지고 lean이 흔들린다. "
+        "짧은 NE_hyp 포켓은 Si co-sign이 있을 때만 라벨.\n\n"
+        "단계 D · 후기 PE (≈410–EOL)\n"
+        "Ch022보다 이른 구간에서 PE 상대 지배가 분명해진다(≈410+). "
+        "SoHQ 70%→64%. 동일 SJ900에서도 lean 타임라인이 셀마다 다르다.\n\n"
+        "함의\n"
+        "RPT를 노이즈로 지우면 fade/knee가 왜곡되고, RPT를 routine에 섞으면 "
+        "가짜 ‘용량 회복’ 서사가 생긴다. 알고리즘은 둘을 분리한다."
     )
     draw_wrapped(fig, 0.08, 0.90, text, width=92, size=9)
     pdf.savefig(fig)
@@ -512,6 +508,10 @@ def page_limits(pdf: PdfPages):
 
 
 def phase_means(d: pd.DataFrame) -> str:
+    if "cycle_role" in d.columns:
+        rout = d[d["cycle_role"].astype(str).eq("routine_05c")]
+        if len(rout) >= 9:
+            d = rout
     d = d.dropna(subset=["SoHQ"])
     n = len(d)
     parts = []
@@ -545,12 +545,12 @@ def main():
         page_cell_overview(
             pdf, "M01Ch022", d22, s22,
             f"샘플 {len(d22)} capa-like cycles. {phase_means(d22)}. "
-            "중기 NE(contact_loss) 고원 후 ~390에서 PE lean 전환이 핵심 서사.",
+            "routine only 궤적. 중기 contact_stack 고원 → 후기(≈500+) PE lean. C/3 RPT는 앵커.",
         )
         page_cell_drivers(
             pdf, "M01Ch022", d22, s22,
             "상단: LAM_PE vs contact_loss vs LLI. 하단: Δ=PE−NE (구간 전환 트리거). "
-            "중기 Δ<0이 길고, 후기 Δ>0으로 바뀌는 것이 ‘음극→양극’ 해석의 직접 근거.",
+            "상단: LAM_PE vs contact_loss. 하단 lean. RPT bump는 궤적 노이즈가 아님.",
         )
         page_segment_table(
             pdf, "M01Ch022", s22,
@@ -559,15 +559,15 @@ def main():
         page_cell_overview(
             pdf, "M01Ch024", d24, s24,
             f"샘플 {len(d24)} capa-like cycles. {phase_means(d24)}. "
-            "초·후기 PE 경향, 중기 NE 포켓이 Ch022보다 짧다.",
+            "초·중기 contact_stack → ≈410+ PE lean. RPT dual-track 적용.",
         )
         page_cell_drivers(
             pdf, "M01Ch024", d24, s24,
-            "Ch024는 contact_loss 고원이 Ch022만큼 길지 않고, Δ 부호 반전이 더 빈번(혼재)하다.",
+            "Ch024는 후기 PE 전환이 Ch022보다 이름. mid는 PE↔contact mixed.",
         )
         page_segment_table(
             pdf, "M01Ch024", s24,
-            "Seg5·8이 짧은 NE 명확 구간, Seg9–11이 후기 PE 구간.",
+            "후기 seg가 PE 상대 지배. 세그먼트는 routine_05c only.",
         )
         page_comparison(pdf, d22, d24)
         page_scatter_phase(pdf, d22, d24)
@@ -576,7 +576,7 @@ def main():
         page_limits(pdf)
 
         meta = pdf.infodict()
-        meta["Title"] = "ASSB SJ900 Ch022/Ch024 Electrode-side Diagnosis Report"
+        meta["Title"] = "ASSB SJ900 Ch022/Ch024 Electrode-side Diagnosis Report v1.2"
         meta["Author"] = "CycleDiag"
         meta["Subject"] = "hypothesis_bol_ocp PE/NE segment diagnosis"
         meta["Keywords"] = "ASSB, SJ900, LAM_PE, contact_loss, electrode diagnosis"
