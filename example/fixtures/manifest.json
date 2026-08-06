@@ -1,73 +1,52 @@
 {
-  "dataset": "260304_900wet_vs_900dry_vs_1300dry",
-  "description": "PNE cycler *_raw.csv only — golden fixtures for CycleDiag / Cloud Agents",
-  "source_root_note": "C:\\260304_900wet_vs_900dry_vs_1300dry (local)",
-  "cells": [
+  "description": "CycleDiag fixtures indexed by DOE",
+  "does": [
     {
-      "cell_id": "M01Ch005",
-      "series": "set1_SJ900",
-      "chemistry": "ASSB_SJ900_Si_rich",
-      "path": "example/fixtures/raw/set1_SJ900/M01Ch005_raw.csv",
-      "size_mb": 73.8
+      "id": "900wet_vs_900dry",
+      "path": "example/fixtures/doe/900wet_vs_900dry",
+      "question": "SJ900 wet vs dry process",
+      "arms": ["set1_SJ900", "set4_SJ900"],
+      "source": "C:\\260304_900wet_vs_900dry_vs_1300dry",
+      "notes": "Confirm which set is wet vs dry"
     },
     {
-      "cell_id": "M01Ch011",
-      "series": "set1_SJ900",
-      "chemistry": "ASSB_SJ900_Si_rich",
-      "path": "example/fixtures/raw/set1_SJ900/M01Ch011_raw.csv",
-      "size_mb": 74.3
+      "id": "900dry_vs_1300dry",
+      "path": "example/fixtures/doe/900dry_vs_1300dry",
+      "question": "SJ900 dry vs SJ1300 dry",
+      "arms": ["SJ1300_dry"],
+      "sj900_dry_arm_ref": "example/fixtures/doe/900wet_vs_900dry/set4_SJ900",
+      "source": "C:\\260304_900wet_vs_900dry_vs_1300dry"
     },
     {
-      "cell_id": "M01Ch013",
-      "series": "set1_SJ900",
-      "chemistry": "ASSB_SJ900_Si_rich",
-      "path": "example/fixtures/raw/set1_SJ900/M01Ch013_raw.csv",
-      "size_mb": 73.8
+      "id": "set3_bimodal_vs_S83S",
+      "path": "example/fixtures/doe/set3_bimodal_vs_S83S",
+      "question": "Cathode degradation: Bimodal vs S83S",
+      "arms": ["Bimodal", "S83S"],
+      "source": "C:\\00207966_260617_모노셀_45도 cycle_Set3_bimodal-30um전해질",
+      "temp_C": 45
     },
     {
-      "cell_id": "M01Ch022",
-      "series": "set4_SJ900",
-      "chemistry": "ASSB_SJ900_Si_rich",
-      "path": "example/fixtures/raw/set4_SJ900/M01Ch022_raw.csv",
-      "size_mb": 75.9
-    },
-    {
-      "cell_id": "M01Ch024",
-      "series": "set4_SJ900",
-      "chemistry": "ASSB_SJ900_Si_rich",
-      "path": "example/fixtures/raw/set4_SJ900/M01Ch024_raw.csv",
-      "size_mb": 71.2
-    },
-    {
-      "cell_id": "M01Ch025",
-      "series": "set4_SJ900",
-      "chemistry": "ASSB_SJ900_Si_rich",
-      "path": "example/fixtures/raw/set4_SJ900/M01Ch025_raw.csv",
-      "size_mb": 21.3
-    },
-    {
-      "cell_id": "M01Ch010",
-      "series": "SJ1300_dry",
-      "chemistry": "ASSB_SJ900_Si_rich",
-      "path": "example/fixtures/raw/SJ1300_dry/M01Ch010_raw.csv",
-      "size_mb": 59.3,
-      "notes": "SJ1300 dry; chemistry key may be refined later"
-    },
-    {
-      "cell_id": "M01Ch011",
-      "series": "SJ1300_dry",
-      "chemistry": "ASSB_SJ900_Si_rich",
-      "path": "example/fixtures/raw/SJ1300_dry/M01Ch011_raw.csv",
-      "size_mb": 59.3,
-      "notes": "SJ1300 dry; chemistry key may be refined later"
-    },
-    {
-      "cell_id": "M01Ch012",
-      "series": "SJ1300_dry",
-      "chemistry": "ASSB_SJ900_Si_rich",
-      "path": "example/fixtures/raw/SJ1300_dry/M01Ch012_raw.csv",
-      "size_mb": 59.0,
-      "notes": "SJ1300 dry; chemistry key may be refined later"
+      "id": "halfcell_BOL_C20",
+      "path": "example/fixtures/halfcell",
+      "question": "Pristine half-cell OCP library (no aged)",
+      "rate": "C/20"
     }
+  ],
+  "cells": [
+    {"doe": "900wet_vs_900dry", "arm": "set1_SJ900", "cell_id": "M01Ch005", "path": "example/fixtures/doe/900wet_vs_900dry/set1_SJ900/M01Ch005_raw.csv"},
+    {"doe": "900wet_vs_900dry", "arm": "set1_SJ900", "cell_id": "M01Ch011", "path": "example/fixtures/doe/900wet_vs_900dry/set1_SJ900/M01Ch011_raw.csv"},
+    {"doe": "900wet_vs_900dry", "arm": "set1_SJ900", "cell_id": "M01Ch013", "path": "example/fixtures/doe/900wet_vs_900dry/set1_SJ900/M01Ch013_raw.csv"},
+    {"doe": "900wet_vs_900dry", "arm": "set4_SJ900", "cell_id": "M01Ch022", "path": "example/fixtures/doe/900wet_vs_900dry/set4_SJ900/M01Ch022_raw.csv"},
+    {"doe": "900wet_vs_900dry", "arm": "set4_SJ900", "cell_id": "M01Ch024", "path": "example/fixtures/doe/900wet_vs_900dry/set4_SJ900/M01Ch024_raw.csv"},
+    {"doe": "900wet_vs_900dry", "arm": "set4_SJ900", "cell_id": "M01Ch025", "path": "example/fixtures/doe/900wet_vs_900dry/set4_SJ900/M01Ch025_raw.csv"},
+    {"doe": "900dry_vs_1300dry", "arm": "SJ1300_dry", "cell_id": "M01Ch010", "path": "example/fixtures/doe/900dry_vs_1300dry/SJ1300_dry/M01Ch010_raw.csv"},
+    {"doe": "900dry_vs_1300dry", "arm": "SJ1300_dry", "cell_id": "M01Ch011", "path": "example/fixtures/doe/900dry_vs_1300dry/SJ1300_dry/M01Ch011_raw.csv"},
+    {"doe": "900dry_vs_1300dry", "arm": "SJ1300_dry", "cell_id": "M01Ch012", "path": "example/fixtures/doe/900dry_vs_1300dry/SJ1300_dry/M01Ch012_raw.csv"},
+    {"doe": "set3_bimodal_vs_S83S", "arm": "Bimodal", "cell_id": "M02Ch109", "path": "example/fixtures/doe/set3_bimodal_vs_S83S/Bimodal/M02Ch109_raw.csv"},
+    {"doe": "set3_bimodal_vs_S83S", "arm": "Bimodal", "cell_id": "M02Ch110", "path": "example/fixtures/doe/set3_bimodal_vs_S83S/Bimodal/M02Ch110_raw.csv"},
+    {"doe": "set3_bimodal_vs_S83S", "arm": "Bimodal", "cell_id": "M02Ch111", "path": "example/fixtures/doe/set3_bimodal_vs_S83S/Bimodal/M02Ch111_raw.csv"},
+    {"doe": "set3_bimodal_vs_S83S", "arm": "S83S", "cell_id": "M02Ch103", "path": "example/fixtures/doe/set3_bimodal_vs_S83S/S83S/M02Ch103_raw.csv"},
+    {"doe": "set3_bimodal_vs_S83S", "arm": "S83S", "cell_id": "M02Ch104", "path": "example/fixtures/doe/set3_bimodal_vs_S83S/S83S/M02Ch104_raw.csv"},
+    {"doe": "set3_bimodal_vs_S83S", "arm": "S83S", "cell_id": "M02Ch105", "path": "example/fixtures/doe/set3_bimodal_vs_S83S/S83S/M02Ch105_raw.csv"}
   ]
 }

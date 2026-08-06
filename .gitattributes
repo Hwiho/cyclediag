@@ -1,7 +1,8 @@
-# Git LFS — raw cycler CSVs (up to ~80MB each)
+# Git LFS — DOE / cycler raw CSVs (up to ~80MB each)
+example/fixtures/doe/**/*.csv filter=lfs diff=lfs merge=lfs -text
+# legacy path (kept for older clones)
 example/fixtures/raw/**/*.csv filter=lfs diff=lfs merge=lfs -text
 
 # Half-cell BOL OCP fixtures
 example/fixtures/halfcell/**/*.csv filter=lfs diff=lfs merge=lfs -text
 example/fixtures/halfcell/source/**/*.xlsx filter=lfs diff=lfs merge=lfs -text
-

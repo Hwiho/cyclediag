@@ -6,31 +6,21 @@ GUI 없음 · `pne_studio2` 불필요 · 단독 구동.
 
 **Version:** 1.0.0
 
-## Example fixtures (Git LFS)
+## Example fixtures (Git LFS) — **DOE별 폴더**
 
-### Full-cell cycle (`example/fixtures/raw/`)
+상세: [`example/fixtures/README.md`](example/fixtures/README.md) · [`manifest.json`](example/fixtures/manifest.json)
 
-`260304_900wet_vs_900dry_vs_1300dry`에서 가져온 `*_raw.csv` 9개.
-
-| Series | Cells |
-|--------|-------|
-| set1_SJ900 | M01Ch005, Ch011, Ch013 |
-| set4_SJ900 | M01Ch022, Ch024, Ch025 |
-| SJ1300_dry | M01Ch010, Ch011, Ch012 |
-
-목록: [`example/fixtures/manifest.json`](example/fixtures/manifest.json)
-
-### Half-cell BOL OCP (`example/fixtures/halfcell/`) — **데이터 있음**
-
-양·음극 **초기(C/20) 하프셀** fixture. 음극 CSV는 **cycle 1–3**.  
-**열화 이후(aged) 하프셀은 아직 없음.**
-
-상세: [`example/fixtures/halfcell/README.md`](example/fixtures/halfcell/README.md) · [`manifest.json`](example/fixtures/halfcell/manifest.json)
+| DOE | 비교 | Arms |
+|-----|------|------|
+| `doe/900wet_vs_900dry` | SJ900 wet vs dry | set1 · set4 |
+| `doe/900dry_vs_1300dry` | SJ900 dry vs SJ1300 dry | SJ1300_dry (+ set4 ref) |
+| `doe/set3_bimodal_vs_S83S` | **양극** Bimodal vs S83S | Ch109–111 · Ch103–105 |
+| `halfcell/` | BOL OCP C/20 | anode · cathode (**aged 없음**) |
 
 ```bash
 git lfs install
 git lfs pull
-python run_cyclediag.py extract --input example/fixtures/raw/set4_SJ900/M01Ch025_raw.csv --out /tmp/f.csv
+python run_cyclediag.py extract --input example/fixtures/doe/900wet_vs_900dry/set4_SJ900/M01Ch025_raw.csv --out /tmp/f.csv
 ```
 ## Cursor Cloud Agents
 
@@ -38,7 +28,7 @@ python run_cyclediag.py extract --input example/fixtures/raw/set4_SJ900/M01Ch025
 
 1. [Cloud Agents dashboard](https://cursor.com/dashboard/cloud-agents#environments) → GitHub에서 이 레포 선택
 2. Environment 셋업(에이전트 자동 설치 권장)
-3. 태스크 예: `example/fixtures/raw/set4_SJ900/M01Ch025_raw.csv`로 diagnose 돌리고 결과 요약해 PR 열어줘
+3. 태스크 예: `example/fixtures/doe/900wet_vs_900dry/set4_SJ900/M01Ch025_raw.csv`로 diagnose 돌리고 결과 요약해 PR 열어줘
 
 ## Install
 
@@ -72,7 +62,7 @@ python run_cyclediag.py peaks export --input raw.csv --out-dir example/docs/feat
 
 ```
 cyclediag/          # package (diagnosis params under diagnosis/config/)
-example/fixtures/   # raw.csv full-cell + halfcell/ BOL OCP (Git LFS)
+example/fixtures/   # DOE raw.csv + halfcell/ BOL OCP (Git LFS)
 .cursor/            # Cloud Agent environment
 run_cyclediag.py
 ```
