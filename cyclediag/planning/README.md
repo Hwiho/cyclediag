@@ -8,7 +8,7 @@
 |------|------|
 | **[NOTES.md](NOTES.md)** | 지시 사항 + 합의·backlog — `#` / `'''` |
 | **[ROADMAP.md](ROADMAP.md)** | Phase별 로드맵·구현 상태 |
-| **[IMPROVEMENT_ROADMAP.md](IMPROVEMENT_ROADMAP.md)** | **열화 원인 예측 개선 로드맵 (통합판, ASSB)** |
+| **[IMPROVEMENT_ROADMAP.md](IMPROVEMENT_ROADMAP.md)** | **열화 원인 예측 개선 로드맵** · **§0 Full-cell 스택** · §12 외부 OSS |
 | **[IMPROVEMENT_ANSWERS.md](IMPROVEMENT_ANSWERS.md)** | **로드맵 §10 확인 질문 답변** (SJ900 raw·코드 근거) |
 | **[LLI_LAM_DIAGNOSIS.md](LLI_LAM_DIAGNOSIS.md)** | **Full-cell LLI·LAM 진단 정책 · 하프셀 Phase 3 로드맵** |
 | **[PEAK_TRACKING_ROADMAP.md](PEAK_TRACKING_ROADMAP.md)** | dQ/dV peak 검수 → golden → 추적 → ML **단계별 실행 가이드** |

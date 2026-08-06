@@ -3,12 +3,13 @@
 > **대상 셀:** ASSB SJ900 (S83S 양극 / SJ-ASG903-1300 Si-rich 음극), 2.5–4.2 V, 45 °C
 > **프로토콜:** routine 0.5C CC-CV · C/3 RPT 2사이클 (약 105 사이클 주기) · DC-IR (SOC 20/50/80, 방전, 1C, 30 s)
 > **기준 데이터:** SJ900 set4 Ch22 (564 cycles, SoHQ ~65 %), Ch25
-> **갱신:** 2026-08-05 — `IMPROVEMENT_ANSWERS.md` 실측 확인 반영, ASSB 전제로 전면 재작성
+> **갱신:** 2026-08-06 — **§0 Full-cell 우선 스택** 추가 (하프셀 없이 ICA/DVA·peak·R·change-point). §12 OSS 참고 유지
 
 ---
 
 ## 목차
 
+- [0. Full-cell 우선 스택 (하프셀 없이)](#0-full-cell-우선-스택-하프셀-없이)
 - [1. 확정 사실 요약](#1-확정-사실-요약)
 - [2. 구조적 한계 진단](#2-구조적-한계-진단)
 - [3. ASSB 열화 모드 체계 재정의](#3-assb-열화-모드-체계-재정의)
@@ -34,8 +35,79 @@
 - [9. 실행 계획](#9-실행-계획)
 - [10. 미해결 질문](#10-미해결-질문)
 - [11. 금지 사항](#11-금지-사항)
+- [12. 외부 오픈소스 참고 (BatteryML · PyBaMM · PyDMA · PyProBE · DiffCapAnalyzer)](#12-외부-오픈소스-참고-batteryml--pybamm)
+
 
 ---
+
+## 0. Full-cell 우선 스택 (하프셀 없이)
+
+> **제품 결정 (2026-08-06):** 하프셀 OCP가 없어도 **진단·추적을 최대한 완성**한다.
+> Half-cell DMA(PyDMA/PyProBE, §12.3–12.4)는 **검증·교정 레이어**로만 뒤에 둔다.
+> 출력은 `diagnosis_version=fullcell_v1` + `*_pattern_score` / proxy estimate.
+> **`*_est_hc_calibrated`는 하프셀·검증 템플릿 전까지 채우지 않는다.**
+
+### 0.1 지금 해야 할 8가지 (핵심)
+
+| # | 기능 | 하프셀? | 상태 (대략) | 주 모듈 / § | 진단에 쓰는 방식 |
+|---|---|---|---|---|---|
+| F1 | **ICA/DVA 곡선 생성** | 불필요 | 부분 구현 | `dqdv_peaks` · `dqdv_segment` · §5.1–5.2 | ICA=`dQ/dV`, DVA=`dV/dQ` 둘 다 export·캐시 |
+| F2 | **피크 자동 검출** | 불필요 | 구현됨 | `dqdv_peaks.py` · DiffCapAnalyzer descriptor §12.5 | V, H, area, W, sign |
+| F3 | **피크 matching** | 불필요 | 부분 구현 | `peak_assign` · `peak_tracking` · `peak_evolution` | golden/RPT 앵커 · Hungarian / Viterbi |
+| F4 | **피크 위치 이동** | 불필요 | 부분 구현 | `peak_trajectory` · evolution | ΔV, ΔQ → LLI / slippage **pattern** |
+| F5 | **피크 면적 감소** | 불필요 | 부분 구현 | group_area · peak area trajectory · §5.8 | → LAM_PE **pattern** (Si: LAM_NE는 피크 단독 금지) |
+| F6 | **곡선 correlation** | 불필요 | 일부 | ΔQ(V) §5.7 · DTW/corr · fade_correlation | baseline vs cycle-N 형상 유사도 |
+| F7 | **저항·polarization 증가** | 불필요 | 부분~계획 | DC-IR · §5.3–5.5 · §5.9–5.10 PER | 접촉/계면/확산 분리 (ASSB 핵심) |
+| F8 | **change-point 탐지** | 불필요 | 계획 | §5.12 knee · §7.7 PELT/Bacon-Watts | fade·R·peak 궤적의 급변 시점 |
+
+```
+full-cell raw
+  → F1 ICA/DVA
+  → F2 detect → F3 match → F4 ΔV · F5 Δarea
+  → F6 curve corr / ΔQ(V)
+  → F7 R · polarization
+  → F8 change-point / knee
+  → pattern_scoring (LLI / LAM_PE / impedance / contact …)
+  → (later) half-cell DMA calibrate   ← optional, not blocking
+```
+
+### 0.2 하프셀 없이 가능한 것 / 보류할 것
+
+| 가능 (지금) | 보류 (하프셀·OCP 템플릿 후) |
+|---|---|
+| ICA/DVA · peak detect/match/track | `LLI_est_hc_calibrated` 등 Level 3 수치 |
+| peak ΔV / Δarea → **pattern score** | stoichiometry window 절대값 (PyDMA) |
+| ΔQ(V) · curve corr → early fade / RUL proxy | blend phase OCP 분해 |
+| R 3성분 · PER · hysteresis | electrode utilization 절대 % |
+| knee / change-point | full-cell↔half-cell peak 화학 라벨 확정 |
+| 3-param curve fit proxy (§5.6) | CompositeOCP weighted DMA fit |
+
+### 0.3 완료 정의 (Full-cell MVP DoD)
+
+- [ ] 사이클마다 ICA **및** DVA 곡선 parquet/npz 저장 (동일 전처리 버전 해시)
+- [ ] 피크 테이블: match_id, V, H, area, W, sign, confidence
+- [ ] 궤적: `dV_vs_baseline`, `dArea_vs_baseline`, match_confidence
+- [ ] 곡선: `corr_to_baseline`, `dQV_log_var` (또는 equiv)
+- [ ] 저항: `R_ohmic`/`R_ct`/`A_diff` 또는 가용 DC-IR proxy + PER
+- [ ] change-point: SoHQ·R·대표 peak_V 중 ≥1 시계열에 변점 + knee flag
+- [ ] `*_pattern_score`가 위 증거를 `supporting_features`로 인용
+- [ ] 하프셀 없이도 CLI 한 방으로 셀 리포트 생성
+
+### 0.4 실행 순서 (이 스택만 뽑은 것)
+
+```
+1. F1+F2 품질 고정   (§5.1 스윕 → §5.2 스무딩)     ← 피크 전부이 선행
+2. F3 matching 안정  (RPT 앵커 · evolution)
+3. F4+F5 궤적 export (ΔV, Δarea → diagnosis 입력)
+4. F7 R/polarization (§5.3 우선 — ASSB 접촉 손실)
+5. F6 curve corr     (§5.7 ΔQ(V) + baseline corr)
+6. F8 change-point   (§5.12 + §7.7)
+7. pattern_scoring 재배선 (mode_weights_assb_si_v1)
+```
+
+상세 알고리즘은 §5·§7, peak 단계는 [PEAK_TRACKING_ROADMAP.md](PEAK_TRACKING_ROADMAP.md),
+정책은 [LLI_LAM_DIAGNOSIS.md](LLI_LAM_DIAGNOSIS.md).
+
 
 ## 1. 확정 사실 요약
 
@@ -834,6 +906,9 @@ LAM_curve_proxy, LLI_curve_proxy, R_curve_proxy
 
 > **모듈:** `cyclediag/features/dqv_stats.py` (신규)
 > **우선순위: 6** — 구현 난이도 대비 조기 예측력 최고.
+> **참고 구현:** [microsoft/BatteryML](https://github.com/microsoft/BatteryML) Severson feature
+> (초기·후기 방전곡선을 공통 전압축 보간 → ΔQ(V)의 var / skew / kurtosis / min).
+> VP 진단 → **수명(RUL) 예측** 확장 시 1순위 벤치마크. 상세는 [§12.1](#121-batteryml에서-가져올-것).
 
 #### 목적
 
@@ -853,10 +928,12 @@ LFP 124셀에서 초기 100사이클만으로 수명 예측을 가능케 한 지
    Q_N(V) ← interp(V_grid, V_sorted_desc, Q_sorted)
    ※ 방전은 V 단조 감소 → 정렬 방향 주의
    ※ 동일 rate끼리만 비교 (0.5C↔0.5C)
+   ※ BatteryML과 동일: 사이클 간 공통 V축으로 보간 후 차분
 
 3. 차이 곡선
    dQ_N(V) ← Q_N(V) - Q_ref(V)
    ref ← baseline_cycle (formation 후 첫 RPT 또는 지정 사이클)
+   조기 예측 변형: Q_late(V) - Q_early(V)  (예: cycle 100 − cycle 10)
 
 4. 통계량
    dQV_min      ← min(dQ_N)
@@ -1777,6 +1854,18 @@ P0에서 착수해야 P5에서 쓸 수 있다. 가장 늦게 결실 맺는 투�
   collective     ← 여러 지표 동시 이탈 (Mahalanobis 거리)
 ```
 
+### 7.8 BatteryML형 데이터·파이프라인 계층 (요약)
+
+현행 `extract_features()` 평탄 테이블을 BatteryML식 계층으로 분리한다.
+상세 로드맵·우선순위는 **[§12](#12-외부-오픈소스-참고-batteryml--pybamm)**.
+
+```
+CellData → CycleData[] → FeatureSet → Model → Evaluation(train/val/test)
+```
+
+원칙: **파서 / 공통 모델 / feature extractor / model / eval** 을 서로 독립 모듈로 유지.
+YAML(또는 JSON) 실험 설정으로 재현성(§7.6)과 연결.
+
 ---
 
 ## 8. 검증 체계
@@ -1849,6 +1938,20 @@ RPT 주기 105 사이클이므로 이 검증이 특히 중요하다.
 
 ## 9. 실행 계획
 
+### 9.0 Full-cell 우선 (하프셀 불필요) — **현재 메인 트랙**
+
+§0의 F1–F8. 하프셀·PyDMA DMA는 §9.3 이후.
+
+| 순서 | 기능 | 작업 | § |
+|---|---|---|---|
+| A | F1+F2 | ICA/DVA 생성 품질 고정 · 피크 검출 파라미터 스윕 | 5.1, 5.2 |
+| B | F3 | peak matching (assign + evolution) 안정화 | peak_tracking, 5.8 |
+| C | F4+F5 | 위치 이동 · 면적 감소 궤적 → pattern 입력 | peak_trajectory |
+| D | F7 | R(t) 3성분 · polarization / PER | 5.3, 5.10 |
+| E | F6 | ΔQ(V) · baseline curve correlation | 5.7, 5.6 |
+| F | F8 | knee · change-point (SoHQ / R / peak_V) | 5.12, 7.7 |
+| G | — | `mode_weights_assb_si_v1` + supporting_features 배선 | 7.1 |
+
 ### 9.1 즉시 (추가 실험 없이, 데이터 이미 존재)
 
 | # | 항목 | § | 근거 |
@@ -1891,9 +1994,18 @@ RPT 주기 105 사이클이므로 이 검증이 특히 중요하다.
 | 26 | 재현성 인프라 (§7.6) |
 | 27 | 공개셋 벤치마크 (§8.2) |
 | 28 | 반쪽셀 확보 → forward/inverse fit → 실제 `*_est` |
+| 29 | **BatteryML형 CellData→CycleData→FeatureSet 계층** (§7.8, §12.1) |
+| 30 | **YAML 실험 설정 + train/val/test 평가 파이프라인** (§12.1) |
+| 31 | **ΔQ(V) → RUL 예측 경로** (§5.7 + §12.1, Severson 재현 포함) |
+| 32 | **전극 SOH 상태 벡터** (Q_PE / Q_NE / n_Li) — 스키마만, PyBaMM 비내장 (§12.2) |
+| 33 | **OCP / CompositeOCP + fit_target(OCV/ICA/DVA)** — PyProBE API (§12.4) |
+| 34 | **Batch DMA + warm-start + quantify_degradation_modes** — PyDMA 과학 (§12.3–12.4) |
+| 35 | **stoich window · utilization · blend phase** 출력 스키마 (§12.3) |
+| 36 | **ICA peak descriptor 스키마 정렬** — DiffCapAnalyzer (§12.5) |
 
-> **철칙: 반쪽셀 또는 검증된 템플릿 확보 전까지 `*_est` 컬럼을 채우지 않는다.**
+> **철칙: 반쪽셀 또는 검증된 템플릿 확보 전까지 `*_est` / `*_est_hc_calibrated` 컬럼을 채우지 않는다.**
 > null placeholder가 근거 없는 숫자보다 안전하다.
+> **PyBaMM / PyDMA / PyProBE를 cyclediag 필수 의존성으로 내장하지 않는다** — 개념·API·알고리즘만 참고 (§12).
 
 ### 9.4 프로토콜 변경 제안 (외부 협의 필요)
 
@@ -1955,6 +2067,7 @@ RPT 주기 105 사이클이므로 이 검증이 특히 중요하다.
 - **온도 로그가 비어 있는 상태에서 Arrhenius 보정** 적용
 - RPT 앵커로 **cycle 1** 사용 (직전 0.5C 이력 보유 → cycle 2를 사용)
 - `vp_diag`가 여전히 존재한다고 가정
+- **BatteryML / PyBaMM / PyDMA / PyProBE / DiffCapAnalyzer를 필수 의존성·submodule로 내장** (개념·API만 참고, §12)
 
 ### DO
 
@@ -1966,3 +2079,194 @@ RPT 주기 105 사이클이므로 이 검증이 특히 중요하다.
 - 독립 경로 **교차검증**(§8.3) 결과를 신뢰도에 반영
 - 모든 결론에 **"45 °C 조건 한정"** 명시 (온도 로그 복구 전까지)
 - `R_ohmic` 성장을 **접촉 손실의 직접 증거**로 해석 (ASSB 한정)
+
+
+---
+
+## 12. 외부 오픈소스 참고 (BatteryML · PyBaMM · PyDMA · PyProBE · DiffCapAnalyzer)
+
+> **목적:** VP 진단 → 수명 예측 · **DMA(LLI/LAM)** · 전극 SOH로 확장할 때 **재발명하지 말고 구조를 빌린다.**
+> **원칙:** 코드/패키지 통째 내장이 아니라 **과학 기능 · API 계약 · feature 정의 · 평가 파이프라인**만 흡수.
+> **추천 조합:** **PyDMA의 과학적 기능** + **PyProBE의 API 구조** (§12.3–12.4). 수명 예측은 BatteryML (§12.1).
+> **관련:** §5.6–5.8, §7.8, §8.2, §9.3 #29–36, [LLI_LAM_DIAGNOSIS.md](LLI_LAM_DIAGNOSIS.md) DM-P3
+
+### 12.1 BatteryML에서 가져올 것
+
+출처: [microsoft/BatteryML](https://github.com/microsoft/BatteryML)
+
+| 아이디어 | cyclediag 적용 | 우선순위 | 연계 |
+|---|---|---|---|
+| **Cycler별 데이터 파서** | `io/` 에 vendor adapter (`pne`, 향후 `arbin`/`biologic`…) → 공통 스키마로 정규화. §6.3 로더 견고화와 동일 축 | 중기 | §6 |
+| **공통 BatteryData 모델** | `CellData` → `CycleData[]` → (옵션) `StepData`. 현행 flat `extract_features()` 결과의 **상위 컨테이너** | **단기~중기** | §7.8, DATA_SCHEMA |
+| **YAML 기반 실험 설정** | train/feature/model/split/metric을 한 파일로 고정. `config_hash`(§7.6)와 연결 | 중기 | §7.6 |
+| **Feature extractor ↔ Model 분리** | `features/*` 는 벡터만, `models/*` 는 학습·추론만. diagnosis engine도 feature 입력만 받도록 | **단기** (이미 방향은 맞음, 계약 명문화) | ROADMAP Phase 1–2 |
+| **train / validation / test 평가 파이프라인** | 셀 단위 hold-out (GroupKFold by `cell_id`). RUL·진단 공통 평가 CLI | 중기 | ROADMAP 0.5, 2.4 |
+| **Severson ΔQ(V) feature** | 공통 V축 보간 → ΔQ(V)의 var/skew/kurtosis/min/`log_var`. **수명 예측 확장의 1순위 feature** | **단기** (알고리즘은 §5.7) | §5.7, §8.2 |
+
+#### 목표 데이터 계층
+
+```
+CellData
+  meta: cell_id, chemistry, protocol_hash, q_rated, ...
+  cycles: list[CycleData]
+    CycleData
+      cycle_index, role (routine/RPT/DCIR/...), V/I/Q/t arrays (또는 lazy path)
+      features: FeatureSet          ← extract_* 결과
+FeatureSet
+  version, family tags (§4.1), values + sigma (§7.2)
+ModelSpec (YAML)
+  features: [dQV_log_var, ...]
+  model: ridge | xgb | ...
+  split: {by: cell_id, train/val/test ratios}
+EvaluationReport
+  metrics, per-cell residuals, config_hash
+```
+
+#### 수명 예측으로의 확장 경로
+
+```
+1. §5.7 dQV_* 구현 + BatteryML Severson 공개셋 재현 (§8.2)
+2. FeatureSet에 early-cycle window feature 묶음 (cycle 10–100 등)
+3. YAML experiment → RUL / cycle-to-knee 회귀
+4. ASSB(Ch22/Ch25)에 전이 — 화학·rate 차이로 계수 재학습, feature 정의는 공유
+```
+
+진단(LLI/LAM/접촉 손실)과 예측(RUL)은 **같은 FeatureSet**을 쓰되 **ModelSpec만 분기**.
+
+### 12.2 PyBaMM에서 가져올 것
+
+출처: [pybamm-team/PyBaMM](https://github.com/pybamm-team/PyBaMM)
+
+| 아이디어 | cyclediag 적용 | 우선순위 | 비고 |
+|---|---|---|---|
+| **전극 SOH 상태 벡터** | 셀 전체 `SoHQ` 외에 `Q_PE_eff`, `Q_NE_eff`, `n_Li` (또는 LLI) 스키마. Layer 2 출력과 정렬 | 중기 (스키마) / 장기 (추정) | electrode SOH solver 예제 참고 |
+| **열화 모드 온톨로지** | SEI · plating · LAM · LLI를 **파라미터 이름 공간**으로 문서화. ASSB에서는 §3에 맞게 재매핑 (액상 SEI≠고체 계면상) | 문서·스키마 | §3, LLI_LAM_DIAGNOSIS |
+| **Forward model 합성** | §8.1 합성 데이터 검증의 물리 근거. 필요 시 **오프라인**으로 PyBaMM 곡선 생성 → cyclediag regression fixture | 선택 | **런타임 의존성 금지** |
+| **Half-cell / OCV 라이브러리 사고방식** | DM-P3 half-cell calibrate와 동일 철학: 템플릿 OCV → full-cell 정합 | 장기 | §5.6, DM-P3 |
+
+#### 명시적 비목표
+
+```
+✗ PyBaMM을 cyclediag requirements에 추가
+✗ SPM/DFN을 진단 루프 안에 돌림 (너무 무겁고 ASSB 파라미터 부재)
+✗ 액체 전해질 기본 파라미터를 ASSB에 그대로 적용
+```
+
+가져올 것은 **"셀 용량 하나"가 아니라 전극·리튬 재고 상태를 분리해 보고하는 출력 계약**이다.
+수치 해는 반쪽셀·C/20·곡선 정합(§5.6) 경로로 채우고, PyBaMM은 **검증용 forward 시뮬레이터(옵션 툴)** 로만 둔다.
+
+### 12.3 PyDMA에서 가져올 것 (DMA 과학 — **목표에 가장 근접**)
+
+출처: [tum-ees/PyDMA](https://github.com/tum-ees/PyDMA)
+
+full-cell **pseudo-OCV**와 양극·음극 **half-cell OCP**를 맞춰 다음을 **정량화**하는 구조가 cyclediag DM-P3 / Level 3과 동일한 문제 정의다.
+
+| 정량 출력 | cyclediag 매핑 | 비고 |
+|---|---|---|
+| **LLI** | `LLI_est_hc_calibrated` (Level 3) | 하프셀·저율 OCV 확보 후 |
+| **LAM at anode / cathode** | `LAM_NE_est_*`, `LAM_PE_est_*` | ASSB Si-rich: LAM_NE는 피크 단독 금지 (§3) — **OCP fit 경로로만** |
+| **전극 utilization · stoichiometry window** | `stoich_window_PE/NE`, `utilization_*` | 최근 PyDMA: blend phase별 window 확인 |
+| **전극 불균일성** | `inhomogeneity_*` (신규 지표 후보) | pattern score 보조 증거 |
+| **Si–graphite blend 변화** | `CompositeOCP` / blend fraction drift | SJ-ASG903 Si-rich blend에 **직접 관련** |
+
+#### 과학 기능 (흡수 대상)
+
+```
+1. OCV뿐 아니라 DVA(dV/dQ) · ICA(dQ/dV)를 가중치로 동시 fitting
+2. 양극·음극 모두 blend electrode로 모델링 가능
+3. 각 전극 / blend phase의 stoichiometry window 검증
+4. pseudo-OCV(full-cell) ↔ half-cell OCP 라이브러리 정합
+```
+
+#### ASSB 적용 시 주의
+
+- 현재 SJ900은 **반쪽셀 OCV 없음** → Level 3 수치는 placeholder. PyDMA식 fit은 **템플릿 OCP 확보 후** 활성화.
+- C/3 RPT를 pseudo-OCV 근사로 쓸 때는 §5.9·§5.13 품질 게이팅 필수 (분극 잔류).
+- Si 히스테리시스: **충·방전 각각** fit하거나, PyProBE식 평균 OCV로 저항 보정 후 fit (§12.4).
+- 액체 셀 기본 OCP를 ASSB SE 계면에 그대로 쓰지 말 것.
+
+**우선순위:** 하프셀 또는 문헌 OCP 템플릿 확보 시 **DM-P3 1순위 참고 구현**. 그 전에는 API·출력 스키마만 정렬.
+
+### 12.4 PyProBE에서 가져올 것 (API · 배치 DMA 구조)
+
+출처: [ImperialCollegeLondon/PyProBE](https://github.com/ImperialCollegeLondon/PyProBE)
+
+실제 DMA 모듈이 있고, half-cell OCP → full-cell fitting으로 SOH / LAM_PE / LAM_NE / LLI를 낸다.
+**과학은 PyDMA, 모듈 경계·배치 UX는 PyProBE** 를 기본 추천으로 둔다.
+
+| API / 기능 | cyclediag 적용 |
+|---|---|
+| **`OCP` / `CompositeOCP` 객체** | `diagnosis/halfcell/` — 단일·blend OCP 타입. Si–Gr blend = CompositeOCP |
+| **OCP data interpolation** | 공통 V 또는 Q 그리드로 half/full 정렬 (§5.6·§5.7과 동일 패턴) |
+| **Fitting target 선택** | `fit_target ∈ {OCV, ICA(dQ/dV), DVA(dV/dQ), weighted}` — config로 전환 |
+| **Batch DMA (여러 RPT)** | `rpt_anchor` 주기마다 fit; 병렬·순차 스위치는 기존 적응형 병렬 정책과 공유 |
+| **이전 RPT → 다음 fit 초기값** | warm-start: `x0_{k} ← x*_{k-1}` — 105사이클 앵커 간격에서 수렴 안정화 |
+| **충·방전 OCV 평균** | 저항(분극) 영향 보정 후 열역학 곡선에 가깝게 — Si 히스테리시스와 **병기** (평균만으로 히스테리시스를 지우지 않음) |
+| **`quantify_degradation_modes()`** | 여러 OCV fit 결과 → `LLI`, `LAM_PE`, `LAM_NE` 직접 반환. Level 2/3 export 계약의 참고 시그니처 |
+
+#### 목표 모듈 스케치
+
+```
+diagnosis/halfcell/
+  ocp.py              # OCP, CompositeOCP (PyProBE 스타일)
+  interpolate.py
+  fit_ocv.py          # target: ocv | ica | dva | weighted (PyDMA 가중 아이디어)
+  dma_batch.py        # multi-RPT, warm-start, parallel/sequential
+  quantify.py         # quantify_degradation_modes(fits) → LLI, LAM_PE, LAM_NE, windows
+```
+
+Level 1 pattern score와 **병행**: half-cell 없이도 pattern은 유지하고, DMA fit은 `diagnosis_state=halfcell_ready`일 때만 `*_est_hc_calibrated`를 채운다.
+
+### 12.5 DiffCapAnalyzer에서 가져올 것 (ICA 피크 descriptor)
+
+출처: [nicolet5/DiffCapAnalyzer](https://github.com/nicolet5/DiffCapAnalyzer)
+
+오래된 프로젝트이나 **differential capacity 피크 descriptor** 구조는 peak tracking / §5.8과 맞는다.
+
+| descriptor | cyclediag 컬럼 후보 | 연계 |
+|---|---|---|
+| peak voltage | `peak_*_V` | 기존 |
+| peak height | `peak_*_H` / `H_norm` | PEAK_TRACKING |
+| peak area | `peak_*_area` / `group_area` | §5.8 |
+| peak width | `peak_*_W` | 기존 |
+| positive / negative peak | `peak_*_sign` (ICA 부호) | 충·방전 분리 저장 |
+| cycle별 피크 변화 | trajectory / delta 테이블 | peak_trajectory |
+
+추가 참고:
+- **Gaussian baseline fitting** — 검수 UI에서 baseline on/off (pne_studio Diagnosis / peak review)
+- **cycle별 결과 저장** — golden·review parquet 스키마에 descriptor 고정 길이 벡터
+
+**우선순위:** 단기 — 기존 `dqdv_peaks` / review export의 **스키마·네이밍 정렬**. 새 피크 엔진 교체는 아님.
+
+### 12.6 구현 체크리스트 (로드맵 항목)
+
+**데이터·수명 (BatteryML / PyBaMM)**
+- [ ] `schema/cell_cycle.py` — `CellData` / `CycleData` / `FeatureSet` dataclass
+- [ ] `io/adapters/` — PNE 파서 → CycleData
+- [ ] `features/extract.py` — flat + FeatureSet 동시 출력
+- [ ] `features/dqv_stats.py` — §5.7; Severson 교차검증
+- [ ] `config/experiments/*.yaml` + `pipeline/evaluate.py`
+- [ ] Layer 2 placeholder: `Q_PE_eff` / `Q_NE_eff` / `n_Li`
+- [ ] `tools/synth_from_pybamm.py` (optional extra only)
+
+**DMA (PyDMA 과학 + PyProBE API)**
+- [ ] `diagnosis/halfcell/ocp.py` — `OCP`, `CompositeOCP` (+ blend phase window)
+- [ ] OCP interpolation + `fit_target` config (OCV / ICA / DVA / weighted)
+- [ ] `dma_batch.py` — multi-RPT, warm-start, parallel|sequential
+- [ ] `quantify_degradation_modes()` — LLI, LAM_PE, LAM_NE, stoich windows, utilization
+- [ ] 충·방전 평균 OCV 옵션 (저항 보정) vs 방향별 fit (Si 히스테리시스) 분기
+- [ ] ASSB: Si–Gr CompositeOCP 템플릿 슬롯 (데이터 확보 전 null)
+
+**ICA 피크 (DiffCapAnalyzer)**
+- [ ] peak descriptor 스키마 고정: V, H, area, W, sign, cycle-delta
+- [ ] review UI / export에 Gaussian baseline 토글 (선택)
+- [ ] PEAK_TRACKING · §5.8 group metrics와 컬럼 정렬
+
+### 12.7 하지 말 것 (이 절 한정)
+
+- BatteryML / PyBaMM / PyDMA / PyProBE / DiffCapAnalyzer를 **git submodule·필수 의존성으로 벤더링**하지 말 것
+- 공개 액체 셀 OCP·모델 가중치를 **ASSB 진단 점수에 직접 복사**하지 말 것
+- ΔQ(V)만으로 ASSB 기구(접촉 손실 등)를 **단정**하지 말 것 — RUL 보조 feature; 기구는 §3·§5.3
+- 반쪽셀·검증 템플릿 없이 PyDMA/PyProBE식 **`*_est_hc_calibrated`를 숫자로 채우지** 말 것
+- 충·방전 OCV **평균만**으로 Si 히스테리시스를 “제거된 열역학”이라 단정하지 말 것
+- DiffCapAnalyzer UI/스택을 **통째 이식**하지 말 것 — descriptor·baseline 개념만
