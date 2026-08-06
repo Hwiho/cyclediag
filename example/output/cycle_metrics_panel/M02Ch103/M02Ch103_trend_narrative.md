@@ -1,22 +1,25 @@
 ## 트렌드 요약 — M02Ch103
 
-- 유효 지표: 48개 · aging 방향 일치 17 · 반대 1
+- 유효 지표: 358개 · aging 방향 일치 47 · 반대 10
 
 ### 하락 트렌드 (상위)
+- 국소 CE(20): early=528.7 → late=273.2 (Δ=-255.4, -85.37%/100cyc) → decreasing · matches_aging
+- 방전후 휴지 완화 τ: early=369.3 → late=291 (Δ=-78.3, -37.29s/100cyc) → decreasing · context
+- 방전후 완화 τ Δvs기준: early=9.884 → late=-68.41 (Δ=-78.3, -37.29s/100cyc) → decreasing · context
+- 충전 에너지: early=243.6 → late=204.5 (Δ=-39.03, -14.6Wh/100cyc) → decreasing · matches_aging
 - LAM 곡선 proxy: early=-3.11 → late=-17.48 (Δ=-14.37, -5.717%/100cyc) → decreasing · context
-- LLI 곡선 proxy: early=-0.6932 → late=-3.752 (Δ=-3.059, -1.527%/100cyc) → decreasing · context
-- 방전 플래토 폭: early=16.85 → late=14.17 (Δ=-2.681, -1.363Q-units/100cyc) → decreasing · matches_aging
-- RΩ 성장률 /100cyc: early=0.7711 → late=0.4781 (Δ=-0.293, -0.2952mΩ/100cyc/100cyc) → decreasing · context
-- 방전 플래토 ΔV: early=-0.0323 → late=-0.07078 (Δ=-0.03847, -0.01613V/100cyc) → decreasing · context
 
 ### 상승 트렌드 (상위)
-- 옴 저항 (SOC50): early=1.362 → late=2.366 (Δ=+1.004, +0.5021mΩ/100cyc) → increasing · matches_aging
-- 기계/화학 비: early=1.898 → late=2.592 (Δ=+0.6938, +0.37961/100cyc) → increasing · matches_aging
-- 완화 용량 회복: early=-0.5139 → late=0.106 (Δ=+0.6199, +0.3169%/100cyc) → increasing · matches_aging
-- 계면 R 패턴: early=0.453 → late=0.8481 (Δ=+0.3951, +0.16420–1/100cyc) → increasing · matches_aging
-- LLI 패턴: early=0.374 → late=0.6624 (Δ=+0.2883, +0.12770–1/100cyc) → increasing · matches_aging
+- fit 잔차 max: early=55.92 → late=152.7 (Δ=+96.79, +42.63mV/100cyc) → increasing · matches_aging
+- EoC 방전 10s 증가%: early=28.76 → late=49.05 (Δ=+20.29, +13.58%/100cyc) → increasing · matches_aging
+- EoC 방전 30s 증가%: early=22.07 → late=43.82 (Δ=+21.75, +12.44%/100cyc) → increasing · matches_aging
+- EoC 방전 60s 증가%: early=17.67 → late=38.96 (Δ=+21.29, +11.32%/100cyc) → increasing · matches_aging
+- CV 시간: early=0 → late=0 (Δ=+0, +8.492s/100cyc) → increasing · matches_aging
 
 ### 기대 aging과 반대
-- 저SOC 히스테리시스: early=0.0766 → late=0.0465 (Δ=-0.0301, -0.01222V/100cyc) → decreasing · opposite_aging
+- 쿨롱 비효율: early=-7.902 → late=-17.31 (Δ=-9.409, -3.596%/100cyc) → decreasing · opposite_aging
+- CI /시간: early=-1.548 → late=-3.525 (Δ=-1.977, -0.7513%/h/100cyc) → decreasing · opposite_aging
+- 에너지 손실: early=8.32 → late=-1.791 (Δ=-10.11, -3.476Wh/100cyc) → decreasing · opposite_aging
+- dSoHQ/dN: early=-0.1665 → late=-0.02386 (Δ=+0.1426, +0.1581%/cyc/100cyc) → increasing · opposite_aging
 
 > slope = 선형회귀 ×100사이클. early/late = 앞·뒤 5포인트 median (routine_05c). 패턴 점수는 0–1 가설이며 절대 LAM%가 아닙니다.

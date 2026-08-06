@@ -30,8 +30,12 @@ def _fake_traj() -> pd.DataFrame:
 
 def test_catalog_has_core_metrics():
     assert get_metric("SoHQ") is not None
+    assert get_metric("EoC_restV_30m") is not None
+    assert get_metric("dchgCapa") is not None
     assert get_metric("mech_vs_chem_ratio").aging_hint == "increase"
     assert get_metric("R_ohmic_soc50").unit == "mΩ"
+    from cyclediag.analysis.metric_catalog import METRICS
+    assert len(METRICS) >= 300
 
 
 def test_analyze_sohq_decreasing():

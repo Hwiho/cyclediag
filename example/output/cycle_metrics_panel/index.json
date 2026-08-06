@@ -1,32 +1,32 @@
 [
   {
     "cell_id": "M02Ch103",
-    "n_metrics": 48,
+    "n_metrics": 358,
     "pdf": "example/output/cycle_metrics_panel/M02Ch103/M02Ch103_metrics_panel.pdf"
   },
   {
     "cell_id": "M02Ch104",
-    "n_metrics": 48,
+    "n_metrics": 358,
     "pdf": "example/output/cycle_metrics_panel/M02Ch104/M02Ch104_metrics_panel.pdf"
   },
   {
     "cell_id": "M02Ch105",
-    "n_metrics": 48,
+    "n_metrics": 358,
     "pdf": "example/output/cycle_metrics_panel/M02Ch105/M02Ch105_metrics_panel.pdf"
   },
   {
     "cell_id": "M02Ch109",
-    "n_metrics": 48,
+    "n_metrics": 358,
     "pdf": "example/output/cycle_metrics_panel/M02Ch109/M02Ch109_metrics_panel.pdf"
   },
   {
     "cell_id": "M02Ch110",
-    "n_metrics": 48,
+    "n_metrics": 358,
     "pdf": "example/output/cycle_metrics_panel/M02Ch110/M02Ch110_metrics_panel.pdf"
   },
   {
     "cell_id": "M02Ch111",
-    "n_metrics": 48,
+    "n_metrics": 358,
     "pdf": "example/output/cycle_metrics_panel/M02Ch111/M02Ch111_metrics_panel.pdf"
   }
 ]

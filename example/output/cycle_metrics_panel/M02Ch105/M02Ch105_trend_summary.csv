@@ -1,49 +1,359 @@
 metric,title_ko,unit,family,aging_hint,n,cycle_start,cycle_end,early_median,late_median,delta_late_early,pct_change,slope_per_100,trend_label,vs_expectation,note
+chg_V_cutoff,충전 전압 컷오프,V,protocol,either,30,7.0,240.0,4.199744,4.199796,5.200000000016303e-05,0.0012381707075517705,4.23753353697503e-05,flat,context,"충전 전압 컷오프: early=4.2 → late=4.2 (Δ=+5.2e-05, +4.238e-05V/100cyc) → flat · context"
+dchg_V_cutoff,방전 전압 컷오프,V,protocol,either,30,7.0,240.0,2.4999762,2.4999752,-9.999999996956888e-07,-4.000038079145269e-05,2.1330629649014153e-06,flat,context,"방전 전압 컷오프: early=2.5 → late=2.5 (Δ=-1e-06, +2.133e-06V/100cyc) → flat · context"
+chg_I_cutoff,충전 전류 컷오프,A,protocol,either,30,7.0,240.0,34.161,34.697,0.5360000000000014,1.5690407189485125,0.8548025439621598,flat,context,"충전 전류 컷오프: early=34.16 → late=34.7 (Δ=+0.536, +0.8548A/100cyc) → flat · context"
+chg_temp_avg,충전 평균 온도,C,protocol,either,30,7.0,240.0,0.0,0.0,0.0,,0.0,flat,context,"충전 평균 온도: early=0 → late=0 (Δ=+0, +0C/100cyc) → flat · context"
+dchg_temp_avg,방전 평균 온도,C,protocol,either,30,7.0,240.0,0.0,0.0,0.0,,0.0,flat,context,"방전 평균 온도: early=0 → late=0 (Δ=+0, +0C/100cyc) → flat · context"
+cycle_duration_h,사이클 소요시간,h,protocol,either,30,7.0,240.0,5.110347222222222,4.903611111111111,-0.2067361111111108,-4.045441574148304,-0.07214104924849457,flat,context,"사이클 소요시간: early=5.11 → late=4.904 (Δ=-0.2067, -0.07214h/100cyc) → flat · context"
 SoHQ,용량 유지율,%,capacity,decrease,30,7.0,240.0,96.87211497388836,87.26248053683878,-9.609634437049579,-9.919918068930189,-3.549619716865647,flat,stable,"용량 유지율: early=96.87 → late=87.26 (Δ=-9.61, -3.55%/100cyc) → flat · stable"
+dchgCapa,방전 용량,Ah,capacity,decrease,30,7.0,240.0,70.303,63.329,-6.973999999999997,-9.919918068930198,-2.5760655171208926,flat,stable,"방전 용량: early=70.3 → late=63.33 (Δ=-6.974, -2.576Ah/100cyc) → flat · stable"
+chgCapa,충전 용량,Ah,capacity,decrease,30,7.0,240.0,64.415,53.464,-10.951000000000008,-17.000698595047748,-4.45745366937035,decreasing,matches_aging,"충전 용량: early=64.42 → late=53.46 (Δ=-10.95, -4.457Ah/100cyc) → decreasing · matches_aging"
+chgCCcapa,CC 충전용량,Ah,capacity,decrease,30,7.0,240.0,64.10100000000001,53.2,-10.90100000000001,-17.00597494578869,-4.239225046689798,decreasing,matches_aging,"CC 충전용량: early=64.1 → late=53.2 (Δ=-10.9, -4.239Ah/100cyc) → decreasing · matches_aging"
+chgCVcapa,CV 충전용량,Ah,capacity,increase,30,7.0,240.0,0.0,0.0,0.0,,-0.19159389790759931,decreasing,opposite_aging,"CV 충전용량: early=0 → late=0 (Δ=+0, -0.1916Ah/100cyc) → decreasing · opposite_aging"
+chgCapa_CCratio,CC 용량비,1,capacity,decrease,30,7.0,240.0,100.0,100.0,0.0,0.0,0.2593248860989268,flat,stable,"CC 용량비: early=100 → late=100 (Δ=+0, +0.25931/100cyc) → flat · stable"
+chgCapa_CCratio_norm,CC비 (정규화),1,capacity,decrease,6,40.0,236.0,94.24286538187091,97.5200210921794,3.2771557103084916,3.477351518366401,0.7082962803678458,flat,stable,"CC비 (정규화): early=94.24 → late=97.52 (Δ=+3.277, +0.70831/100cyc) → flat · stable"
+delta_chgCapa_CCratio,CC비 Δ,1,capacity,decrease,30,7.0,240.0,0.0,0.0,0.0,,0.2593248860989555,increasing,opposite_aging,"CC비 Δ: early=0 → late=0 (Δ=+0, +0.25931/100cyc) → increasing · opposite_aging"
+chgCVtime,CV 시간,s,capacity,increase,30,7.0,240.0,0.0,0.0,0.0,,-31.81117526237526,decreasing,opposite_aging,"CV 시간: early=0 → late=0 (Δ=+0, -31.81s/100cyc) → decreasing · opposite_aging"
+tau_CV,CV 시정수,s,capacity,increase,3,40.0,230.0,1047.6637483031152,1047.6637483031152,0.0,0.0,-251.02065448220426,decreasing,opposite_aging,"CV 시정수: early=1048 → late=1048 (Δ=+0, -251s/100cyc) → decreasing · opposite_aging"
+Q_CV_at_Tref,CV Q @Tref,Ah,capacity,either,3,40.0,230.0,4.066516695204923,4.066516695204923,0.0,0.0,-0.7335471439868507,decreasing,context,"CV Q @Tref: early=4.067 → late=4.067 (Δ=+0, -0.7335Ah/100cyc) → decreasing · context"
 CE,쿨롱 효율,%,capacity,decrease,30,7.0,240.0,108.90669399543486,118.38196782641226,9.4752738309774,8.700359439222886,4.138730392834679,flat,stable,"쿨롱 효율: early=108.9 → late=118.4 (Δ=+9.475, +4.139%/100cyc) → flat · stable"
+CE_rev,가역 CE,%,capacity,decrease,29,7.0,239.0,91.4115827266664,84.4226183896793,-6.988964336987095,-7.645600402615378,-2.6918668644148624,flat,stable,"가역 CE: early=91.41 → late=84.42 (Δ=-6.989, -2.692%/100cyc) → flat · stable"
+CE_local_20,국소 CE(20),%,capacity,decrease,27,10.0,240.0,544.6798517942968,268.96363344655754,-275.7162183477393,-50.61986732930705,-89.98963586939595,decreasing,matches_aging,"국소 CE(20): early=544.7 → late=269 (Δ=-275.7, -89.99%/100cyc) → decreasing · matches_aging"
+CI,쿨롱 비효율,%,capacity,increase,30,7.0,240.0,-8.906693995434864,-18.381967826412264,-9.4752738309774,-106.38373605104164,-4.138730392834695,decreasing,opposite_aging,"쿨롱 비효율: early=-8.907 → late=-18.38 (Δ=-9.475, -4.139%/100cyc) → decreasing · opposite_aging"
+CI_per_hour,CI /시간,%/h,capacity,increase,30,7.0,240.0,-1.7447000970489448,-3.749084141129917,-2.004384044080972,-114.88415960263126,-0.8654324554277247,decreasing,opposite_aging,"CI /시간: early=-1.745 → late=-3.749 (Δ=-2.004, -0.8654%/h/100cyc) → decreasing · opposite_aging"
 VE,전압 효율,1,capacity,decrease,30,7.0,240.0,0.8960597643196737,0.8589804018836328,-0.03707936243604093,-4.138045687632581,-0.01446917679361756,flat,stable,"전압 효율: early=0.8961 → late=0.859 (Δ=-0.03708, -0.014471/100cyc) → flat · stable"
 EE,에너지 효율,1,capacity,decrease,30,7.0,240.0,0.972074380768994,1.016746317988703,0.04467193721970908,4.595526649346499,0.019868118310239,flat,stable,"에너지 효율: early=0.9721 → late=1.017 (Δ=+0.04467, +0.019871/100cyc) → flat · stable"
-Q_relax_pct,완화 용량 회복,%,capacity,increase,30,7.0,240.0,-0.5043197883510393,-0.082673200354732,0.4216465879963073,83.60698860834981,0.24697826905354822,increasing,matches_aging,"완화 용량 회복: early=-0.5043 → late=-0.08267 (Δ=+0.4216, +0.247%/100cyc) → increasing · matches_aging"
+chg_E,충전 에너지,Wh,capacity,decrease,30,7.0,240.0,243.4280179149,204.3378513999,-39.09016651500002,-16.058203509123402,-15.989527860758454,decreasing,matches_aging,"충전 에너지: early=243.4 → late=204.3 (Δ=-39.09, -15.99Wh/100cyc) → decreasing · matches_aging"
+dchg_E,방전 에너지,Wh,capacity,decrease,30,7.0,240.0,237.9140374176,207.91730342575,-29.99673399185002,-12.60822367500665,-11.280500767131356,flat,stable,"방전 에너지: early=237.9 → late=207.9 (Δ=-30, -11.28Wh/100cyc) → flat · stable"
+dE,에너지 손실,Wh,capacity,increase,30,7.0,240.0,6.797878138450017,-3.4226363012500087,-10.220514439700025,-150.3485974820726,-4.709027093627149,decreasing,opposite_aging,"에너지 손실: early=6.798 → late=-3.423 (Δ=-10.22, -4.709Wh/100cyc) → decreasing · opposite_aging"
+Q_relax,완화 용량,Ah,capacity,either,30,7.0,240.0,-0.3659999999999996,-0.0549999999999926,0.311000000000007,84.97267759563042,0.18067800163851153,increasing,context,"완화 용량: early=-0.366 → late=-0.055 (Δ=+0.311, +0.1807Ah/100cyc) → increasing · context"
+Q_relax_pct,완화 용량 %,%,capacity,increase,30,7.0,240.0,-0.5043197883510393,-0.082673200354732,0.4216465879963073,83.60698860834981,0.24697826905354822,increasing,matches_aging,"완화 용량 %: early=-0.5043 → late=-0.08267 (Δ=+0.4216, +0.247%/100cyc) → increasing · matches_aging"
+dSoHQ_dN,dSoHQ/dN,%/cyc,capacity,decrease,17,120.0,240.0,-0.1685617874563932,-0.0215822267616001,0.1469795606947931,87.19625183899797,0.16606348474537863,increasing,opposite_aging,"dSoHQ/dN: early=-0.1686 → late=-0.02158 (Δ=+0.147, +0.1661%/cyc/100cyc) → increasing · opposite_aging"
+d2SoHQ,d2SoHQ,%/cyc2,capacity,either,17,120.0,240.0,-0.0009764060869141,-0.0647830997846037,-0.0638066936976896,-6534.852102299833,-0.04209813062916758,decreasing,context,"d2SoHQ: early=-0.0009764 → late=-0.06478 (Δ=-0.06381, -0.0421%/cyc2/100cyc) → decreasing · context"
 EoC_restV_init,충전후 휴지 초기 V,V,rest,either,30,7.0,240.0,4.1997004,4.1997824,8.199999999991547e-05,0.0019525202321555002,2.2328150539292553e-05,flat,context,"충전후 휴지 초기 V: early=4.2 → late=4.2 (Δ=+8.2e-05, +2.233e-05V/100cyc) → flat · context"
 EoC_restV_60s,충전후 휴지 60s V,V,rest,either,30,7.0,240.0,4.1880574,4.183031,-0.0050264000000002085,-0.12001745725835106,-0.002007856473088393,flat,context,"충전후 휴지 60s V: early=4.188 → late=4.183 (Δ=-0.005026, -0.002008V/100cyc) → flat · context"
 EoC_restV_30m,충전후 휴지 30분 V,V,rest,either,30,7.0,240.0,4.17478,4.163652,-0.011128000000000249,-0.26655296806059836,-0.004441174883811362,flat,context,"충전후 휴지 30분 V: early=4.175 → late=4.164 (Δ=-0.01113, -0.004441V/100cyc) → flat · context"
 EoC_restV_end,충전후 휴지 종료 V,V,rest,either,30,7.0,240.0,4.17478,4.163652,-0.011128000000000249,-0.26655296806059836,-0.004441174883811362,flat,context,"충전후 휴지 종료 V: early=4.175 → late=4.164 (Δ=-0.01113, -0.004441V/100cyc) → flat · context"
 EoC_restV_relax,충전후 휴지 완화량,V,rest,either,30,7.0,240.0,-0.024915,-0.0361323000000002,-0.0112173000000002,-45.02227573750833,-0.004463503034350391,decreasing,context,"충전후 휴지 완화량: early=-0.02491 → late=-0.03613 (Δ=-0.01122, -0.004464V/100cyc) → decreasing · context"
 EoC_restV_relax_60s,충전후 60s 완화량,V,rest,either,30,7.0,240.0,-0.0116376000000002,-0.0167413999999999,-0.0051037999999997,-43.85612153708336,-0.0020301846236279114,decreasing,context,"충전후 60s 완화량: early=-0.01164 → late=-0.01674 (Δ=-0.005104, -0.00203V/100cyc) → decreasing · context"
+EoC_restV_tau,충전후 휴지 완화 τ,s,rest,either,30,7.0,240.0,512.3322115837642,545.5815335476004,33.24932196383622,6.489797286228234,15.235158515974447,flat,context,"충전후 휴지 완화 τ: early=512.3 → late=545.6 (Δ=+33.25, +15.24s/100cyc) → flat · context"
+delta_EoC_restV_60s,충전후 60s V Δvs기준,V,rest,either,30,7.0,240.0,-0.0008176000000004,-0.0058440000000006,-0.0050264000000002,-614.7749510760445,-0.0020078564730869617,decreasing,context,"충전후 60s V Δvs기준: early=-0.0008176 → late=-0.005844 (Δ=-0.005026, -0.002008V/100cyc) → decreasing · context"
 delta_EoC_restV_30m,충전후 30분 V Δvs기준,V,rest,either,30,7.0,240.0,-0.001119,-0.0122470000000003,-0.011128000000000299,-994.4593386952904,-0.004441174883809439,decreasing,context,"충전후 30분 V Δvs기준: early=-0.001119 → late=-0.01225 (Δ=-0.01113, -0.004441V/100cyc) → decreasing · context"
+delta_EoC_restV_end,충전후 종료 V Δvs기준,V,rest,either,30,7.0,240.0,-0.001119,-0.0122470000000003,-0.011128000000000299,-994.4593386952904,-0.004441174883809439,decreasing,context,"충전후 종료 V Δvs기준: early=-0.001119 → late=-0.01225 (Δ=-0.01113, -0.004441V/100cyc) → decreasing · context"
+delta_EoC_restV_tau,충전후 완화 τ Δvs기준,s,rest,either,30,7.0,240.0,-6.130968675072609,27.11835328876361,33.24932196383622,542.3175965491694,15.23515851597459,increasing,context,"충전후 완화 τ Δvs기준: early=-6.131 → late=27.12 (Δ=+33.25, +15.24s/100cyc) → increasing · context"
 EoD_restV_init,방전후 휴지 초기 V,V,rest,either,30,7.0,240.0,2.4999762,2.4999752,-9.999999996956888e-07,-4.000038079145269e-05,2.1330629649014153e-06,flat,context,"방전후 휴지 초기 V: early=2.5 → late=2.5 (Δ=-1e-06, +2.133e-06V/100cyc) → flat · context"
 EoD_restV_60s,방전후 휴지 60s V,V,rest,either,30,7.0,240.0,2.899759,2.9750412,0.07528220000000019,2.596153680357581,0.035155783029380064,flat,context,"방전후 휴지 60s V: early=2.9 → late=2.975 (Δ=+0.07528, +0.03516V/100cyc) → flat · context"
 EoD_restV_30m,방전후 휴지 30분 V,V,rest,either,30,7.0,240.0,3.02852,3.0957541,0.0672341000000003,2.2200315665737818,0.028825772546019243,flat,context,"방전후 휴지 30분 V: early=3.029 → late=3.096 (Δ=+0.06723, +0.02883V/100cyc) → flat · context"
 EoD_restV_end,방전후 휴지 종료 V,V,rest,either,30,7.0,240.0,3.02852,3.0957541,0.0672341000000003,2.2200315665737818,0.028825772546019243,flat,context,"방전후 휴지 종료 V: early=3.029 → late=3.096 (Δ=+0.06723, +0.02883V/100cyc) → flat · context"
 EoD_restV_relax,방전후 휴지 완화량,V,rest,either,30,7.0,240.0,0.5285438,0.5957789,0.06723509999999999,12.720818974699919,0.028823639483053762,flat,context,"방전후 휴지 완화량: early=0.5285 → late=0.5958 (Δ=+0.06724, +0.02882V/100cyc) → flat · context"
+EoD_restV_relax_60s,방전후 60s 완화량,V,rest,either,30,7.0,240.0,0.3997828000000001,0.475066,0.07528319999999988,18.83102524670893,0.03515364996641437,increasing,context,"방전후 60s 완화량: early=0.3998 → late=0.4751 (Δ=+0.07528, +0.03515V/100cyc) → increasing · context"
+EoD_restV_tau,방전후 휴지 완화 τ,s,rest,either,30,7.0,240.0,369.9898807669948,297.6416489843091,-72.34823178268573,-19.55411094830667,-35.231463095363715,decreasing,context,"방전후 휴지 완화 τ: early=370 → late=297.6 (Δ=-72.35, -35.23s/100cyc) → decreasing · context"
+delta_EoD_restV_60s,방전후 60s V Δvs기준,V,rest,either,30,7.0,240.0,0.057776,0.1330582000000002,0.07528220000000022,130.30012461921942,0.03515578302938062,increasing,context,"방전후 60s V Δvs기준: early=0.05778 → late=0.1331 (Δ=+0.07528, +0.03516V/100cyc) → increasing · context"
 delta_EoD_restV_30m,방전후 30분 V Δvs기준,V,rest,either,30,7.0,240.0,0.041859,0.1090931000000003,0.0672341000000003,160.62041615901072,0.028825772546020027,increasing,context,"방전후 30분 V Δvs기준: early=0.04186 → late=0.1091 (Δ=+0.06723, +0.02883V/100cyc) → increasing · context"
-R_ohmic_soc50,옴 저항 (SOC50),mΩ,resistance,increase,30,7.0,240.0,1.348849510018462,2.29349157961866,0.944642069600198,70.03316994104617,0.47887304825409316,increasing,matches_aging,"옴 저항 (SOC50): early=1.349 → late=2.293 (Δ=+0.9446, +0.4789mΩ/100cyc) → increasing · matches_aging"
-R_ct_soc50,전하전달 저항 (SOC50),mΩ,resistance,increase,30,7.0,240.0,0.7251637964572387,0.9469922665479568,0.22182847009071804,30.590119249534098,0.0966712469285044,increasing,matches_aging,"전하전달 저항 (SOC50): early=0.7252 → late=0.947 (Δ=+0.2218, +0.09667mΩ/100cyc) → increasing · matches_aging"
-tau_ct_soc50,Rct 시정수 τ,s,resistance,either,0,,,,,,,,insufficient_data,n/a,
+delta_EoD_restV_end,방전후 종료 V Δvs기준,V,rest,either,30,7.0,240.0,0.041859,0.1090931000000003,0.0672341000000003,160.62041615901072,0.028825772546020027,increasing,context,"방전후 종료 V Δvs기준: early=0.04186 → late=0.1091 (Δ=+0.06723, +0.02883V/100cyc) → increasing · context"
+delta_EoD_restV_tau,방전후 완화 τ Δvs기준,s,rest,either,30,7.0,240.0,6.491344623893838,-65.85688715879184,-72.34823178268567,-1114.533828883168,-35.23146309536363,decreasing,context,"방전후 완화 τ Δvs기준: early=6.491 → late=-65.86 (Δ=-72.35, -35.23s/100cyc) → decreasing · context"
+EoC_dchgR_10s,EoC 방전 10s DCIR,mΩ,start_r,increase,30,7.0,240.0,0.1631246428757063,0.1931272393130684,0.03000259643736211,18.392436549407652,0.017662289862542355,increasing,matches_aging,"EoC 방전 10s DCIR: early=0.1631 → late=0.1931 (Δ=+0.03, +0.01766mΩ/100cyc) → increasing · matches_aging"
+EoC_dchgR_10s_inc,EoC 방전 10s 증가%,%,start_r,increase,30,7.0,240.0,27.840445772581575,51.35341864578356,23.51297287320199,84.45616519674601,13.841900093000813,increasing,matches_aging,"EoC 방전 10s 증가%: early=27.84 → late=51.35 (Δ=+23.51, +13.84%/100cyc) → increasing · matches_aging"
+EoC_dchgR_30s,EoC 방전 30s DCIR,mΩ,start_r,increase,30,7.0,240.0,0.4436257615277416,0.5267142465001339,0.0830884849723923,18.729409375653773,0.044831546069825416,increasing,matches_aging,"EoC 방전 30s DCIR: early=0.4436 → late=0.5267 (Δ=+0.08309, +0.04483mΩ/100cyc) → increasing · matches_aging"
+EoC_dchgR_30s_inc,EoC 방전 30s 증가%,%,start_r,increase,30,7.0,240.0,20.984849315562247,43.644597026391736,22.65974771082949,107.98146496112862,12.226381595069617,increasing,matches_aging,"EoC 방전 30s 증가%: early=20.98 → late=43.64 (Δ=+22.66, +12.23%/100cyc) → increasing · matches_aging"
+EoC_dchgR_60s,EoC 방전 60s DCIR,mΩ,start_r,increase,30,7.0,240.0,0.7803112117037259,0.9137563756578058,0.1334451639540799,17.101531024104688,0.06938318463838915,increasing,matches_aging,"EoC 방전 60s DCIR: early=0.7803 → late=0.9138 (Δ=+0.1334, +0.06938mΩ/100cyc) → increasing · matches_aging"
+EoC_dchgR_60s_inc,EoC 방전 60s 증가%,%,start_r,increase,30,7.0,240.0,17.328881341974288,37.393916384907,20.065035042932713,115.78955760018317,10.432570127746379,increasing,matches_aging,"EoC 방전 60s 증가%: early=17.33 → late=37.39 (Δ=+20.07, +10.43%/100cyc) → increasing · matches_aging"
+EoD_chgR_10s,EoD 충전 10s DCIR,mΩ,start_r,increase,30,7.0,240.0,0.2754435030572127,0.3527659691176947,0.07732246606048199,28.071987613525682,0.024025973946202563,increasing,matches_aging,"EoD 충전 10s DCIR: early=0.2754 → late=0.3528 (Δ=+0.07732, +0.02403mΩ/100cyc) → increasing · matches_aging"
+EoD_chgR_10s_inc,EoD 충전 10s 증가%,%,start_r,increase,30,7.0,240.0,-2.289313809895824,25.140017914481188,27.42933172437701,1198.146431730353,8.522961604149378,increasing,matches_aging,"EoD 충전 10s 증가%: early=-2.289 → late=25.14 (Δ=+27.43, +8.523%/100cyc) → increasing · matches_aging"
+EoD_chgR_30s,EoD 충전 30s DCIR,mΩ,start_r,increase,30,7.0,240.0,0.7482481245430531,0.8803209169353835,0.13207279239233038,17.65093530611731,0.03181388501798533,flat,stable,"EoD 충전 30s DCIR: early=0.7482 → late=0.8803 (Δ=+0.1321, +0.03181mΩ/100cyc) → flat · stable"
+EoD_chgR_30s_inc,EoD 충전 30s 증가%,%,start_r,increase,30,7.0,240.0,-5.562530905366709,11.106565669261542,16.669096574628252,299.6674869445843,4.015276062336935,increasing,matches_aging,"EoD 충전 30s 증가%: early=-5.563 → late=11.11 (Δ=+16.67, +4.015%/100cyc) → increasing · matches_aging"
+EoD_chgR_60s,EoD 충전 60s DCIR,mΩ,start_r,increase,30,7.0,240.0,1.332548373199662,1.4189847248095857,0.0864363516099238,6.486545130243662,-0.006169473856068018,flat,stable,"EoD 충전 60s DCIR: early=1.333 → late=1.419 (Δ=+0.08644, -0.006169mΩ/100cyc) → flat · stable"
+EoD_chgR_60s_inc,EoD 충전 60s 증가%,%,start_r,increase,30,7.0,240.0,-9.021428323010232,-3.1200622123312294,5.901366110679003,65.41498640106536,-0.4212154175505133,flat,stable,"EoD 충전 60s 증가%: early=-9.021 → late=-3.12 (Δ=+5.901, -0.4212%/100cyc) → flat · stable"
+EoC_dchgR_10_60_ratio,EoC R10/R60,1,start_r,either,30,7.0,240.0,0.209050748507818,0.2116926739426075,0.0026419254347894994,1.2637722914877283,0.0033716009702419395,flat,context,"EoC R10/R60: early=0.2091 → late=0.2117 (Δ=+0.002642, +0.0033721/100cyc) → flat · context"
+EoD_chgR_10_60_ratio,EoD R10/R60,1,start_r,either,30,7.0,240.0,0.20670431827989,0.2492495948651429,0.042545276585252895,20.58267429500145,0.017635162732478463,increasing,context,"EoD R10/R60: early=0.2067 → late=0.2492 (Δ=+0.04255, +0.017641/100cyc) → increasing · context"
+EoC_dchgR_10s_T25,EoC R10s @25C,mΩ,start_r,increase,30,7.0,240.0,0.0779493851274425,0.0922861763276608,0.014336791200218302,18.392436549407698,0.008439954935422427,increasing,matches_aging,"EoC R10s @25C: early=0.07795 → late=0.09229 (Δ=+0.01434, +0.00844mΩ/100cyc) → increasing · matches_aging"
+EoD_chgR_10s_T25,EoD R10s @25C,mΩ,start_r,increase,30,7.0,240.0,0.1316211414912843,0.1685698120274988,0.036948670536214506,28.071987613525735,0.011480852084509628,increasing,matches_aging,"EoD R10s @25C: early=0.1316 → late=0.1686 (Δ=+0.03695, +0.01148mΩ/100cyc) → increasing · matches_aging"
+EoC_dchgR_10s_growth_50,EoC R10s 성장/50cyc,mΩ/50cyc,start_r,increase,0,,,,,,,,insufficient_data,n/a,
+R_ohmic_soc80,RΩ (SOC80),mΩ,resistance,increase,0,,,,,,,,insufficient_data,n/a,
+R_ct_soc80,Rct (SOC80),mΩ,resistance,increase,0,,,,,,,,insufficient_data,n/a,
+tau_ct_soc80,τ_ct (SOC80),s,resistance,either,0,,,,,,,,insufficient_data,n/a,
+A_diff_soc80,A_diff (SOC80),mΩ/√s,resistance,increase,0,,,,,,,,insufficient_data,n/a,
+R_30s_total_soc80,R30s 총 (SOC80),mΩ,resistance,increase,0,,,,,,,,insufficient_data,n/a,
+R_ohmic_frac_soc80,RΩ분율 (SOC80),1,resistance,increase,0,,,,,,,,insufficient_data,n/a,
+R_ct_frac_soc80,Rct분율 (SOC80),1,resistance,either,0,,,,,,,,insufficient_data,n/a,
+R_diff_frac_soc80,Rdiff분율 (SOC80),1,resistance,either,0,,,,,,,,insufficient_data,n/a,
+R_recovery_tau1_soc80,회복 τ1 (SOC80),s,resistance,either,0,,,,,,,,insufficient_data,n/a,
+R_recovery_tau2_soc80,회복 τ2 (SOC80),s,resistance,either,0,,,,,,,,insufficient_data,n/a,
+V_inf_est_soc80,V∞ est (SOC80),V,resistance,either,0,,,,,,,,insufficient_data,n/a,
+V_inf_rest_soc80,V∞ rest (SOC80),V,resistance,either,0,,,,,,,,insufficient_data,n/a,
+self_discharge_rate_soc80,자기방전 (SOC80),mV/h,resistance,increase,0,,,,,,,,insufficient_data,n/a,
+dcir_fit_r2_soc80,DCIR fit R2 (SOC80),1,resistance,either,0,,,,,,,,insufficient_data,n/a,
+dcir_fit_rmse_soc80,DCIR fit RMSE (SOC80),1,resistance,decrease,0,,,,,,,,insufficient_data,n/a,
+pulse_current_A_soc80,펄스 전류 (SOC80),A,resistance,either,0,,,,,,,,insufficient_data,n/a,
+n_t_le_1s_soc80,t≤1s 샘플수 (SOC80),count,resistance,either,0,,,,,,,,insufficient_data,n/a,
+relax_amp_ratio_soc80,회복 amp비 (SOC80),1,resistance,either,0,,,,,,,,insufficient_data,n/a,
+relax_completeness_soc80,완화 완성도 (SOC80),1,resistance,either,0,,,,,,,,insufficient_data,n/a,
+recovery_fit_r2_soc80,회복 fit R2 (SOC80),1,resistance,either,0,,,,,,,,insufficient_data,n/a,
+dcir_fit_valid_soc80,DCIR fit 유효 (SOC80),0/1,resistance,either,0,,,,,,,,insufficient_data,n/a,
+dcir_fit_cond_soc80,DCIR fit 조건수 (SOC80),1,resistance,either,0,,,,,,,,insufficient_data,n/a,
+sd_fit_valid_soc80,자기방전 fit 유효 (SOC80),0/1,resistance,either,0,,,,,,,,insufficient_data,n/a,
+n_points_soc80,펄스 포인트수 (SOC80),count,resistance,either,0,,,,,,,,insufficient_data,n/a,
+R_ohmic_soc50,RΩ (SOC50),mΩ,resistance,increase,30,7.0,240.0,1.348849510018462,2.29349157961866,0.944642069600198,70.03316994104617,0.47887304825409316,increasing,matches_aging,"RΩ (SOC50): early=1.349 → late=2.293 (Δ=+0.9446, +0.4789mΩ/100cyc) → increasing · matches_aging"
+R_ct_soc50,Rct (SOC50),mΩ,resistance,increase,30,7.0,240.0,0.7251637964572387,0.9469922665479568,0.22182847009071804,30.590119249534098,0.0966712469285044,increasing,matches_aging,"Rct (SOC50): early=0.7252 → late=0.947 (Δ=+0.2218, +0.09667mΩ/100cyc) → increasing · matches_aging"
+tau_ct_soc50,τ_ct (SOC50),s,resistance,either,0,,,,,,,,insufficient_data,n/a,
+A_diff_soc50,A_diff (SOC50),mΩ/√s,resistance,increase,0,,,,,,,,insufficient_data,n/a,
+R_30s_total_soc50,R30s 총 (SOC50),mΩ,resistance,increase,0,,,,,,,,insufficient_data,n/a,
+R_ohmic_frac_soc50,RΩ분율 (SOC50),1,resistance,increase,0,,,,,,,,insufficient_data,n/a,
+R_ct_frac_soc50,Rct분율 (SOC50),1,resistance,either,0,,,,,,,,insufficient_data,n/a,
+R_diff_frac_soc50,Rdiff분율 (SOC50),1,resistance,either,0,,,,,,,,insufficient_data,n/a,
+R_recovery_tau1_soc50,회복 τ1 (SOC50),s,resistance,either,0,,,,,,,,insufficient_data,n/a,
+R_recovery_tau2_soc50,회복 τ2 (SOC50),s,resistance,either,0,,,,,,,,insufficient_data,n/a,
+V_inf_est_soc50,V∞ est (SOC50),V,resistance,either,0,,,,,,,,insufficient_data,n/a,
+V_inf_rest_soc50,V∞ rest (SOC50),V,resistance,either,0,,,,,,,,insufficient_data,n/a,
+self_discharge_rate_soc50,자기방전 (SOC50),mV/h,resistance,increase,0,,,,,,,,insufficient_data,n/a,
+dcir_fit_r2_soc50,DCIR fit R2 (SOC50),1,resistance,either,0,,,,,,,,insufficient_data,n/a,
+dcir_fit_rmse_soc50,DCIR fit RMSE (SOC50),1,resistance,decrease,0,,,,,,,,insufficient_data,n/a,
+pulse_current_A_soc50,펄스 전류 (SOC50),A,resistance,either,0,,,,,,,,insufficient_data,n/a,
+n_t_le_1s_soc50,t≤1s 샘플수 (SOC50),count,resistance,either,0,,,,,,,,insufficient_data,n/a,
+relax_amp_ratio_soc50,회복 amp비 (SOC50),1,resistance,either,0,,,,,,,,insufficient_data,n/a,
+relax_completeness_soc50,완화 완성도 (SOC50),1,resistance,either,0,,,,,,,,insufficient_data,n/a,
+recovery_fit_r2_soc50,회복 fit R2 (SOC50),1,resistance,either,0,,,,,,,,insufficient_data,n/a,
+dcir_fit_valid_soc50,DCIR fit 유효 (SOC50),0/1,resistance,either,0,,,,,,,,insufficient_data,n/a,
+dcir_fit_cond_soc50,DCIR fit 조건수 (SOC50),1,resistance,either,0,,,,,,,,insufficient_data,n/a,
+sd_fit_valid_soc50,자기방전 fit 유효 (SOC50),0/1,resistance,either,0,,,,,,,,insufficient_data,n/a,
+n_points_soc50,펄스 포인트수 (SOC50),count,resistance,either,0,,,,,,,,insufficient_data,n/a,
+R_ohmic_soc20,RΩ (SOC20),mΩ,resistance,increase,0,,,,,,,,insufficient_data,n/a,
+R_ct_soc20,Rct (SOC20),mΩ,resistance,increase,0,,,,,,,,insufficient_data,n/a,
+tau_ct_soc20,τ_ct (SOC20),s,resistance,either,0,,,,,,,,insufficient_data,n/a,
+A_diff_soc20,A_diff (SOC20),mΩ/√s,resistance,increase,0,,,,,,,,insufficient_data,n/a,
+R_30s_total_soc20,R30s 총 (SOC20),mΩ,resistance,increase,0,,,,,,,,insufficient_data,n/a,
+R_ohmic_frac_soc20,RΩ분율 (SOC20),1,resistance,increase,0,,,,,,,,insufficient_data,n/a,
+R_ct_frac_soc20,Rct분율 (SOC20),1,resistance,either,0,,,,,,,,insufficient_data,n/a,
+R_diff_frac_soc20,Rdiff분율 (SOC20),1,resistance,either,0,,,,,,,,insufficient_data,n/a,
+R_recovery_tau1_soc20,회복 τ1 (SOC20),s,resistance,either,0,,,,,,,,insufficient_data,n/a,
+R_recovery_tau2_soc20,회복 τ2 (SOC20),s,resistance,either,0,,,,,,,,insufficient_data,n/a,
+V_inf_est_soc20,V∞ est (SOC20),V,resistance,either,0,,,,,,,,insufficient_data,n/a,
+V_inf_rest_soc20,V∞ rest (SOC20),V,resistance,either,0,,,,,,,,insufficient_data,n/a,
+self_discharge_rate_soc20,자기방전 (SOC20),mV/h,resistance,increase,0,,,,,,,,insufficient_data,n/a,
+dcir_fit_r2_soc20,DCIR fit R2 (SOC20),1,resistance,either,0,,,,,,,,insufficient_data,n/a,
+dcir_fit_rmse_soc20,DCIR fit RMSE (SOC20),1,resistance,decrease,0,,,,,,,,insufficient_data,n/a,
+pulse_current_A_soc20,펄스 전류 (SOC20),A,resistance,either,0,,,,,,,,insufficient_data,n/a,
+n_t_le_1s_soc20,t≤1s 샘플수 (SOC20),count,resistance,either,0,,,,,,,,insufficient_data,n/a,
+relax_amp_ratio_soc20,회복 amp비 (SOC20),1,resistance,either,0,,,,,,,,insufficient_data,n/a,
+relax_completeness_soc20,완화 완성도 (SOC20),1,resistance,either,0,,,,,,,,insufficient_data,n/a,
+recovery_fit_r2_soc20,회복 fit R2 (SOC20),1,resistance,either,0,,,,,,,,insufficient_data,n/a,
+dcir_fit_valid_soc20,DCIR fit 유효 (SOC20),0/1,resistance,either,0,,,,,,,,insufficient_data,n/a,
+dcir_fit_cond_soc20,DCIR fit 조건수 (SOC20),1,resistance,either,0,,,,,,,,insufficient_data,n/a,
+sd_fit_valid_soc20,자기방전 fit 유효 (SOC20),0/1,resistance,either,0,,,,,,,,insufficient_data,n/a,
+n_points_soc20,펄스 포인트수 (SOC20),count,resistance,either,0,,,,,,,,insufficient_data,n/a,
 mech_vs_chem_ratio,기계/화학 비,1,resistance,increase,30,7.0,240.0,1.8600618461762943,2.421869386514694,0.5618075403383997,30.20370217760772,0.3330571751138983,increasing,matches_aging,"기계/화학 비: early=1.86 → late=2.422 (Δ=+0.5618, +0.33311/100cyc) → increasing · matches_aging"
-R_ohmic_growth_100,RΩ 성장률 /100cyc,mΩ/100cyc,resistance,either,17,120.0,240.0,0.7607212718082967,0.449829556952475,-0.31089171485582173,-40.868019125691944,-0.3132101155046088,decreasing,context,"RΩ 성장률 /100cyc: early=0.7607 → late=0.4498 (Δ=-0.3109, -0.3132mΩ/100cyc/100cyc) → decreasing · context"
-R_ohmic_frac_soc50,RΩ / R30s 분율,1,resistance,increase,0,,,,,,,,insufficient_data,n/a,
-EoC_dchgR_10s,EoC 방전 10s DCIR,mΩ,resistance,increase,30,7.0,240.0,0.1631246428757063,0.1931272393130684,0.03000259643736211,18.392436549407652,0.017662289862542355,increasing,matches_aging,"EoC 방전 10s DCIR: early=0.1631 → late=0.1931 (Δ=+0.03, +0.01766mΩ/100cyc) → increasing · matches_aging"
-EoC_dchgR_30s,EoC 방전 30s DCIR,mΩ,resistance,increase,30,7.0,240.0,0.4436257615277416,0.5267142465001339,0.0830884849723923,18.729409375653773,0.044831546069825416,increasing,matches_aging,"EoC 방전 30s DCIR: early=0.4436 → late=0.5267 (Δ=+0.08309, +0.04483mΩ/100cyc) → increasing · matches_aging"
-EoC_dchgR_60s,EoC 방전 60s DCIR,mΩ,resistance,increase,30,7.0,240.0,0.7803112117037259,0.9137563756578058,0.1334451639540799,17.101531024104688,0.06938318463838915,increasing,matches_aging,"EoC 방전 60s DCIR: early=0.7803 → late=0.9138 (Δ=+0.1334, +0.06938mΩ/100cyc) → increasing · matches_aging"
-EoD_chgR_10s,EoD 충전 10s DCIR,mΩ,resistance,increase,30,7.0,240.0,0.2754435030572127,0.3527659691176947,0.07732246606048199,28.071987613525682,0.024025973946202563,increasing,matches_aging,"EoD 충전 10s DCIR: early=0.2754 → late=0.3528 (Δ=+0.07732, +0.02403mΩ/100cyc) → increasing · matches_aging"
+R_ohmic_growth_100,RΩ 성장/100cyc,mΩ/100cyc,resistance,either,17,120.0,240.0,0.7607212718082967,0.449829556952475,-0.31089171485582173,-40.868019125691944,-0.3132101155046088,decreasing,context,"RΩ 성장/100cyc: early=0.7607 → late=0.4498 (Δ=-0.3109, -0.3132mΩ/100cyc/100cyc) → decreasing · context"
+R_ct_growth_100,Rct 성장/100cyc,mΩ/100cyc,resistance,either,17,120.0,240.0,0.0930914712614577,0.1056326048051038,0.012541133543646096,13.471839443189092,0.012634656049247756,increasing,context,"Rct 성장/100cyc: early=0.09309 → late=0.1056 (Δ=+0.01254, +0.01263mΩ/100cyc/100cyc) → increasing · context"
+R_ratio_20_50,R30s 20/50,1,resistance,either,0,,,,,,,,insufficient_data,n/a,
+R_ratio_80_50,R30s 80/50,1,resistance,either,0,,,,,,,,insufficient_data,n/a,
+R_SOC_slope,R–SOC 기울기,mΩ/%,resistance,either,0,,,,,,,,insufficient_data,n/a,
+R_SOC_curvature,R–SOC 곡률,1,resistance,either,0,,,,,,,,insufficient_data,n/a,
+R_ohmic_soc50_ff,RΩ SOC50 (ff),mΩ,resistance,increase,30,7.0,240.0,1.348849510018462,2.29349157961866,0.944642069600198,70.03316994104617,0.47887304825409316,increasing,matches_aging,"RΩ SOC50 (ff): early=1.349 → late=2.293 (Δ=+0.9446, +0.4789mΩ/100cyc) → increasing · matches_aging"
+R_ct_soc50_ff,Rct SOC50 (ff),mΩ,resistance,increase,30,7.0,240.0,0.7251637964572387,0.9469922665479568,0.22182847009071804,30.590119249534098,0.0966712469285044,increasing,matches_aging,"Rct SOC50 (ff): early=0.7252 → late=0.947 (Δ=+0.2218, +0.09667mΩ/100cyc) → increasing · matches_aging"
+chg_V_avg,충전 평균 V,V,shape,either,30,7.0,240.0,3.795512706024367,3.840870837312029,0.04535813128766186,1.1950462243392808,0.016643993075711964,flat,context,"충전 평균 V: early=3.796 → late=3.841 (Δ=+0.04536, +0.01664V/100cyc) → flat · context"
+dchg_V_avg,방전 평균 V,V,shape,either,30,7.0,240.0,3.3937782608105223,3.299315053720786,-0.09446320708973621,-2.7834230709927392,-0.039674390563212196,flat,context,"방전 평균 V: early=3.394 → late=3.299 (Δ=-0.09446, -0.03967V/100cyc) → flat · context"
+delta_chg_V_avg,충전 평균V Δ,V,shape,either,30,7.0,240.0,0.0385415527339363,0.0838996840215986,0.0453581312876623,117.68631015149506,0.016643993075712307,increasing,context,"충전 평균V Δ: early=0.03854 → late=0.0839 (Δ=+0.04536, +0.01664V/100cyc) → increasing · context"
+delta_dchg_V_avg,방전 평균V Δ,V,shape,either,30,7.0,240.0,-0.0362199933192566,-0.1306832004089928,-0.09446320708973621,-260.80404338317265,-0.03967439056321091,decreasing,context,"방전 평균V Δ: early=-0.03622 → late=-0.1307 (Δ=-0.09446, -0.03967V/100cyc) → decreasing · context"
+chg_ir_drop_proxy,충전 IR drop proxy,V,shape,increase,30,7.0,240.0,0.0401038999999996,0.0401861000000001,8.220000000049715e-05,0.20496759666889747,2.9708086942011012e-05,flat,stable,"충전 IR drop proxy: early=0.0401 → late=0.04019 (Δ=+8.22e-05, +2.971e-05V/100cyc) → flat · stable"
+dchg_ir_drop_proxy,방전 IR drop proxy,V,shape,increase,30,7.0,240.0,0.0400230000000005,0.0401297,0.0001066999999994947,0.26659670689227033,0.000496262196613356,flat,stable,"방전 IR drop proxy: early=0.04002 → late=0.04013 (Δ=+0.0001067, +0.0004963V/100cyc) → flat · stable"
+hyst_area,히스테리시스 면적,V,shape,increase,30,7.0,240.0,0.5586669534800284,0.6121221445716359,0.05345519109160757,9.568346715091412,0.02224697331696616,flat,stable,"히스테리시스 면적: early=0.5587 → late=0.6121 (Δ=+0.05346, +0.02225V/100cyc) → flat · stable"
 hyst_area_low,저SOC 히스테리시스,V,shape,increase,30,7.0,240.0,0.076668643914124,0.0456115367019233,-0.031057107212200695,-40.5082255621836,-0.012306197555583603,decreasing,opposite_aging,"저SOC 히스테리시스: early=0.07667 → late=0.04561 (Δ=-0.03106, -0.01231V/100cyc) → decreasing · opposite_aging"
+hyst_area_mid,중SOC 히스테리시스,V,shape,either,30,7.0,240.0,0.2617322650749913,0.3241447200811524,0.062412455006161105,23.845915591751265,0.0252180231570703,increasing,context,"중SOC 히스테리시스: early=0.2617 → late=0.3241 (Δ=+0.06241, +0.02522V/100cyc) → increasing · context"
 hyst_area_high,고SOC 히스테리시스,V,shape,increase,30,7.0,240.0,0.217679779098758,0.2401373733693623,0.022457594270604314,10.31680313329225,0.009360153318535232,flat,stable,"고SOC 히스테리시스: early=0.2177 → late=0.2401 (Δ=+0.02246, +0.00936V/100cyc) → flat · stable"
+hyst_frac_low,히스테리시스 저SOC분율,1,shape,either,30,7.0,240.0,0.1373829963702344,0.0744510462732254,-0.06293195009700901,-45.80767035202323,-0.024786833074178366,decreasing,context,"히스테리시스 저SOC분율: early=0.1374 → late=0.07445 (Δ=-0.06293, -0.024791/100cyc) → decreasing · context"
+hyst_frac_high,히스테리시스 고SOC분율,1,shape,either,30,7.0,240.0,0.3895119341271145,0.392303032162659,0.0027910980355445036,0.716562906294329,0.0011218180656297366,flat,context,"히스테리시스 고SOC분율: early=0.3895 → late=0.3923 (Δ=+0.002791, +0.0011221/100cyc) → flat · context"
+hyst_max_dV,최대 히스테리시스 dV,V,shape,increase,30,7.0,240.0,1.5515160107828452,1.6193632507337514,0.06784723995090625,4.3729642156043695,0.029749377049870494,flat,stable,"최대 히스테리시스 dV: early=1.552 → late=1.619 (Δ=+0.06785, +0.02975V/100cyc) → flat · stable"
+hyst_max_dV_low,max dV 저SOC,V,shape,increase,30,7.0,240.0,0.6585026162363352,0.4893386717316335,-0.16916394450470174,-25.689183358383065,-0.06740649675202222,decreasing,opposite_aging,"max dV 저SOC: early=0.6585 → late=0.4893 (Δ=-0.1692, -0.06741V/100cyc) → decreasing · opposite_aging"
+hyst_max_dV_mid,max dV 중SOC,V,shape,either,30,7.0,240.0,0.9800450716424408,1.1157858066219366,0.1357407349794958,13.85045840310285,0.05551474899261967,flat,context,"max dV 중SOC: early=0.98 → late=1.116 (Δ=+0.1357, +0.05551V/100cyc) → flat · context"
+hyst_max_dV_high,max dV 고SOC,V,shape,either,30,7.0,240.0,1.5515160107828452,1.6193632507337514,0.06784723995090625,4.3729642156043695,0.029749377049870494,flat,context,"max dV 고SOC: early=1.552 → late=1.619 (Δ=+0.06785, +0.02975V/100cyc) → flat · context"
+delta_hyst_area,히스테리시스 Δ,V,shape,increase,30,7.0,240.0,0.0105024967719238,0.0639576878635314,0.053455191091607596,508.97602972379605,0.02224697331696617,increasing,matches_aging,"히스테리시스 Δ: early=0.0105 → late=0.06396 (Δ=+0.05346, +0.02225V/100cyc) → increasing · matches_aging"
+delta_hyst_max_dV,max dV Δ,V,shape,increase,30,7.0,240.0,0.0132776298902843,0.0811248698411906,0.0678472399509063,510.9890885010469,0.02974937704987105,increasing,matches_aging,"max dV Δ: early=0.01328 → late=0.08112 (Δ=+0.06785, +0.02975V/100cyc) → increasing · matches_aging"
+chg_plateau_V,충전 플래토 V,V,shape,either,30,7.0,240.0,3.7254538537985886,3.773843924666548,0.048390070867959434,1.2989040467812911,0.01633185100035305,flat,context,"충전 플래토 V: early=3.725 → late=3.774 (Δ=+0.04839, +0.01633V/100cyc) → flat · context"
+chg_plateau_width,충전 플래토 폭,Q-units,shape,either,30,7.0,240.0,13.359727454909825,13.32740480961924,-0.03232264529058426,-0.24194090335806503,0.5072780172518895,flat,context,"충전 플래토 폭: early=13.36 → late=13.33 (Δ=-0.03232, +0.5073Q-units/100cyc) → flat · context"
+dchg_plateau_V,방전 플래토 V,V,shape,either,30,7.0,240.0,3.1645130406040494,3.123092831386973,-0.041420209217076565,-1.3088967776593576,-0.019070630464684806,flat,context,"방전 플래토 V: early=3.165 → late=3.123 (Δ=-0.04142, -0.01907V/100cyc) → flat · context"
 dchg_plateau_width,방전 플래토 폭,Q-units,shape,decrease,30,7.0,240.0,17.31859719438878,15.301529058116238,-2.017068136272542,-11.646833248861931,-0.9286504220122668,decreasing,matches_aging,"방전 플래토 폭: early=17.32 → late=15.3 (Δ=-2.017, -0.9287Q-units/100cyc) → decreasing · matches_aging"
 delta_dchg_plateau_V,방전 플래토 ΔV,V,shape,either,30,7.0,240.0,-0.0394003713616806,-0.0808205805787571,-0.0414202092170765,-105.1264436998691,-0.019070630464683533,decreasing,context,"방전 플래토 ΔV: early=-0.0394 → late=-0.08082 (Δ=-0.04142, -0.01907V/100cyc) → decreasing · context"
-chg_dQdV_peak1_V,충전 dQ/dV 피크1 V,V,shape,either,26,8.0,240.0,3.5322378823633773,3.7666560949331576,0.23441821256978024,6.636535261122726,0.07479295806064078,flat,context,"충전 dQ/dV 피크1 V: early=3.532 → late=3.767 (Δ=+0.2344, +0.07479V/100cyc) → flat · context"
-LAM_curve_proxy,LAM 곡선 proxy,%,shape,either,30,7.0,240.0,-3.1936826867145163,-16.438308322242023,-13.244625635527505,-414.7132616093692,-5.251085665877005,decreasing,context,"LAM 곡선 proxy: early=-3.194 → late=-16.44 (Δ=-13.24, -5.251%/100cyc) → decreasing · context"
-LLI_curve_proxy,LLI 곡선 proxy,%,shape,either,30,7.0,240.0,-0.5850554244018336,-2.774439272064775,-2.189383847662941,-374.21819478067204,-1.0462731860371592,decreasing,context,"LLI 곡선 proxy: early=-0.5851 → late=-2.774 (Δ=-2.189, -1.046%/100cyc) → decreasing · context"
-RCF,Rate capability factor,1,transport,decrease,30,7.0,240.0,0.9687211497388836,0.9519292918664602,-0.01679185787242332,-1.7334046930790687,-0.0012015232470639929,flat,stable,"Rate capability factor: early=0.9687 → late=0.9519 (Δ=-0.01679, -0.0012021/100cyc) → flat · stable"
-PER,분극 효율 비,1,transport,increase,0,,,,,,,,insufficient_data,n/a,
-eta_max,최대 과전위 η,V,transport,increase,0,,,,,,,,insufficient_data,n/a,
-eta_argmax_SOC,η 최댓값 SOC,%,transport,either,0,,,,,,,,insufficient_data,n/a,
+dchg_V_cutoff_margin,방전 컷오프 마진,V,shape,decrease,30,7.0,240.0,0.4005752400000002,0.26726537,-0.13330987000000022,-33.27960809559776,-0.0582014753622394,decreasing,matches_aging,"방전 컷오프 마진: early=0.4006 → late=0.2673 (Δ=-0.1333, -0.0582V/100cyc) → decreasing · matches_aging"
+delta_dchg_V_cutoff_margin,컷오프 마진 Δ,V,shape,decrease,30,7.0,240.0,-0.0337157370030576,-0.1670256070030578,-0.1333098700000002,-395.3936109654392,-0.05820147536223928,decreasing,matches_aging,"컷오프 마진 Δ: early=-0.03372 → late=-0.167 (Δ=-0.1333, -0.0582V/100cyc) → decreasing · matches_aging"
+dchg_shape_DTW,방전 형상 DTW,1,shape,increase,30,7.0,240.0,0.0037541641305919,0.0082717747650252,0.0045176106344333,120.33599164246,0.0018577238613715252,increasing,matches_aging,"방전 형상 DTW: early=0.003754 → late=0.008272 (Δ=+0.004518, +0.0018581/100cyc) → increasing · matches_aging"
+delta_dchg_shape_DTW,DTW Δ,1,shape,increase,30,7.0,240.0,0.002037709510025,0.0065553201444583,0.0045176106344333,221.7004245309664,0.0018577238613715363,increasing,matches_aging,"DTW Δ: early=0.002038 → late=0.006555 (Δ=+0.004518, +0.0018581/100cyc) → increasing · matches_aging"
+chg_dQdV_peak1_V,충전 dQ/dV 피크1 V,V,peaks,either,26,8.0,240.0,3.5322378823633773,3.7666560949331576,0.23441821256978024,6.636535261122726,0.07479295806064078,flat,context,"충전 dQ/dV 피크1 V: early=3.532 → late=3.767 (Δ=+0.2344, +0.07479V/100cyc) → flat · context"
+chg_dQdV_peak1,충전 dQ/dV 피크1 높이,Ah/V,peaks,either,26,8.0,240.0,74.9822543658733,96.01951035955388,21.037255993680574,28.05631301911785,-1188.3752578041308,decreasing,context,"충전 dQ/dV 피크1 높이: early=74.98 → late=96.02 (Δ=+21.04, -1188Ah/V/100cyc) → decreasing · context"
+dchg_dQdV_peak1_V,방전 dQ/dV 피크1 V,V,peaks,either,30,7.0,240.0,3.163354229765388,3.110779379180387,-0.052574850585001,-1.6619969426851144,-0.022585904264604596,flat,context,"방전 dQ/dV 피크1 V: early=3.163 → late=3.111 (Δ=-0.05257, -0.02259V/100cyc) → flat · context"
+dchg_dQdV_peak1,방전 dQ/dV 피크1 높이,Ah/V,peaks,either,30,7.0,240.0,-71.32508090932632,-53.93234082886245,17.392740080463867,24.385166982950633,7.186032536187071,increasing,context,"방전 dQ/dV 피크1 높이: early=-71.33 → late=-53.93 (Δ=+17.39, +7.186Ah/V/100cyc) → increasing · context"
+chg_dVdQ_peak1_Q,충전 dV/dQ 피크1 Q,Ah,peaks,either,30,7.0,240.0,56.26500601202406,49.4685370741483,-6.796468937875758,-12.079388983666554,-2.5406133113359903,flat,context,"충전 dV/dQ 피크1 Q: early=56.27 → late=49.47 (Δ=-6.796, -2.541Ah/100cyc) → flat · context"
+chg_dVdQ_peak1,충전 dV/dQ 피크1 높이,V/Ah,peaks,either,30,7.0,240.0,0.0153022458042779,0.0164767373559016,0.0011744915516237013,7.6752887559508425,0.00047152219569214943,flat,context,"충전 dV/dQ 피크1 높이: early=0.0153 → late=0.01648 (Δ=+0.001174, +0.0004715V/Ah/100cyc) → flat · context"
+dchg_dVdQ_peak1_Q,방전 dV/dQ 피크1 Q,Ah,peaks,either,18,7.0,240.0,11.519931863727454,28.68556713426854,17.165635270541085,149.0081319368748,4.546090848129831,increasing,context,"방전 dV/dQ 피크1 Q: early=11.52 → late=28.69 (Δ=+17.17, +4.546Ah/100cyc) → increasing · context"
+dchg_dVdQ_peak1,방전 dV/dQ 피크1 높이,V/Ah,peaks,either,18,7.0,240.0,-0.0225680240532014,-0.0215499272417389,0.001018096811462501,4.51123593745939,0.0004308628493595678,flat,context,"방전 dV/dQ 피크1 높이: early=-0.02257 → late=-0.02155 (Δ=+0.001018, +0.0004309V/Ah/100cyc) → flat · context"
+chg_dQdV_peak2_V,충전 dQ/dV 피크2 V,V,peaks,either,19,8.0,240.0,3.742618575405154,4.194436852355558,0.4518182769504042,12.07225015980938,0.10009243158322075,flat,context,"충전 dQ/dV 피크2 V: early=3.743 → late=4.194 (Δ=+0.4518, +0.1001V/100cyc) → flat · context"
+chg_dQdV_peak2,충전 dQ/dV 피크2 높이,Ah/V,peaks,either,19,8.0,240.0,91.75431606852672,198.43074576142777,106.67642969290105,116.26311901581802,108.0990050767604,increasing,context,"충전 dQ/dV 피크2 높이: early=91.75 → late=198.4 (Δ=+106.7, +108.1Ah/V/100cyc) → increasing · context"
+dchg_dQdV_peak2_V,방전 dQ/dV 피크2 V,V,peaks,either,30,7.0,240.0,3.647571503083917,3.552566717004156,-0.0950047860797607,-2.604603802816117,-0.029559089797221248,flat,context,"방전 dQ/dV 피크2 V: early=3.648 → late=3.553 (Δ=-0.095, -0.02956V/100cyc) → flat · context"
+dchg_dQdV_peak2,방전 dQ/dV 피크2 높이,Ah/V,peaks,either,30,7.0,240.0,-55.14890039107189,-48.87581310415075,6.27308728692114,11.374818432348464,2.6120642627557324,flat,context,"방전 dQ/dV 피크2 높이: early=-55.15 → late=-48.88 (Δ=+6.273, +2.612Ah/V/100cyc) → flat · context"
+chg_dVdQ_peak2_Q,충전 dV/dQ 피크2 Q,Ah,peaks,either,0,,,,,,,,insufficient_data,n/a,
+chg_dVdQ_peak2,충전 dV/dQ 피크2 높이,V/Ah,peaks,either,0,,,,,,,,insufficient_data,n/a,
+dchg_dVdQ_peak2_Q,방전 dV/dQ 피크2 Q,Ah,peaks,either,0,,,,,,,,insufficient_data,n/a,
+dchg_dVdQ_peak2,방전 dV/dQ 피크2 높이,V/Ah,peaks,either,0,,,,,,,,insufficient_data,n/a,
+chg_dQdV_peak3_V,충전 dQ/dV 피크3 V,V,peaks,either,9,9.0,170.0,3.969604709677665,4.172768918775111,0.2031642090974457,5.117995970786291,0.15311681146992667,flat,context,"충전 dQ/dV 피크3 V: early=3.97 → late=4.173 (Δ=+0.2032, +0.1531V/100cyc) → flat · context"
+chg_dQdV_peak3,충전 dQ/dV 피크3 높이,Ah/V,peaks,either,9,9.0,170.0,83.38120520184341,82.30853961795178,-1.0726655838916344,-1.286459677927418,66.36529320369146,increasing,context,"충전 dQ/dV 피크3 높이: early=83.38 → late=82.31 (Δ=-1.073, +66.37Ah/V/100cyc) → increasing · context"
+dchg_dQdV_peak3_V,방전 dQ/dV 피크3 V,V,peaks,either,30,7.0,240.0,3.966459542449841,3.8342762503936574,-0.13218329205618362,-3.3325259123793316,-0.05629983967108227,flat,context,"방전 dQ/dV 피크3 V: early=3.966 → late=3.834 (Δ=-0.1322, -0.0563V/100cyc) → flat · context"
+dchg_dQdV_peak3,방전 dQ/dV 피크3 높이,Ah/V,peaks,either,30,7.0,240.0,-60.91340759575715,-49.25421505216863,11.659192543588517,19.140601394298987,4.4901273747891235,increasing,context,"방전 dQ/dV 피크3 높이: early=-60.91 → late=-49.25 (Δ=+11.66, +4.49Ah/V/100cyc) → increasing · context"
+chg_dVdQ_peak3_Q,충전 dV/dQ 피크3 Q,Ah,peaks,either,0,,,,,,,,insufficient_data,n/a,
+chg_dVdQ_peak3,충전 dV/dQ 피크3 높이,V/Ah,peaks,either,0,,,,,,,,insufficient_data,n/a,
+dchg_dVdQ_peak3_Q,방전 dV/dQ 피크3 Q,Ah,peaks,either,0,,,,,,,,insufficient_data,n/a,
+dchg_dVdQ_peak3,방전 dV/dQ 피크3 높이,V/Ah,peaks,either,0,,,,,,,,insufficient_data,n/a,
+chg_dQdV_peak4_V,충전 dQ/dV 피크4 V,V,peaks,either,1,9.0,9.0,,,,,,insufficient_data,n/a,
+chg_dQdV_peak4,충전 dQ/dV 피크4 높이,Ah/V,peaks,either,1,9.0,9.0,,,,,,insufficient_data,n/a,
+dchg_dQdV_peak4_V,방전 dQ/dV 피크4 V,V,peaks,either,0,,,,,,,,insufficient_data,n/a,
+dchg_dQdV_peak4,방전 dQ/dV 피크4 높이,Ah/V,peaks,either,0,,,,,,,,insufficient_data,n/a,
+chg_dVdQ_peak4_Q,충전 dV/dQ 피크4 Q,Ah,peaks,either,0,,,,,,,,insufficient_data,n/a,
+chg_dVdQ_peak4,충전 dV/dQ 피크4 높이,V/Ah,peaks,either,0,,,,,,,,insufficient_data,n/a,
+dchg_dVdQ_peak4_Q,방전 dV/dQ 피크4 Q,Ah,peaks,either,0,,,,,,,,insufficient_data,n/a,
+dchg_dVdQ_peak4,방전 dV/dQ 피크4 높이,V/Ah,peaks,either,0,,,,,,,,insufficient_data,n/a,
+chg_dQdV_peak5_V,충전 dQ/dV 피크5 V,V,peaks,either,0,,,,,,,,insufficient_data,n/a,
+chg_dQdV_peak5,충전 dQ/dV 피크5 높이,Ah/V,peaks,either,0,,,,,,,,insufficient_data,n/a,
+dchg_dQdV_peak5_V,방전 dQ/dV 피크5 V,V,peaks,either,0,,,,,,,,insufficient_data,n/a,
+dchg_dQdV_peak5,방전 dQ/dV 피크5 높이,Ah/V,peaks,either,0,,,,,,,,insufficient_data,n/a,
+chg_dVdQ_peak5_Q,충전 dV/dQ 피크5 Q,Ah,peaks,either,0,,,,,,,,insufficient_data,n/a,
+chg_dVdQ_peak5,충전 dV/dQ 피크5 높이,V/Ah,peaks,either,0,,,,,,,,insufficient_data,n/a,
+dchg_dVdQ_peak5_Q,방전 dV/dQ 피크5 Q,Ah,peaks,either,0,,,,,,,,insufficient_data,n/a,
+dchg_dVdQ_peak5,방전 dV/dQ 피크5 높이,V/Ah,peaks,either,0,,,,,,,,insufficient_data,n/a,
+chg_dQdV_peak6_V,충전 dQ/dV 피크6 V,V,peaks,either,0,,,,,,,,insufficient_data,n/a,
+chg_dQdV_peak6,충전 dQ/dV 피크6 높이,Ah/V,peaks,either,0,,,,,,,,insufficient_data,n/a,
+dchg_dQdV_peak6_V,방전 dQ/dV 피크6 V,V,peaks,either,0,,,,,,,,insufficient_data,n/a,
+dchg_dQdV_peak6,방전 dQ/dV 피크6 높이,Ah/V,peaks,either,0,,,,,,,,insufficient_data,n/a,
+chg_dVdQ_peak6_Q,충전 dV/dQ 피크6 Q,Ah,peaks,either,0,,,,,,,,insufficient_data,n/a,
+chg_dVdQ_peak6,충전 dV/dQ 피크6 높이,V/Ah,peaks,either,0,,,,,,,,insufficient_data,n/a,
+dchg_dVdQ_peak6_Q,방전 dV/dQ 피크6 Q,Ah,peaks,either,0,,,,,,,,insufficient_data,n/a,
+dchg_dVdQ_peak6,방전 dV/dQ 피크6 높이,V/Ah,peaks,either,0,,,,,,,,insufficient_data,n/a,
+chg_dQdV_peak7_V,충전 dQ/dV 피크7 V,V,peaks,either,0,,,,,,,,insufficient_data,n/a,
+chg_dQdV_peak7,충전 dQ/dV 피크7 높이,Ah/V,peaks,either,0,,,,,,,,insufficient_data,n/a,
+dchg_dQdV_peak7_V,방전 dQ/dV 피크7 V,V,peaks,either,0,,,,,,,,insufficient_data,n/a,
+dchg_dQdV_peak7,방전 dQ/dV 피크7 높이,Ah/V,peaks,either,0,,,,,,,,insufficient_data,n/a,
+chg_dVdQ_peak7_Q,충전 dV/dQ 피크7 Q,Ah,peaks,either,0,,,,,,,,insufficient_data,n/a,
+chg_dVdQ_peak7,충전 dV/dQ 피크7 높이,V/Ah,peaks,either,0,,,,,,,,insufficient_data,n/a,
+dchg_dVdQ_peak7_Q,방전 dV/dQ 피크7 Q,Ah,peaks,either,0,,,,,,,,insufficient_data,n/a,
+dchg_dVdQ_peak7,방전 dV/dQ 피크7 높이,V/Ah,peaks,either,0,,,,,,,,insufficient_data,n/a,
+chg_dQdV_peak8_V,충전 dQ/dV 피크8 V,V,peaks,either,0,,,,,,,,insufficient_data,n/a,
+chg_dQdV_peak8,충전 dQ/dV 피크8 높이,Ah/V,peaks,either,0,,,,,,,,insufficient_data,n/a,
+dchg_dQdV_peak8_V,방전 dQ/dV 피크8 V,V,peaks,either,0,,,,,,,,insufficient_data,n/a,
+dchg_dQdV_peak8,방전 dQ/dV 피크8 높이,Ah/V,peaks,either,0,,,,,,,,insufficient_data,n/a,
+chg_dVdQ_peak8_Q,충전 dV/dQ 피크8 Q,Ah,peaks,either,0,,,,,,,,insufficient_data,n/a,
+chg_dVdQ_peak8,충전 dV/dQ 피크8 높이,V/Ah,peaks,either,0,,,,,,,,insufficient_data,n/a,
+dchg_dVdQ_peak8_Q,방전 dV/dQ 피크8 Q,Ah,peaks,either,0,,,,,,,,insufficient_data,n/a,
+dchg_dVdQ_peak8,방전 dV/dQ 피크8 높이,V/Ah,peaks,either,0,,,,,,,,insufficient_data,n/a,
+delta_chg_dQdV_peak1_V,충전 피크1 ΔV,V,peaks,either,26,8.0,240.0,0.0931576591325824,0.3275758717023627,0.2344182125697803,251.6360058341046,0.07479295806064039,increasing,context,"충전 피크1 ΔV: early=0.09316 → late=0.3276 (Δ=+0.2344, +0.07479V/100cyc) → increasing · context"
+delta_dchg_dQdV_peak1_V,방전 피크1 ΔV,V,peaks,either,30,7.0,240.0,-0.0195885767869397,-0.0721634273719402,-0.0525748505850005,-268.3954590312745,-0.022585904264603666,decreasing,context,"방전 피크1 ΔV: early=-0.01959 → late=-0.07216 (Δ=-0.05257, -0.02259V/100cyc) → decreasing · context"
+dchg_dVdQ_SOC0,방전 dV/dQ @SOC0,V/Ah,peaks,either,30,7.0,240.0,0.1002469374508369,0.0565932771878888,-0.043653660262948105,-43.546128563136136,-0.02001012946275044,decreasing,context,"방전 dV/dQ @SOC0: early=0.1002 → late=0.05659 (Δ=-0.04365, -0.02001V/Ah/100cyc) → decreasing · context"
+dchg_dVdQ_SOC5,방전 dV/dQ @SOC5,V/Ah,peaks,either,30,7.0,240.0,0.0443813714574569,0.038339671850767,-0.006041699606689904,-13.613143100999835,-0.002879810212756701,decreasing,context,"방전 dV/dQ @SOC5: early=0.04438 → late=0.03834 (Δ=-0.006042, -0.00288V/Ah/100cyc) → decreasing · context"
+dchg_dVdQ_SOC10,방전 dV/dQ @SOC10,V/Ah,peaks,either,30,7.0,240.0,0.0266040444241835,0.0292340537875666,0.0026300093633831005,9.885750156815932,0.0008684272854475139,flat,context,"방전 dV/dQ @SOC10: early=0.0266 → late=0.02923 (Δ=+0.00263, +0.0008684V/Ah/100cyc) → flat · context"
+dchg_dVdQ_SOCmid,방전 dV/dQ @mid,V/Ah,peaks,either,30,7.0,240.0,0.018896967469979,0.0207023047136976,0.001805337243718598,9.553581793410391,0.0007917134627605644,flat,context,"방전 dV/dQ @mid: early=0.0189 → late=0.0207 (Δ=+0.001805, +0.0007917V/Ah/100cyc) → flat · context"
+dchg_dVdQ_SOC0_Q,방전 cliff Q,Ah,peaks,either,30,7.0,240.0,70.103,63.022,-7.080999999999996,-10.100851604068295,-2.5886335133624185,flat,context,"방전 cliff Q: early=70.1 → late=63.02 (Δ=-7.081, -2.589Ah/100cyc) → flat · context"
+dchg_dVdQ_SOC0_cliff_width,방전 cliff 폭,Ah,peaks,either,30,7.0,240.0,4.787254509018041,2.778525050100207,-2.008729458917834,-41.95994708728915,-0.9197204814169597,decreasing,context,"방전 cliff 폭: early=4.787 → late=2.779 (Δ=-2.009, -0.9197Ah/100cyc) → decreasing · context"
+dchg_dVdQ_SOC0_to_mid_ratio,cliff/mid 비,1,peaks,either,30,7.0,240.0,5.304399532288376,2.73585940192847,-2.568540130359906,-48.42282551917445,-1.1724517140826431,decreasing,context,"cliff/mid 비: early=5.304 → late=2.736 (Δ=-2.569, -1.1721/100cyc) → decreasing · context"
+chg_dVdQ_SOC100,충전 dV/dQ @100,V/Ah,peaks,either,30,7.0,240.0,0.0068809950603736,0.0079658372872485,0.001084842226874899,15.765775405396063,0.00037258287754481957,flat,context,"충전 dV/dQ @100: early=0.006881 → late=0.007966 (Δ=+0.001085, +0.0003726V/Ah/100cyc) → flat · context"
+delta_dchg_dVdQ_SOC0,dV/dQ SOC0 Δ,V/Ah,peaks,either,30,7.0,240.0,-0.0027955589921029,-0.046449219255051,-0.043653660262948105,-1561.5360071550688,-0.020010129462750423,decreasing,context,"dV/dQ SOC0 Δ: early=-0.002796 → late=-0.04645 (Δ=-0.04365, -0.02001V/Ah/100cyc) → decreasing · context"
+delta_dchg_dVdQ_SOC5,dV/dQ SOC5 Δ,V/Ah,peaks,either,30,7.0,240.0,-0.0030423977918938,-0.0090840973985837,-0.0060416996066899,-198.58348644570654,-0.0028798102127566955,decreasing,context,"dV/dQ SOC5 Δ: early=-0.003042 → late=-0.009084 (Δ=-0.006042, -0.00288V/Ah/100cyc) → decreasing · context"
+delta_dchg_dVdQ_SOC10,dV/dQ SOC10 Δ,V/Ah,peaks,either,30,7.0,240.0,-0.0016265260384708,0.0010034833249122,0.002630009363383,161.69488229377737,0.0008684272854474935,increasing,context,"dV/dQ SOC10 Δ: early=-0.001627 → late=0.001003 (Δ=+0.00263, +0.0008684V/Ah/100cyc) → increasing · context"
+delta_dchg_dVdQ_SOCmid,dV/dQ mid Δ,V/Ah,peaks,either,30,7.0,240.0,0.000509182407522,0.0023145196512407,0.0018053372437187,354.556091697001,0.0007917134627605814,increasing,context,"dV/dQ mid Δ: early=0.0005092 → late=0.002315 (Δ=+0.001805, +0.0007917V/Ah/100cyc) → increasing · context"
+delta_chg_dVdQ_SOC100,dV/dQ 100 Δ,V/Ah,peaks,either,30,7.0,240.0,-0.0039407652878106,-0.0028559230609357,0.0010848422268748999,27.528719617747488,0.0003725828775448132,increasing,context,"dV/dQ 100 Δ: early=-0.003941 → late=-0.002856 (Δ=+0.001085, +0.0003726V/Ah/100cyc) → increasing · context"
+delta_dchg_dVdQ_SOC0_cliff_width,cliff 폭 Δ,Ah,peaks,either,30,7.0,240.0,-0.8628216432865656,-2.8715511022044,-2.008729458917834,-232.80934994472346,-0.9197204814169583,decreasing,context,"cliff 폭 Δ: early=-0.8628 → late=-2.872 (Δ=-2.009, -0.9197Ah/100cyc) → decreasing · context"
+delta_dchg_dVdQ_SOC0_to_mid_ratio,cliff/mid Δ,1,peaks,either,30,7.0,240.0,-0.2994562933556768,-2.867996423715583,-2.568540130359906,-857.7345633905724,-1.1724517140826411,decreasing,context,"cliff/mid Δ: early=-0.2995 → late=-2.868 (Δ=-2.569, -1.1721/100cyc) → decreasing · context"
+chg_dQdV_area_sum,충전 IC 면적합,Ah,peaks,either,30,7.0,240.0,64.10099999999996,53.199999999999946,-10.90100000000001,-17.005974945788704,-6.059855972109418,decreasing,context,"충전 IC 면적합: early=64.1 → late=53.2 (Δ=-10.9, -6.06Ah/100cyc) → decreasing · context"
+dchg_dQdV_area_sum,방전 IC 면적합,Ah,peaks,either,30,7.0,240.0,70.1029999999999,63.021999999999935,-7.08099999999996,-10.100851604068259,-2.5886335133624185,flat,context,"방전 IC 면적합: early=70.1 → late=63.02 (Δ=-7.081, -2.589Ah/100cyc) → flat · context"
+RCF,RCF,1,transport,decrease,30,7.0,240.0,0.9687211497388836,0.9519292918664602,-0.01679185787242332,-1.7334046930790687,-0.0012015232470639929,flat,stable,"RCF: early=0.9687 → late=0.9519 (Δ=-0.01679, -0.0012021/100cyc) → flat · stable"
+RCF_slope_100,RCF 기울기/100,1/100cyc,transport,decrease,30,7.0,240.0,-0.0168639533405045,-0.0168639533405045,0.0,0.0,6.104461430150539e-18,flat,stable,"RCF 기울기/100: early=-0.01686 → late=-0.01686 (Δ=+0, +6.104e-181/100cyc/100cyc) → flat · stable"
+PER,PER,1,transport,increase,0,,,,,,,,insufficient_data,n/a,
+eta_SOC20,η @SOC20,V,transport,increase,0,,,,,,,,insufficient_data,n/a,
+eta_SOC50,η @SOC50,V,transport,increase,0,,,,,,,,insufficient_data,n/a,
+eta_SOC80,η @SOC80,V,transport,increase,0,,,,,,,,insufficient_data,n/a,
+eta_max,η max,V,transport,increase,0,,,,,,,,insufficient_data,n/a,
+eta_mean,η mean,V,transport,increase,0,,,,,,,,insufficient_data,n/a,
+eta_argmax_SOC,η argmax SOC,%,transport,either,0,,,,,,,,insufficient_data,n/a,
+eta_slope_lowSOC,η 저SOC 기울기,V/%,transport,either,0,,,,,,,,insufficient_data,n/a,
+Reff_scale,Reff scale,1,transport,increase,0,,,,,,,,insufficient_data,n/a,
+Reff_shape_fit_r2,Reff fit R2,1,transport,either,0,,,,,,,,insufficient_data,n/a,
+Reff_resid_soc20,Reff 잔차 SOC20,V,transport,either,0,,,,,,,,insufficient_data,n/a,
+Reff_resid_soc50,Reff 잔차 SOC50,V,transport,either,0,,,,,,,,insufficient_data,n/a,
+Reff_resid_soc80,Reff 잔차 SOC80,V,transport,either,0,,,,,,,,insufficient_data,n/a,
+I_inf_norm,I∞ 정규화,1,transport,either,3,40.0,230.0,3.521065653859494e-16,3.521065653859494e-16,0.0,,0.20931237849386536,increasing,context,"I∞ 정규화: early=3.521e-16 → late=3.521e-16 (Δ=+0, +0.20931/100cyc) → increasing · context"
+pulse_sample_count_1s,펄스 1s 샘플수,count,transport,either,30,7.0,240.0,5.0,7.0,2.0,40.0,1.0541601469223563,increasing,context,"펄스 1s 샘플수: early=5 → late=7 (Δ=+2, +1.054count/100cyc) → increasing · context"
+pulse_current_stability,펄스 전류 안정도,1,transport,decrease,30,7.0,240.0,0.035877809571885,0.0475504814385358,0.011672671866650795,32.534516476719006,0.004426207767730543,increasing,opposite_aging,"펄스 전류 안정도: early=0.03588 → late=0.04755 (Δ=+0.01167, +0.0044261/100cyc) → increasing · opposite_aging"
+rest_sufficiency,rest 충분성,1,transport,either,30,7.0,240.0,3.0,3.0,0.0,0.0,-1.6777885369649478e-17,flat,context,"rest 충분성: early=3 → late=3 (Δ=+0, -1.678e-171/100cyc) → flat · context"
+leg_completeness,레그 완전성,1,transport,either,30,7.0,240.0,0.9999042352941176,0.9999401176470588,3.5882352941163376e-05,0.003588578953324338,1.5497832867548668e-05,flat,context,"레그 완전성: early=0.9999 → late=0.9999 (Δ=+3.588e-05, +1.55e-051/100cyc) → flat · context"
+relax_completeness_max,완화 완성도 max,1,transport,either,0,,,,,,,,insufficient_data,n/a,
+samples_per_mV,샘플/mV,1/mV,transport,either,30,7.0,240.0,0.3582757371258555,0.3482571523753873,-0.010018584750468185,-2.79633358117936,-0.00362732843227169,flat,context,"샘플/mV: early=0.3583 → late=0.3483 (Δ=-0.01002, -0.0036271/mV/100cyc) → flat · context"
+ocv_V_inf_soc80,OCV V∞ SOC80,V,ocv,either,0,,,,,,,,insufficient_data,n/a,
+ocv_V_inf_soc50,OCV V∞ SOC50,V,ocv,either,0,,,,,,,,insufficient_data,n/a,
+ocv_V_inf_soc20,OCV V∞ SOC20,V,ocv,either,0,,,,,,,,insufficient_data,n/a,
+ocv_spread_20_80,OCV spread 20–80,V,ocv,either,0,,,,,,,,insufficient_data,n/a,
+ocv_spread_50_80,OCV spread 50–80,V,ocv,either,0,,,,,,,,insufficient_data,n/a,
+ocv_spread_20_50,OCV spread 20–50,V,ocv,either,0,,,,,,,,insufficient_data,n/a,
+ocv_parallel_shift,OCV 평행이동,V,ocv,either,0,,,,,,,,insufficient_data,n/a,
+ocv_spread_compression,OCV 폭 압축,V,ocv,either,0,,,,,,,,insufficient_data,n/a,
+delta_ocv_V_inf_soc80,OCV80 Δ,V,ocv,either,0,,,,,,,,insufficient_data,n/a,
+delta_ocv_V_inf_soc50,OCV50 Δ,V,ocv,either,0,,,,,,,,insufficient_data,n/a,
+delta_ocv_V_inf_soc20,OCV20 Δ,V,ocv,either,0,,,,,,,,insufficient_data,n/a,
+delta_ocv_spread_20_80,OCV spread Δ,V,ocv,either,0,,,,,,,,insufficient_data,n/a,
+LAM_curve_proxy,LAM 곡선 proxy,%,curve,either,30,7.0,240.0,-3.1936826867145163,-16.438308322242023,-13.244625635527505,-414.7132616093692,-5.251085665877005,decreasing,context,"LAM 곡선 proxy: early=-3.194 → late=-16.44 (Δ=-13.24, -5.251%/100cyc) → decreasing · context"
+LLI_curve_proxy,LLI 곡선 proxy,%,curve,either,30,7.0,240.0,-0.5850554244018336,-2.774439272064775,-2.189383847662941,-374.21819478067204,-1.0462731860371592,decreasing,context,"LLI 곡선 proxy: early=-0.5851 → late=-2.774 (Δ=-2.189, -1.046%/100cyc) → decreasing · context"
+R_curve_proxy,R 곡선 proxy,mΩ,curve,increase,30,7.0,240.0,1.2778591212932626,4.314394988949274,3.036535867656011,237.62681011212504,1.3047598739252588,increasing,matches_aging,"R 곡선 proxy: early=1.278 → late=4.314 (Δ=+3.037, +1.305mΩ/100cyc) → increasing · matches_aging"
+dchg_fit_scale,방전 fit scale,1,curve,decrease,30,7.0,240.0,1.0319368268671452,1.1643830832224202,0.13244625635527507,12.83472523772297,0.052510856658769825,flat,stable,"방전 fit scale: early=1.032 → late=1.164 (Δ=+0.1324, +0.052511/100cyc) → flat · stable"
+dchg_fit_offset,방전 fit offset,Ah,curve,either,30,7.0,240.0,-0.4245922731511427,-2.0134938129155686,-1.588901539764426,-374.21819478067204,-0.7593118393027477,decreasing,context,"방전 fit offset: early=-0.4246 → late=-2.013 (Δ=-1.589, -0.7593Ah/100cyc) → decreasing · context"
+dchg_fit_dR,방전 fit dR,mΩ,curve,increase,30,7.0,240.0,1.2778591212932626,4.314394988949274,3.036535867656011,237.62681011212504,1.3047598739252588,increasing,matches_aging,"방전 fit dR: early=1.278 → late=4.314 (Δ=+3.037, +1.305mΩ/100cyc) → increasing · matches_aging"
+dchg_fit_residual_rms,fit 잔차 RMS,mV,curve,increase,30,7.0,240.0,6.301370316102003,22.659813571491163,16.35844325538916,259.601363430239,7.29572455698031,increasing,matches_aging,"fit 잔차 RMS: early=6.301 → late=22.66 (Δ=+16.36, +7.296mV/100cyc) → increasing · matches_aging"
+dchg_fit_residual_max,fit 잔차 max,mV,curve,increase,30,7.0,240.0,56.472699255222025,145.29214053875262,88.8194412835306,157.27854778487054,28.705365185850575,increasing,matches_aging,"fit 잔차 max: early=56.47 → late=145.3 (Δ=+88.82, +28.71mV/100cyc) → increasing · matches_aging"
+dchg_fit_residual_argmax_SOC,잔차 argmax SOC,%,curve,either,30,7.0,240.0,99.48650839935706,100.0,0.5134916006429364,0.5161419461839861,0.12138766527180943,flat,context,"잔차 argmax SOC: early=99.49 → late=100 (Δ=+0.5135, +0.1214%/100cyc) → flat · context"
+dchg_fit_r2,fit R2,1,curve,either,30,7.0,240.0,0.9997918559677332,0.9972288273875378,-0.0025630285801954145,-0.256356217036252,-0.001151347654858264,flat,context,"fit R2: early=0.9998 → late=0.9972 (Δ=-0.002563, -0.0011511/100cyc) → flat · context"
+dchg_fit_corr_s_o,"fit corr(s,o)",1,curve,either,30,7.0,240.0,0.5151501852466317,0.6223024345701528,0.10715224932352108,20.80019621311428,-0.05333506661808367,decreasing,context,"fit corr(s,o): early=0.5152 → late=0.6223 (Δ=+0.1072, -0.053341/100cyc) → decreasing · context"
+dchg_fit_residual_argmax_DOD,잔차 argmax DOD,%,curve,either,30,7.0,240.0,0.5134916006429313,0.0,-0.5134916006429313,-100.0,-0.12138766527184566,decreasing,context,"잔차 argmax DOD: early=0.5135 → late=0 (Δ=-0.5135, -0.1214%/100cyc) → decreasing · context"
+dQV_min,ΔQ(V) min,Ah,curve,either,30,7.0,240.0,-4.67098080507089,-15.846462652507128,-11.175481847436238,-239.2534312130754,-4.51532652449561,decreasing,context,"ΔQ(V) min: early=-4.671 → late=-15.85 (Δ=-11.18, -4.515Ah/100cyc) → decreasing · context"
+dQV_mean,ΔQ(V) mean,Ah,curve,either,30,7.0,240.0,-3.347914185179727,-10.869303959860597,-7.52138977468087,-224.65897746053182,-2.986325746052988,decreasing,context,"ΔQ(V) mean: early=-3.348 → late=-10.87 (Δ=-7.521, -2.986Ah/100cyc) → decreasing · context"
+dQV_var,ΔQ(V) var,Ah2,curve,increase,30,7.0,240.0,0.5903752026191059,6.066825391218896,5.47645018859979,927.6219875605187,2.3533439743531623,increasing,matches_aging,"ΔQ(V) var: early=0.5904 → late=6.067 (Δ=+5.476, +2.353Ah2/100cyc) → increasing · matches_aging"
+dQV_log_var,ΔQ(V) log-var,1,curve,increase,30,7.0,240.0,-0.2288718923628975,0.7829614957317634,1.011833388094661,442.09595929337877,0.4010316323451375,increasing,matches_aging,"ΔQ(V) log-var: early=-0.2289 → late=0.783 (Δ=+1.012, +0.4011/100cyc) → increasing · matches_aging"
+dQV_skew,ΔQ(V) skew,1,curve,either,30,7.0,240.0,-0.3662129089894703,-0.6885174913660138,-0.3223045823765435,-88.0101641599452,-0.13443358851652215,decreasing,context,"ΔQ(V) skew: early=-0.3662 → late=-0.6885 (Δ=-0.3223, -0.13441/100cyc) → decreasing · context"
+dQV_kurtosis,ΔQ(V) kurtosis,1,curve,either,30,7.0,240.0,-1.0014726882736285,-0.6759921246154046,0.32548056365822386,32.500193711652585,0.11232147551729077,increasing,context,"ΔQ(V) kurtosis: early=-1.001 → late=-0.676 (Δ=+0.3255, +0.11231/100cyc) → increasing · context"
+dQV_argmin_V,ΔQ argmin V,V,curve,either,30,7.0,240.0,3.112329145063063,3.045155966,-0.06717317906306297,-2.158292903230256,-0.030073340944264854,flat,context,"ΔQ argmin V: early=3.112 → late=3.045 (Δ=-0.06717, -0.03007V/100cyc) → flat · context"
+dqdv_snr,dQ/dV SNR,1,curve,either,30,7.0,240.0,76.50036100567206,73.92064094685529,-2.5797200588167755,-3.3721671700680003,-1.5735936533504635,flat,context,"dQ/dV SNR: early=76.5 → late=73.92 (Δ=-2.58, -1.5741/100cyc) → flat · context"
+quality_score,데이터 품질점수,0–1,curve,either,30,7.0,240.0,1.0,1.0,0.0,0.0,-2.526406795897898e-16,flat,context,"데이터 품질점수: early=1 → late=1 (Δ=+0, -2.526e-160–1/100cyc) → flat · context"
+v_noise_sigma,전압 노이즈 σ,V,curve,either,30,7.0,240.0,0.022219608870525,0.0229961926496568,0.0007765837791317981,3.4950380254530966,0.0005549941951297673,flat,context,"전압 노이즈 σ: early=0.02222 → late=0.023 (Δ=+0.0007766, +0.000555V/100cyc) → flat · context"
+dQV_ref_cycle,ΔQ(V) 기준 사이클,cyc,curve,either,30,7.0,240.0,3.0,3.0,0.0,0.0,-1.6777885369649478e-17,flat,context,"ΔQ(V) 기준 사이클: early=3 → late=3 (Δ=+0, -1.678e-17cyc/100cyc) → flat · context"
+temperature_available,온도 가용,0/1,curve,either,30,7.0,240.0,0.0,0.0,0.0,,0.0,flat,context,"온도 가용: early=0 → late=0 (Δ=+0, +00/1/100cyc) → flat · context"
+Q_relax_significant,Q_relax 유의,0/1,curve,either,30,7.0,240.0,1.0,1.0,0.0,0.0,-0.17569335782039308,decreasing,context,"Q_relax 유의: early=1 → late=1 (Δ=+0, -0.17570/1/100cyc) → decreasing · context"
+dchg_fit_degenerate_flag,fit 축퇴 플래그,0/1,curve,either,30,7.0,240.0,0.0,0.0,0.0,,0.0,flat,context,"fit 축퇴 플래그: early=0 → late=0 (Δ=+0, +00/1/100cyc) → flat · context"
+eta_valid,η 유효,0/1,curve,either,0,,,,,,,,insufficient_data,n/a,
+fade_exponent_b_se,fade b 표준오차,1,curve,either,30,7.0,240.0,0.0403754630289624,0.0403754630289624,0.0,0.0,-1.0345771078878129e-17,flat,context,"fade b 표준오차: early=0.04038 → late=0.04038 (Δ=+0, -1.035e-171/100cyc) → flat · context"
+dQV_valid_V_range,ΔQ 유효 V범위,V,curve,either,30,7.0,240.0,0.7803023940000005,0.7803023940000005,0.0,0.0,-3.0858823242260784e-16,flat,context,"ΔQ 유효 V범위: early=0.7803 → late=0.7803 (Δ=+0, -3.086e-16V/100cyc) → flat · context"
+fade_exponent_b,fade 지수 b,1,life,either,30,7.0,240.0,0.6238443601576621,0.6238443601576621,0.0,0.0,-1.6422879111575853e-16,flat,context,"fade 지수 b: early=0.6238 → late=0.6238 (Δ=+0, -1.642e-161/100cyc) → flat · context"
+fade_exponent_a,fade 지수 a,1,life,either,30,7.0,240.0,0.0032076061321386,0.0032076061321386,0.0,0.0,-1.3289834120275983e-18,flat,context,"fade 지수 a: early=0.003208 → late=0.003208 (Δ=+0, -1.329e-181/100cyc) → flat · context"
+fade_fit_r2,fade fit R2,1,life,either,30,7.0,240.0,0.9557015051831098,0.9557015051831098,0.0,0.0,-1.7155448579819057e-16,flat,context,"fade fit R2: early=0.9557 → late=0.9557 (Δ=+0, -1.716e-161/100cyc) → flat · context"
+fade_sohq0,fade SoHQ0,%,life,either,30,7.0,240.0,97.09809433260304,97.09809433260304,0.0,0.0,-4.408703188534079e-14,flat,context,"fade SoHQ0: early=97.1 → late=97.1 (Δ=+0, -4.409e-14%/100cyc) → flat · context"
+knee_cycle_bw,knee 사이클,cyc,life,either,30,7.0,240.0,30.0,30.0,0.0,0.0,-3.1323490831971194e-15,flat,context,"knee 사이클: early=30 → late=30 (Δ=+0, -3.132e-15cyc/100cyc) → flat · context"
+knee_severity,knee 심각도,1,life,increase,30,7.0,240.0,0.0,0.0,0.0,,0.0,flat,stable,"knee 심각도: early=0 → late=0 (Δ=+0, +01/100cyc) → flat · stable"
+knee_slope_before,knee 전 기울기,%/cyc,life,decrease,30,7.0,240.0,-0.1583820204925489,-0.1583820204925489,0.0,0.0,3.7168465448097e-17,flat,stable,"knee 전 기울기: early=-0.1584 → late=-0.1584 (Δ=+0, +3.717e-17%/cyc/100cyc) → flat · stable"
+knee_slope_after,knee 후 기울기,%/cyc,life,decrease,30,7.0,240.0,-0.0281260429186037,-0.0281260429186037,0.0,0.0,1.0305499268251293e-17,flat,stable,"knee 후 기울기: early=-0.02813 → late=-0.02813 (Δ=+0, +1.031e-17%/cyc/100cyc) → flat · stable"
+knee_fit_r2,knee fit R2,1,life,either,30,7.0,240.0,0.9885930026485082,0.9885930026485082,0.0,0.0,-3.398824934909037e-16,flat,context,"knee fit R2: early=0.9886 → late=0.9886 (Δ=+0, -3.399e-161/100cyc) → flat · context"
 LAM_PE_pattern_score,PE activity 패턴,0–1,mechanism,increase,30,7.0,240.0,0.6564607117426684,0.9319071627131856,0.27544645097051723,41.95932003901733,0.13801364389524434,increasing,matches_aging,"PE activity 패턴: early=0.6565 → late=0.9319 (Δ=+0.2754, +0.1380–1/100cyc) → increasing · matches_aging"
-contact_loss_score,접촉/스택 손실,0–1,mechanism,increase,30,7.0,240.0,0.805337520687064,0.9259167895285167,0.12057926884145276,14.972513479637955,0.07443911717412334,increasing,matches_aging,"접촉/스택 손실: early=0.8053 → late=0.9259 (Δ=+0.1206, +0.074440–1/100cyc) → increasing · matches_aging"
+LAM_NE_pattern_score,NE 패턴 점수,0–1,mechanism,increase,0,,,,,,,,insufficient_data,n/a,
+contact_loss_score,contact_loss,0–1,mechanism,increase,30,7.0,240.0,0.805337520687064,0.9259167895285167,0.12057926884145276,14.972513479637955,0.07443911717412334,increasing,matches_aging,"contact_loss: early=0.8053 → late=0.9259 (Δ=+0.1206, +0.074440–1/100cyc) → increasing · matches_aging"
 LLI_pattern_score,LLI 패턴,0–1,mechanism,increase,30,7.0,240.0,0.3602433856665496,0.632511453978385,0.2722680683118354,75.5789222356059,0.11256166396107187,increasing,matches_aging,"LLI 패턴: early=0.3602 → late=0.6325 (Δ=+0.2723, +0.11260–1/100cyc) → increasing · matches_aging"
 interface_R_score,계면 R 패턴,0–1,mechanism,increase,30,7.0,240.0,0.4692140863310223,0.8449418365383637,0.37572775020734145,80.07597409219127,0.15482507851824817,increasing,matches_aging,"계면 R 패턴: early=0.4692 → late=0.8449 (Δ=+0.3757, +0.15480–1/100cyc) → increasing · matches_aging"
-solid_diffusion_score,고체확산 제한,0–1,mechanism,increase,30,7.0,240.0,0.5549991239581897,0.7449069937252325,0.18990786976704277,34.21768820329693,0.03696778998878605,flat,stable,"고체확산 제한: early=0.555 → late=0.7449 (Δ=+0.1899, +0.036970–1/100cyc) → flat · stable"
-PE_side_score,PE lean 점수,0–1,electrode,increase,30,7.0,240.0,0.5423455338070013,0.7989303720348891,0.2565848382278878,47.31021502597934,0.11392370442804753,increasing,matches_aging,"PE lean 점수: early=0.5423 → late=0.7989 (Δ=+0.2566, +0.11390–1/100cyc) → increasing · matches_aging"
-contact_stack_score,contact_stack lean,0–1,electrode,increase,30,7.0,240.0,0.805337520687064,0.9259167895285167,0.12057926884145276,14.972513479637955,0.07443911717412334,increasing,matches_aging,"contact_stack lean: early=0.8053 → late=0.9259 (Δ=+0.1206, +0.074440–1/100cyc) → increasing · matches_aging"
-NE_side_score,NE 가설 점수,0–1,electrode,increase,30,7.0,240.0,0.1771742545511541,0.2803618757714517,0.10318762122029762,58.24075370414785,0.055853430602302946,increasing,matches_aging,"NE 가설 점수: early=0.1772 → late=0.2804 (Δ=+0.1032, +0.055850–1/100cyc) → increasing · matches_aging"
+solid_diffusion_score,고체확산 패턴,0–1,mechanism,increase,30,7.0,240.0,0.5549991239581897,0.7449069937252325,0.18990786976704277,34.21768820329693,0.03696778998878605,flat,stable,"고체확산 패턴: early=0.555 → late=0.7449 (Δ=+0.1899, +0.036970–1/100cyc) → flat · stable"
+SE_decomposition_score,SE 분해 패턴,0–1,mechanism,increase,30,7.0,240.0,0.1422727961571242,0.3468675616568178,0.2045947654996936,143.80455788170622,0.0759219421132109,increasing,matches_aging,"SE 분해 패턴: early=0.1423 → late=0.3469 (Δ=+0.2046, +0.075920–1/100cyc) → increasing · matches_aging"
+microshort_score,마이크로쇼트 패턴,0–1,mechanism,increase,0,,,,,,,,insufficient_data,n/a,
+impedance_pattern_score,임피던스 패턴,0–1,mechanism,increase,0,,,,,,,,insufficient_data,n/a,
+transport_limitation_score,수송제한 패턴,0–1,mechanism,increase,0,,,,,,,,insufficient_data,n/a,
+plating_risk_score,플레이팅 리스크,0–1,mechanism,increase,0,,,,,,,,insufficient_data,n/a,
+contact_loss_confidence,contact_loss 신뢰도,0–1,mechanism,either,30,7.0,240.0,0.364,0.448,0.08400000000000002,23.076923076923084,0.02664520813353462,increasing,context,"contact_loss 신뢰도: early=0.364 → late=0.448 (Δ=+0.084, +0.026650–1/100cyc) → increasing · context"
+LAM_PE_confidence,LAM_PE 신뢰도,0–1,mechanism,either,30,7.0,240.0,0.76,0.616,-0.14400000000000002,-18.947368421052634,-0.06747904152442043,decreasing,context,"LAM_PE 신뢰도: early=0.76 → late=0.616 (Δ=-0.144, -0.067480–1/100cyc) → decreasing · context"
+LLI_confidence,LLI 신뢰도,0–1,mechanism,either,30,7.0,240.0,0.7200000000000001,0.7200000000000001,0.0,0.0,-2.284848803124168e-16,flat,context,"LLI 신뢰도: early=0.72 → late=0.72 (Δ=+0, -2.285e-160–1/100cyc) → flat · context"
+PE_side_score,PE lean,0–1,electrode,increase,30,7.0,240.0,0.5423455338070013,0.7989303720348891,0.2565848382278878,47.31021502597934,0.11392370442804753,increasing,matches_aging,"PE lean: early=0.5423 → late=0.7989 (Δ=+0.2566, +0.11390–1/100cyc) → increasing · matches_aging"
+contact_stack_score,contact_stack,0–1,electrode,increase,30,7.0,240.0,0.805337520687064,0.9259167895285167,0.12057926884145276,14.972513479637955,0.07443911717412334,increasing,matches_aging,"contact_stack: early=0.8053 → late=0.9259 (Δ=+0.1206, +0.074440–1/100cyc) → increasing · matches_aging"
+NE_side_score,NE 가설,0–1,electrode,increase,30,7.0,240.0,0.1771742545511541,0.2803618757714517,0.10318762122029762,58.24075370414785,0.055853430602302946,increasing,matches_aging,"NE 가설: early=0.1772 → late=0.2804 (Δ=+0.1032, +0.055850–1/100cyc) → increasing · matches_aging"
+shared_side_score,shared 모드,0–1,electrode,increase,30,7.0,240.0,0.372391756604981,0.6421456704358859,0.2697539138309049,72.43820762580673,0.09506911864532926,increasing,matches_aging,"shared 모드: early=0.3724 → late=0.6421 (Δ=+0.2698, +0.095070–1/100cyc) → increasing · matches_aging"
 si_cosign,Si co-sign,0–1,electrode,increase,30,7.0,240.0,0.2,0.4,0.2,100.0,0.10130032498417788,increasing,matches_aging,"Si co-sign: early=0.2 → late=0.4 (Δ=+0.2, +0.10130–1/100cyc) → increasing · matches_aging"
+dominance_margin,dominant 마진,0–1,electrode,either,30,7.0,240.0,0.2714552854631522,0.1269864174936277,-0.14446886796952446,-53.22013447740915,-0.06380231835880384,decreasing,context,"dominant 마진: early=0.2715 → late=0.127 (Δ=-0.1445, -0.06380–1/100cyc) → decreasing · context"
+pe_peak_hits,FC-OCP 피크 hits,count,electrode,either,30,7.0,240.0,0.0,0.0,0.0,,-0.22995445562238176,decreasing,context,"FC-OCP 피크 hits: early=0 → late=0 (Δ=+0, -0.23count/100cyc) → decreasing · context"
+pe_peak_hits_delta,FC-OCP hits Δ,count,electrode,increase,30,7.0,240.0,0.0,0.0,0.0,,-0.22995445562238176,decreasing,opposite_aging,"FC-OCP hits Δ: early=0 → late=0 (Δ=+0, -0.23count/100cyc) → decreasing · opposite_aging"
+fc_ocp_hits,FC-OCP hits (alias),count,electrode,either,30,7.0,240.0,0.0,0.0,0.0,,-0.22995445562238176,decreasing,context,"FC-OCP hits (alias): early=0 → late=0 (Δ=+0, -0.23count/100cyc) → decreasing · context"
+fc_ocp_hits_delta,FC-OCP hits Δ (alias),count,electrode,increase,30,7.0,240.0,0.0,0.0,0.0,,-0.22995445562238176,decreasing,opposite_aging,"FC-OCP hits Δ (alias): early=0 → late=0 (Δ=+0, -0.23count/100cyc) → decreasing · opposite_aging"
+electrode_confidence,전극진단 신뢰도,0–1,electrode,either,30,7.0,240.0,0.825,0.8022362303686903,-0.02276376963130966,-2.7592448037951107,0.0006142011510992658,flat,context,"전극진단 신뢰도: early=0.825 → late=0.8022 (Δ=-0.02276, +0.00061420–1/100cyc) → flat · context"
