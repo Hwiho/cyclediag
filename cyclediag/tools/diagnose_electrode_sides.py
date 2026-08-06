@@ -69,14 +69,14 @@ def main() -> None:
     if args.cycles.strip():
         raw_cycles = [int(x) for x in args.cycles.split(",") if x.strip()]
     else:
-        # light default sample — caller can pass explicit list
+        # light default sample — prefer capa-like cycles (skip DCIR SOC steps)
         from cyclediag.io.cycler_csv import load_cycler_csv
         raw = load_cycler_csv(str(args.input), column_map=ColumnMap.studio_default())
         all_c = sorted(int(c) for c in raw["cycle"].dropna().unique())
-        # early capa, mid, late + near DCIR blocks
+        # early / mid / late + near RPT anchors (capa often N-1 / N-2 before DCIR block)
         picks = set(all_c[:3] + all_c[len(all_c)//2:len(all_c)//2+2] + all_c[-3:])
         for b in (4, 109, 214, 319, 424, 529):
-            for d in (-2, -1, 0, 5, 10):
+            for d in (-2, -1):
                 if b + d in set(all_c):
                     picks.add(b + d)
         raw_cycles = sorted(picks)
