@@ -6,21 +6,22 @@ GUI 없음 · `pne_studio2` 불필요 · 단독 구동.
 
 **Version:** 1.0.0
 
-## Example fixtures (Git LFS) — **DOE별 폴더**
+## Example fixtures (Git LFS) — **DOE1 / DOE2 / DOE3**
 
+비교할 때 **`DOE1`**, **`DOE2`**, **`DOE3`** 만 말하면 됩니다.  
 상세: [`example/fixtures/README.md`](example/fixtures/README.md) · [`manifest.json`](example/fixtures/manifest.json)
 
-| DOE | 비교 | Arms |
-|-----|------|------|
-| `doe/900wet_vs_900dry` | SJ900 wet vs dry | set1 · set4 |
-| `doe/900dry_vs_1300dry` | SJ900 dry vs SJ1300 dry | SJ1300_dry (+ set4 ref) |
-| `doe/set3_bimodal_vs_S83S` | **양극** Bimodal vs S83S | Ch109–111 · Ch103–105 |
-| `halfcell/` | BOL OCP C/20 | anode · cathode (**aged 없음**) |
+| ID | 비교 | Arms |
+|----|------|------|
+| **DOE1** | SJ900 wet vs dry | set1 · set4 |
+| **DOE2** | SJ900 dry vs SJ1300 dry | SJ1300_dry (+ DOE1 set4 ref) |
+| **DOE3** | **양극** Bimodal vs S83S | Ch109–111 · Ch103–105 |
+| halfcell | BOL OCP C/20 | anode · cathode (**aged 없음**) |
 
 ```bash
 git lfs install
 git lfs pull
-python run_cyclediag.py extract --input example/fixtures/doe/900wet_vs_900dry/set4_SJ900/M01Ch025_raw.csv --out /tmp/f.csv
+python run_cyclediag.py extract --input example/fixtures/doe/DOE1/set4_SJ900/M01Ch025_raw.csv --out /tmp/f.csv
 ```
 ## Cursor Cloud Agents
 
@@ -28,7 +29,7 @@ python run_cyclediag.py extract --input example/fixtures/doe/900wet_vs_900dry/se
 
 1. [Cloud Agents dashboard](https://cursor.com/dashboard/cloud-agents#environments) → GitHub에서 이 레포 선택
 2. Environment 셋업(에이전트 자동 설치 권장)
-3. 태스크 예: `example/fixtures/doe/900wet_vs_900dry/set4_SJ900/M01Ch025_raw.csv`로 diagnose 돌리고 결과 요약해 PR 열어줘
+3. 태스크 예: `DOE1`의 `example/fixtures/doe/DOE1/set4_SJ900/M01Ch025_raw.csv`로 diagnose 돌리고 결과 요약해 PR 열어줘
 
 ## Install
 

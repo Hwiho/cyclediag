@@ -1,25 +1,28 @@
 {
-  "description": "CycleDiag fixtures indexed by DOE",
+  "description": "CycleDiag fixtures indexed by DOE1/DOE2/DOE3",
   "does": [
     {
-      "id": "900wet_vs_900dry",
-      "path": "example/fixtures/doe/900wet_vs_900dry",
+      "id": "DOE1",
+      "aliases": ["900wet_vs_900dry"],
+      "path": "example/fixtures/doe/DOE1",
       "question": "SJ900 wet vs dry process",
       "arms": ["set1_SJ900", "set4_SJ900"],
       "source": "C:\\260304_900wet_vs_900dry_vs_1300dry",
       "notes": "Confirm which set is wet vs dry"
     },
     {
-      "id": "900dry_vs_1300dry",
-      "path": "example/fixtures/doe/900dry_vs_1300dry",
+      "id": "DOE2",
+      "aliases": ["900dry_vs_1300dry"],
+      "path": "example/fixtures/doe/DOE2",
       "question": "SJ900 dry vs SJ1300 dry",
       "arms": ["SJ1300_dry"],
-      "sj900_dry_arm_ref": "example/fixtures/doe/900wet_vs_900dry/set4_SJ900",
+      "sj900_dry_arm_ref": "example/fixtures/doe/DOE1/set4_SJ900",
       "source": "C:\\260304_900wet_vs_900dry_vs_1300dry"
     },
     {
-      "id": "set3_bimodal_vs_S83S",
-      "path": "example/fixtures/doe/set3_bimodal_vs_S83S",
+      "id": "DOE3",
+      "aliases": ["set3_bimodal_vs_S83S"],
+      "path": "example/fixtures/doe/DOE3",
       "question": "Cathode degradation: Bimodal vs S83S",
       "arms": ["Bimodal", "S83S"],
       "source": "C:\\00207966_260617_모노셀_45도 cycle_Set3_bimodal-30um전해질",
@@ -33,20 +36,20 @@
     }
   ],
   "cells": [
-    {"doe": "900wet_vs_900dry", "arm": "set1_SJ900", "cell_id": "M01Ch005", "path": "example/fixtures/doe/900wet_vs_900dry/set1_SJ900/M01Ch005_raw.csv"},
-    {"doe": "900wet_vs_900dry", "arm": "set1_SJ900", "cell_id": "M01Ch011", "path": "example/fixtures/doe/900wet_vs_900dry/set1_SJ900/M01Ch011_raw.csv"},
-    {"doe": "900wet_vs_900dry", "arm": "set1_SJ900", "cell_id": "M01Ch013", "path": "example/fixtures/doe/900wet_vs_900dry/set1_SJ900/M01Ch013_raw.csv"},
-    {"doe": "900wet_vs_900dry", "arm": "set4_SJ900", "cell_id": "M01Ch022", "path": "example/fixtures/doe/900wet_vs_900dry/set4_SJ900/M01Ch022_raw.csv"},
-    {"doe": "900wet_vs_900dry", "arm": "set4_SJ900", "cell_id": "M01Ch024", "path": "example/fixtures/doe/900wet_vs_900dry/set4_SJ900/M01Ch024_raw.csv"},
-    {"doe": "900wet_vs_900dry", "arm": "set4_SJ900", "cell_id": "M01Ch025", "path": "example/fixtures/doe/900wet_vs_900dry/set4_SJ900/M01Ch025_raw.csv"},
-    {"doe": "900dry_vs_1300dry", "arm": "SJ1300_dry", "cell_id": "M01Ch010", "path": "example/fixtures/doe/900dry_vs_1300dry/SJ1300_dry/M01Ch010_raw.csv"},
-    {"doe": "900dry_vs_1300dry", "arm": "SJ1300_dry", "cell_id": "M01Ch011", "path": "example/fixtures/doe/900dry_vs_1300dry/SJ1300_dry/M01Ch011_raw.csv"},
-    {"doe": "900dry_vs_1300dry", "arm": "SJ1300_dry", "cell_id": "M01Ch012", "path": "example/fixtures/doe/900dry_vs_1300dry/SJ1300_dry/M01Ch012_raw.csv"},
-    {"doe": "set3_bimodal_vs_S83S", "arm": "Bimodal", "cell_id": "M02Ch109", "path": "example/fixtures/doe/set3_bimodal_vs_S83S/Bimodal/M02Ch109_raw.csv"},
-    {"doe": "set3_bimodal_vs_S83S", "arm": "Bimodal", "cell_id": "M02Ch110", "path": "example/fixtures/doe/set3_bimodal_vs_S83S/Bimodal/M02Ch110_raw.csv"},
-    {"doe": "set3_bimodal_vs_S83S", "arm": "Bimodal", "cell_id": "M02Ch111", "path": "example/fixtures/doe/set3_bimodal_vs_S83S/Bimodal/M02Ch111_raw.csv"},
-    {"doe": "set3_bimodal_vs_S83S", "arm": "S83S", "cell_id": "M02Ch103", "path": "example/fixtures/doe/set3_bimodal_vs_S83S/S83S/M02Ch103_raw.csv"},
-    {"doe": "set3_bimodal_vs_S83S", "arm": "S83S", "cell_id": "M02Ch104", "path": "example/fixtures/doe/set3_bimodal_vs_S83S/S83S/M02Ch104_raw.csv"},
-    {"doe": "set3_bimodal_vs_S83S", "arm": "S83S", "cell_id": "M02Ch105", "path": "example/fixtures/doe/set3_bimodal_vs_S83S/S83S/M02Ch105_raw.csv"}
+    {"doe": "DOE1", "arm": "set1_SJ900", "cell_id": "M01Ch005", "path": "example/fixtures/doe/DOE1/set1_SJ900/M01Ch005_raw.csv"},
+    {"doe": "DOE1", "arm": "set1_SJ900", "cell_id": "M01Ch011", "path": "example/fixtures/doe/DOE1/set1_SJ900/M01Ch011_raw.csv"},
+    {"doe": "DOE1", "arm": "set1_SJ900", "cell_id": "M01Ch013", "path": "example/fixtures/doe/DOE1/set1_SJ900/M01Ch013_raw.csv"},
+    {"doe": "DOE1", "arm": "set4_SJ900", "cell_id": "M01Ch022", "path": "example/fixtures/doe/DOE1/set4_SJ900/M01Ch022_raw.csv"},
+    {"doe": "DOE1", "arm": "set4_SJ900", "cell_id": "M01Ch024", "path": "example/fixtures/doe/DOE1/set4_SJ900/M01Ch024_raw.csv"},
+    {"doe": "DOE1", "arm": "set4_SJ900", "cell_id": "M01Ch025", "path": "example/fixtures/doe/DOE1/set4_SJ900/M01Ch025_raw.csv"},
+    {"doe": "DOE2", "arm": "SJ1300_dry", "cell_id": "M01Ch010", "path": "example/fixtures/doe/DOE2/SJ1300_dry/M01Ch010_raw.csv"},
+    {"doe": "DOE2", "arm": "SJ1300_dry", "cell_id": "M01Ch011", "path": "example/fixtures/doe/DOE2/SJ1300_dry/M01Ch011_raw.csv"},
+    {"doe": "DOE2", "arm": "SJ1300_dry", "cell_id": "M01Ch012", "path": "example/fixtures/doe/DOE2/SJ1300_dry/M01Ch012_raw.csv"},
+    {"doe": "DOE3", "arm": "Bimodal", "cell_id": "M02Ch109", "path": "example/fixtures/doe/DOE3/Bimodal/M02Ch109_raw.csv"},
+    {"doe": "DOE3", "arm": "Bimodal", "cell_id": "M02Ch110", "path": "example/fixtures/doe/DOE3/Bimodal/M02Ch110_raw.csv"},
+    {"doe": "DOE3", "arm": "Bimodal", "cell_id": "M02Ch111", "path": "example/fixtures/doe/DOE3/Bimodal/M02Ch111_raw.csv"},
+    {"doe": "DOE3", "arm": "S83S", "cell_id": "M02Ch103", "path": "example/fixtures/doe/DOE3/S83S/M02Ch103_raw.csv"},
+    {"doe": "DOE3", "arm": "S83S", "cell_id": "M02Ch104", "path": "example/fixtures/doe/DOE3/S83S/M02Ch104_raw.csv"},
+    {"doe": "DOE3", "arm": "S83S", "cell_id": "M02Ch105", "path": "example/fixtures/doe/DOE3/S83S/M02Ch105_raw.csv"}
   ]
 }

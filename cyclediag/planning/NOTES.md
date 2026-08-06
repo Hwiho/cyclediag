@@ -49,8 +49,8 @@
 | 2026-08-06 | **BatteryML · PyBaMM 참고**를 로드맵에 반영 — 패키지 내장 없이 CellData/FeatureSet·ΔQ(V)·전극 SOH 스키마. 상세: `IMPROVEMENT_ROADMAP.md` §12 |
 | 2026-08-06 | **PyDMA · PyProBE · DiffCapAnalyzer** 추가 — DMA는 PyDMA 과학+PyProBE API; ICA peak descriptor는 DiffCapAnalyzer. §12.3–12.5 |
 | 2026-08-06 | **Full-cell 우선 스택 F1–F8** — ICA/DVA·peak·corr·R·change-point. 하프셀 없어도 MVP 완성. 상세: `IMPROVEMENT_ROADMAP.md` §0 |
+| 2026-08-06 | **Fixtures DOE 폴더 분리** — `DOE1` wet/dry, `DOE2` 900dry/1300dry, `DOE3` Bimodal/S83S. |
 | 2026-08-06 | **하프셀 BOL 데이터 있음** — `example/fixtures/halfcell/` (C/20, 음극 cycle 1–3). **Aged 하프셀은 없음.** |
-| 2026-08-06 | **Fixtures DOE 폴더 분리** — `900wet_vs_900dry`, `900dry_vs_1300dry`, `set3_bimodal_vs_S83S` (양극 열화 비교). |
 
 ---
 
@@ -61,8 +61,7 @@
 - [ ] **B.** 라벨 있는 불량 분류 (soft short, Li plating, …)
 - [ ] **C.** 수명/용량 fade 예측 (회귀) — BatteryML Severson ΔQ(V) 경로 (§5.7 / §12) — F6과 병행
 - [ ] **D.** Half-cell DMA — BOL OCP fixture로 프로토타입 가능; **aged 하프셀은 미확보** (DM-P3)
-- [ ] **E.** `900wet_vs_900dry`에서 set1/set4 중 어느 wet·dry인지 확정 후 폴더 rename
-
+- [ ] **E.** **DOE1**에서 set1/set4 중 어느 wet·dry인지 확정 후 arm 폴더 rename
 ### 데이터
 - [ ] 보유 라벨 데이터 규모? (대략 N cells × M cycles)
 - [ ] 정상 reference: 동일 설계 lot 평균 vs 단일 golden cell
