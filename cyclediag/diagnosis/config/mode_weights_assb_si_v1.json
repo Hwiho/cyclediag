@@ -17,6 +17,7 @@
         {"feature": "R_ohmic_frac_soc50", "direction": "increase", "weight": 1.3, "scale": 0.1},
         {"feature": "EoC_dchgR_10s_inc", "direction": "increase", "weight": 1.0, "scale": 25.0},
         {"feature": "mech_vs_chem_ratio", "direction": "increase", "weight": 1.2, "scale": 0.5},
+        {"feature": "R_ohmic_growth_100", "direction": "increase", "weight": 1.0, "scale": 0.3},
         {"feature": "hyst_area_low", "direction": "increase", "weight": 0.8, "scale": 0.05},
         {"feature": "Q_relax_pct", "direction": "increase", "weight": 0.6, "scale": 0.2}
       ]
@@ -58,7 +59,8 @@
         {"feature": "delta_dchg_plateau_V", "direction": "either", "weight": 0.8, "scale": 0.02},
         {"feature": "dchg_plateau_width", "direction": "decrease_vs_baseline", "weight": 1.0, "scale": 2.0, "baseline_ref": "dchg_plateau_width"},
         {"feature": "delta_chg_V_avg", "direction": "decrease", "weight": 0.9, "scale": 0.02},
-        {"feature": "delta_chg_dQdV_peak1_V", "direction": "either", "weight": 0.5, "scale": 0.02}
+        {"feature": "delta_chg_dQdV_peak1_V", "direction": "either", "weight": 0.5, "scale": 0.02},
+        {"feature": "LAM_curve_proxy", "direction": "increase", "weight": 1.0, "scale": 5.0}
       ]
     },
     "LLI": {
@@ -69,7 +71,8 @@
         {"feature": "CI", "direction": "increase", "weight": 0.9, "scale": 2.0},
         {"feature": "delta_EoD_restV_end", "direction": "increase", "weight": 0.9, "scale": 0.05},
         {"feature": "delta_dchg_V_cutoff_margin", "direction": "decrease", "weight": 1.0, "scale": 0.05},
-        {"feature": "V_inf_est_soc50", "direction": "either", "weight": 0.5, "scale": 0.02}
+        {"feature": "V_inf_est_soc50", "direction": "either", "weight": 0.5, "scale": 0.02},
+        {"feature": "LLI_curve_proxy", "direction": "either", "weight": 0.8, "scale": 5.0}
       ]
     },
     "solid_diffusion": {
@@ -79,7 +82,8 @@
         {"feature": "A_diff_soc50", "direction": "increase", "weight": 1.3, "scale": 0.05},
         {"feature": "PER", "direction": "increase", "weight": 1.1, "scale": 0.5},
         {"feature": "RCF", "direction": "decrease", "weight": 1.0, "scale": 0.05},
-        {"feature": "R_recovery_tau2_soc50", "direction": "increase", "weight": 0.7, "scale": 100.0}
+        {"feature": "R_recovery_tau2_soc50", "direction": "increase", "weight": 0.7, "scale": 100.0},
+        {"feature": "eta_argmax_SOC", "direction": "either", "weight": 0.5, "scale": 30.0}
       ]
     }
   }

@@ -1,9 +1,10 @@
 # VP Diagnosis — Roadmap
 
-**갱신:** 2026-07-01 · 버전: [VERSIONS.md](VERSIONS.md)
+**갱신:** 2026-08-06 · 버전: [VERSIONS.md](VERSIONS.md)
 
-> **코드 상태:** **v0.1 (Planning)** — planning/specs + 최소 패키지 골격만 존재.  
-> **다음:** Phase 0 완료 → Phase 1 feature 추출 MVP
+> **코드 상태:** full-cell ASSB 진단 파이프라인 동작 (fixtures + CLI diagnose).  
+> **제약:** 하프셀 OCV 없음 → Level-2/3 `*_est` null, §5.8 deconv 보류.  
+> **다음:** §5.1 스윕 판정 → (A면) peak deconv / (B면) §5.2 필터; 합성 검증 하네스(§8.1); knee Bacon-Watts.
 
 ---
 
@@ -51,9 +52,10 @@ DM-P1 Full-cell pattern/est ──► DM-P2 온도 ──► DM-P3 Half-cell cal
 
 | DM Phase | 내용 | 상태 |
 |----------|------|------|
-| **1** | `vp_lges_cycle_v2` · LLI/LAM pattern score · confidence · calibration schema | **현재 범위** |
-| **2** | 온도 동특성 · R 정규화 · 진단 안정성 | Planned |
-| **3** | Half-cell OCV library · `*_est_hc_calibrated` · peak mapping | Planned |
+| **1** | `vp_lges_cycle_v2` · LLI/LAM pattern score · confidence · calibration schema | **Done (full-cell)** |
+| **1b** | ASSB metrics: R 3성분, η/PER, ΔQ(V), curve proxies, quality gate | **Done 2026-08-06** |
+| **2** | 온도 동특성 · R 정규화 · 진단 안정성 | Blocked — Temp 로그 0.0 |
+| **3** | Half-cell OCV library · `*_est_hc_calibrated` · peak mapping | Planned (데이터 없음) |
 | **4** | full-cell + T + half-cell + post-mortem 통합 | Planned |
 
 **원칙:** 하프셀 부재 ≠ LLI·LAM 진단 비활성. Level 1 pattern을 먼저 내고, Level 3은 검증·교정 인터페이스로 병행한다.

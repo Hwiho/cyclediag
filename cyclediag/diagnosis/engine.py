@@ -21,6 +21,7 @@ from .schema import (
 META_COLS = (
     "diagnosis_quality_score",
     "diagnosis_valid",
+    "diagnosis_state",
     "diagnosis_method",
     "diagnosis_model_version",
     "diagnosis_version",
@@ -88,6 +89,8 @@ def diagnose_feature_table(
             out[c] = pd.Series([None] * n, dtype=object)
         elif c == "diagnosis_valid":
             out[c] = False
+        elif c == "diagnosis_state":
+            out[c] = pd.Series([None] * n, dtype=object)
         else:
             out[c] = np.nan
 
@@ -123,8 +126,28 @@ def diagnose_feature_table(
                     **res.to_dict(),
                 })
 
-            out.at[idx, "diagnosis_quality_score"] = float(np.nanmean(qualities)) if qualities else 0.0
-            out.at[idx, "diagnosis_valid"] = bool(any(valids))
+            # Blend evidence fill-rate with §5.13 quality_score when present.
+            fill_q = float(np.nanmean(qualities)) if qualities else 0.0
+            raw_q = row_dict.get("quality_score")
+            try:
+                raw_q_f = float(raw_q) if raw_q is not None and not (
+                    isinstance(raw_q, float) and np.isnan(raw_q)
+                ) else None
+            except (TypeError, ValueError):
+                raw_q_f = None
+            if raw_q_f is not None and np.isfinite(raw_q_f):
+                # quality_score is 0–1ish; clamp and blend
+                raw_q_f = float(np.clip(raw_q_f, 0.0, 1.0))
+                diag_q = 0.55 * fill_q + 0.45 * raw_q_f
+            else:
+                diag_q = fill_q
+            out.at[idx, "diagnosis_quality_score"] = diag_q
+            out.at[idx, "diagnosis_valid"] = bool(any(valids)) and diag_q >= 0.15
+            # Hard insufficient only when quality is present and clearly poor
+            if raw_q_f is not None and raw_q_f < 0.15:
+                out.at[idx, "diagnosis_state"] = "insufficient_data"
+            else:
+                out.at[idx, "diagnosis_state"] = "ok" if any(valids) else "low_evidence"
             out.at[idx, "diagnosis_method"] = str(cfg.get("diagnosis_method", "rule_pattern"))
             out.at[idx, "diagnosis_model_version"] = str(
                 cfg.get("diagnosis_model_version", DIAGNOSIS_MODEL_VERSION)
@@ -132,7 +155,7 @@ def diagnose_feature_table(
             out.at[idx, "diagnosis_version"] = str(
                 cfg.get("diagnosis_version", DIAGNOSIS_VERSION_FULLCELL)
             )
-            # Level 2/3 intentionally null (not validated absolute estimates)
+            # Level 2/3 intentionally null (full-cell only; half-cell Phase 3)
             for c in (
                 "LLI_est", "LAM_PE_est", "LAM_NE_est", "electrode_slippage_est",
                 "LLI_est_hc_calibrated", "LAM_PE_est_hc_calibrated", "LAM_NE_est_hc_calibrated",

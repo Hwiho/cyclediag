@@ -101,5 +101,5 @@ def test_ocv_drift_classify():
     from cyclediag.features.ocv_drift import _classify_drift
 
     mode, par, _ = _classify_drift(d80=-0.05, d50=-0.05, d20=-0.05, d_spread_20_80=0.0)
-    assert mode == "lli_parallel"
+    assert mode == "parallel_shift"
     assert par == pytest.approx(-0.05, abs=0.001)

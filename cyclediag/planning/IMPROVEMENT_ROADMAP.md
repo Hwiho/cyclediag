@@ -3,7 +3,7 @@
 > **대상 셀:** ASSB SJ900 (S83S 양극 / SJ-ASG903-1300 Si-rich 음극), 2.5–4.2 V, 45 °C
 > **프로토콜:** routine 0.5C CC-CV · C/3 RPT 2사이클 (약 105 사이클 주기) · DC-IR (SOC 20/50/80, 방전, 1C, 30 s)
 > **기준 데이터:** SJ900 set4 Ch22 (564 cycles, SoHQ ~65 %), Ch25
-> **갱신:** 2026-08-05 — `IMPROVEMENT_ANSWERS.md` 실측 확인 반영, ASSB 전제로 전면 재작성
+> **갱신:** 2026-08-06 — full-cell-only 반영 상태 (§9 표). 원본 재작성 2026-08-05.
 
 ---
 
@@ -1849,36 +1849,39 @@ RPT 주기 105 사이클이므로 이 검증이 특히 중요하다.
 
 ## 9. 실행 계획
 
+> **상태 갱신 2026-08-06 (full-cell only):** 하프셀 OCV 없음 → `*_est` / `*_est_hc_calibrated` / §5.8 deconv는 보류.
+> §9.1 대부분 + §9.2 중 full-cell 가능 항목(5.5–5.7, 5.9–5.10, 7.1) 코드 반영.
+
 ### 9.1 즉시 (추가 실험 없이, 데이터 이미 존재)
 
-| # | 항목 | § | 근거 |
+| # | 항목 | § | 상태 |
 |---|---|---|---|
-| 1 | **dQ/dV 필터 스윕 진단** | 5.1 | §5.8 필요 여부를 결정. 다른 모든 피크 작업의 선행 |
-| 2 | **R(t) 3성분 분해** | 5.3 | ASSB 접촉 손실 vs 계면 화학 분리. 10 Hz 확보됨 |
-| 3 | **자가방전율** | 5.4 | 미탐지 실패 모드. rest 3600 s 이미 존재 |
-| 4 | **`Q_relax` 전 블록 집계** | 5.10 | 노이즈 하한 0.065 % 확정됨 |
-| 5 | **`chgCVcapa` 버그 수정** | 5.14 | Si 음극 수용 한계 프록시 복구 |
-| 6 | **SOC 분해 히스테리시스** | 5.11 | Si 열화 직접 지표 |
-| 7 | `R_ratio_20_50`, `R_SOC_slope` | 5.9 | 제한 전극 식별 |
-| 8 | `VE`, `CI_per_hour` | 4.3 | 분극/쿨롱 분리, 45 °C 캘린더 성분 |
-| 9 | 데이터 품질 지표 산출 | 5.13 | 이후 모든 진단의 전제. ADC 분해능도 역추정 |
-| 10 | baseline → formation 후 첫 RPT | 6.2 | 현행 cycle=1은 구조적 편향 |
+| 1 | **dQ/dV 필터 스윕 진단** | 5.1 | Done — `tools/diagnose_dqdv_filter_sweep.py` |
+| 2 | **R(t) 3성분 분해** | 5.3 | Done — `features/dcir_decompose.py` |
+| 3 | **자가방전율** | 5.4 | Done — `features/self_discharge.py` |
+| 4 | **`Q_relax` 전 블록 집계** | 5.10 | Done — `features/rpt_metrics.py` + enrich |
+| 5 | **`chgCVcapa` 버그 수정** | 5.14 | Done — `features/signal_cv.py` |
+| 6 | **SOC 분해 히스테리시스** | 5.11 | Done — `hysteresis_metrics` bands |
+| 7 | `R_ratio_20_50`, `R_SOC_slope` | 5.9 | Done — `soc_ratio_features` |
+| 8 | `VE`, `CI_per_hour` | 4.3 | Done — `lges_extract` |
+| 9 | 데이터 품질 지표 산출 | 5.13 | Done — `features/quality.py` (+ diagnosis blend) |
+| 10 | baseline → formation 후 첫 RPT | 6.2 | Done — `first_capa_baseline` / auto_baseline |
 
 ### 9.2 단기
 
-| # | 항목 | § |
-|---|---|---|
-| 11 | 적응형 스무딩 / V축 보간 전환 | 5.2 |
-| 12 | `R_recovery_tau` + `V_inf_est` | 5.5 |
-| 13 | 3-파라미터 곡선 정합 | 5.6 |
-| 14 | ΔQ(V) 통계 | 5.7 |
-| 15 | η(SOC) × DC-IR 결합 | 5.9 |
-| 16 | RCF, PER | 5.10 |
-| 17 | 페이드 지수 · knee | 5.12 |
-| 18 | 프로토콜 자동 구조 인식 | 6.2 |
-| 19 | `mode_weights_assb_si_v1.json` 작성 | 7.1 |
-| 20 | 합성 데이터 검증 하네스 | 8.1 |
-| 21 | Q-domain 제약 디컨볼루션 | 5.8 **(§5.1이 (A)일 때만)** |
+| # | 항목 | § | 상태 |
+|---|---|---|---|
+| 11 | 적응형 스무딩 / V축 보간 전환 | 5.2 | Planned (default still Q-axis) |
+| 12 | `R_recovery_tau` + `V_inf_est` | 5.5 | Done — `dcir_decompose.fit_recovery_tau` |
+| 13 | 3-파라미터 곡선 정합 | 5.6 | Done — `features/curve_fit.py` (**proxies only**, not `*_est`) |
+| 14 | ΔQ(V) 통계 | 5.7 | Done — `features/dqv_stats.py` |
+| 15 | η(SOC) × DC-IR 결합 | 5.9 | Done — `features/overpotential.py` |
+| 16 | RCF, PER | 5.10 | Done — `attach_rcf` / `attach_per` (+ growth) |
+| 17 | 페이드 지수 · knee | 5.12 | Partial — inflection/RPT recovery; Bacon-Watts TBD |
+| 18 | 프로토콜 자동 구조 인식 | 6.2 | Partial — rule-based roles |
+| 19 | `mode_weights_assb_si_v1.json` 작성 | 7.1 | Done (+ curve/η/growth evidence) |
+| 20 | 합성 데이터 검증 하네스 | 8.1 | Planned |
+| 21 | Q-domain 제약 디컨볼루션 | 5.8 | **Blocked** — wait §5.1 verdict (A); no half-cell |
 
 ### 9.3 중기
 
