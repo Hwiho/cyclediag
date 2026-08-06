@@ -1,0 +1,97 @@
+{
+  "diagnosis_version": "fullcell_v1",
+  "diagnosis_method": "rule_pattern",
+  "diagnosis_model_version": "pattern_rule_v1",
+  "support_threshold": 0.25,
+  "conflict_threshold": 0.25,
+  "min_evidence_for_valid": 2,
+  "mode_collision_score": 0.65,
+  "modes": {
+    "LLI": {
+      "description": "Loss of Lithium Inventory — window shift / endpoint early arrival",
+      "evidence": [
+        {"feature": "delta_dchg_V_cutoff_margin", "direction": "decrease", "weight": 1.2, "scale": 0.05},
+        {"feature": "delta_EoD_restV_end", "direction": "increase", "weight": 1.0, "scale": 0.05},
+        {"feature": "delta_EoC_restV_end", "direction": "decrease", "weight": 0.9, "scale": 0.03},
+        {"feature": "delta_dchg_dVdQ_SOC0", "direction": "increase", "weight": 0.8, "scale": 5.0},
+        {"feature": "delta_dchg_dQdV_peak1_V", "direction": "either", "weight": 0.7, "scale": 0.02},
+        {"feature": "delta_chg_dQdV_peak1_V", "direction": "either", "weight": 0.6, "scale": 0.02},
+        {"feature": "CE", "direction": "decrease_from_100", "weight": 0.5, "scale": 2.0},
+        {"feature": "dchg_shape_DTW", "direction": "increase", "weight": 0.5, "scale": 0.01},
+        {"feature": "delta_EoD_restV_tau", "direction": "either", "weight": 0.4, "scale": 50.0}
+      ]
+    },
+    "LAM_PE": {
+      "description": "Positive electrode active material loss — area/plateau shrink",
+      "evidence": [
+        {"feature": "delta_dchg_plateau_V", "direction": "either", "weight": 0.8, "scale": 0.02},
+        {"feature": "dchg_plateau_width", "direction": "decrease_vs_baseline", "weight": 1.0, "scale": 2.0, "baseline_ref": "dchg_plateau_width"},
+        {"feature": "delta_chg_V_avg", "direction": "decrease", "weight": 0.9, "scale": 0.02},
+        {"feature": "delta_dchg_V_avg", "direction": "decrease", "weight": 0.7, "scale": 0.02},
+        {"feature": "chg_dVdQ_SOC100", "direction": "either", "weight": 0.6, "scale": 2.0},
+        {"feature": "delta_chg_dQdV_peak1_V", "direction": "either", "weight": 0.5, "scale": 0.02},
+        {"feature": "hyst_max_dV", "direction": "increase", "weight": 0.4, "scale": 0.05}
+      ]
+    },
+    "LAM_NE": {
+      "description": "Negative electrode active material loss — low-SOC cliff / charge accept",
+      "evidence": [
+        {"feature": "delta_dchg_dVdQ_SOC0", "direction": "increase", "weight": 1.2, "scale": 5.0},
+        {"feature": "dchg_dVdQ_SOC0_to_mid_ratio", "direction": "increase", "weight": 1.0, "scale": 1.0},
+        {"feature": "dchg_dVdQ_SOC0_cliff_width", "direction": "either", "weight": 0.7, "scale": 2.0},
+        {"feature": "delta_dchg_V_cutoff_margin", "direction": "decrease", "weight": 1.0, "scale": 0.05},
+        {"feature": "EoD_chgR_10s_inc", "direction": "increase", "weight": 0.9, "scale": 20.0},
+        {"feature": "chgCVtime", "direction": "increase", "weight": 0.6, "scale": 100.0},
+        {"feature": "chgCapa_CCratio", "direction": "decrease", "weight": 0.7, "scale": 5.0},
+        {"feature": "delta_dchg_dVdQ_SOC5", "direction": "increase", "weight": 0.6, "scale": 3.0}
+      ]
+    },
+    "impedance": {
+      "description": "Ohmic / kinetic resistance growth",
+      "evidence": [
+        {"feature": "EoC_dchgR_10s_inc", "direction": "increase", "weight": 1.2, "scale": 20.0},
+        {"feature": "EoC_dchgR_60s_inc", "direction": "increase", "weight": 1.0, "scale": 20.0},
+        {"feature": "EoD_chgR_10s_inc", "direction": "increase", "weight": 1.0, "scale": 20.0},
+        {"feature": "EoD_chgR_60s_inc", "direction": "increase", "weight": 0.9, "scale": 20.0},
+        {"feature": "EoC_dchgR_10_60_ratio", "direction": "either", "weight": 0.5, "scale": 0.2},
+        {"feature": "delta_hyst_area", "direction": "increase", "weight": 0.8, "scale": 0.1},
+        {"feature": "delta_hyst_max_dV", "direction": "increase", "weight": 0.7, "scale": 0.05},
+        {"feature": "EoC_restV_tau", "direction": "increase", "weight": 0.5, "scale": 100.0},
+        {"feature": "chgCVtime", "direction": "increase", "weight": 0.6, "scale": 100.0},
+        {"feature": "EoC_dchgR_10s_growth_50", "direction": "increase", "weight": 0.8, "scale": 0.001}
+      ]
+    },
+    "transport": {
+      "description": "Polarization / diffusion / transport limitation",
+      "evidence": [
+        {"feature": "EoC_dchgR_60s_inc", "direction": "increase", "weight": 1.0, "scale": 20.0},
+        {"feature": "EoD_chgR_60s_inc", "direction": "increase", "weight": 1.0, "scale": 20.0},
+        {"feature": "EoC_restV_tau", "direction": "increase", "weight": 1.1, "scale": 100.0},
+        {"feature": "EoD_restV_tau", "direction": "increase", "weight": 1.0, "scale": 80.0},
+        {"feature": "EoC_restV_relax", "direction": "either", "weight": 0.5, "scale": 0.03},
+        {"feature": "chgCVtime", "direction": "increase", "weight": 0.8, "scale": 100.0},
+        {"feature": "dchg_shape_DTW", "direction": "increase", "weight": 0.6, "scale": 0.01}
+      ]
+    },
+    "plating": {
+      "description": "Lithium plating suspect patterns (heuristic)",
+      "evidence": [
+        {"feature": "CE", "direction": "decrease_from_100", "weight": 1.2, "scale": 3.0},
+        {"feature": "CE_local_20", "direction": "decrease_from_100", "weight": 1.0, "scale": 3.0},
+        {"feature": "delta_EoC_restV_end", "direction": "decrease", "weight": 0.7, "scale": 0.03},
+        {"feature": "chg_dVdQ_SOC100", "direction": "increase", "weight": 0.8, "scale": 3.0},
+        {"feature": "dSoHQ_dN", "direction": "decrease", "weight": 0.6, "scale": 0.05}
+      ]
+    },
+    "contact": {
+      "description": "Contact / cell-level resistance suspect",
+      "evidence": [
+        {"feature": "EoC_dchgR_10s_inc", "direction": "increase", "weight": 1.3, "scale": 25.0},
+        {"feature": "EoD_chgR_10s_inc", "direction": "increase", "weight": 1.3, "scale": 25.0},
+        {"feature": "EoC_dchgR_10_60_ratio", "direction": "increase", "weight": 0.9, "scale": 0.15},
+        {"feature": "chg_ir_drop_proxy", "direction": "increase", "weight": 0.7, "scale": 0.05},
+        {"feature": "dchg_ir_drop_proxy", "direction": "increase", "weight": 0.7, "scale": 0.05}
+      ]
+    }
+  }
+}

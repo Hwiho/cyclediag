@@ -1,0 +1,119 @@
+"""High-level diagnosis API (GUI-free; replaces Studio Diagnosis tab workflow)."""
+
+from __future__ import annotations
+
+from pathlib import Path
+from typing import Any, Iterable, Mapping
+
+import pandas as pd
+
+from cyclediag.analysis.dqdv_screen import screen_dqdv_by_file, top_dqdv_problems
+from cyclediag.analysis.indicator_screen import (
+    compare_cells,
+    screen_indicators_by_file,
+    top_problem_indicators,
+)
+from cyclediag.features.lges_extract import LgesExtractConfig, extract_lges_features_table
+from cyclediag.io.cycler_csv import ColumnMap, load_cycler_csv, normalize_cycler_dataframe
+from cyclediag.models.predict import predict_features
+
+
+def extract_features(
+    source: str | Path | pd.DataFrame,
+    *,
+    filepath: str = "",
+    cycles: Iterable[int] | None = None,
+    column_map: ColumnMap | None = None,
+    config: LgesExtractConfig | None = None,
+) -> pd.DataFrame:
+    """Load (if needed) and extract LGES cycle indicators."""
+    cmap = column_map or ColumnMap.studio_default()
+    cfg = config or LgesExtractConfig()
+    if isinstance(source, pd.DataFrame):
+        df = normalize_cycler_dataframe(source.copy(), column_map=cmap)
+        path = filepath or str(cfg.cell_id or "dataframe")
+    else:
+        path = str(source)
+        df = load_cycler_csv(path, column_map=cmap)
+        if cfg.cell_id is None:
+            cfg.cell_id = Path(path).stem
+    return extract_lges_features_table(
+        df,
+        cycles=cycles,
+        filepath=path,
+        config=cfg,
+        raw_df=df,
+    )
+
+
+def diagnose_dataframe(
+    features: pd.DataFrame,
+    *,
+    reference: pd.DataFrame | None = None,
+    with_screen: bool = True,
+) -> dict[str, Any]:
+    """Score features and optionally run indicator / dQ/dV screens."""
+    scored = predict_features(features, reference=reference)
+    out: dict[str, Any] = {
+        "features": features,
+        "scored": scored,
+        "indicator_screen": pd.DataFrame(),
+        "top_indicators": pd.DataFrame(),
+        "dqdv_screen": pd.DataFrame(),
+        "top_dqdv": pd.DataFrame(),
+        "compare_cells": pd.DataFrame(),
+    }
+    if with_screen and features is not None and not features.empty:
+        screened = screen_indicators_by_file(features)
+        out["indicator_screen"] = screened
+        out["top_indicators"] = top_problem_indicators(screened)
+        dq = screen_dqdv_by_file(features)
+        out["dqdv_screen"] = dq
+        out["top_dqdv"] = top_dqdv_problems(dq)
+        if "cell_id" in features.columns and features["cell_id"].nunique() >= 2:
+            out["compare_cells"] = compare_cells(features)
+    return out
+
+
+def diagnose_csv(
+    path: str | Path,
+    *,
+    cycles: Iterable[int] | None = None,
+    column_map: ColumnMap | None = None,
+    config: LgesExtractConfig | None = None,
+    with_screen: bool = True,
+) -> dict[str, Any]:
+    """End-to-end: CSV → features → anomaly / screens."""
+    feats = extract_features(
+        path,
+        cycles=cycles,
+        column_map=column_map,
+        config=config,
+    )
+    return diagnose_dataframe(feats, with_screen=with_screen)
+
+
+def diagnose_folder(
+    input_dir: str | Path,
+    *,
+    output_dir: str | Path | None = None,
+    encoding: str = "cp949",
+    top_n: int = 12,
+    write_pngs: bool = True,
+) -> Mapping[str, Any]:
+    """Batch report over a folder (StepEnd or cycler CSVs)."""
+    from cyclediag.analysis.batch_report import run_batch_report
+
+    return run_batch_report(
+        input_dir,
+        output_dir=output_dir,
+        encoding=encoding,
+        top_n=top_n,
+        write_pngs=write_pngs,
+    )
+
+
+def screen_problems(features: pd.DataFrame, *, n: int = 15) -> pd.DataFrame:
+    """Convenience: ranked problem indicators for one feature table."""
+    screened = screen_indicators_by_file(features)
+    return top_problem_indicators(screened, n=n)

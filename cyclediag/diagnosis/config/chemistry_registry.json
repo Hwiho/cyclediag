@@ -1,0 +1,26 @@
+{
+  "default_chemistry": "ASSB_SJ900_Si_rich",
+  "chemistries": {
+    "ASSB_SJ900_Si_rich": {
+      "electrolyte": "solid",
+      "cathode": "S83S",
+      "cathode_spec_cap_mAh_g": 215,
+      "anode": "SJ-ASG903-1300",
+      "anode_spec_cap_mAh_g": 1306,
+      "anode_type": "Si_rich",
+      "np_ratio": 1.08,
+      "loading_cat": 5.0,
+      "loading_ano": 5.4,
+      "q_rated_Ah": 72,
+      "chamber_temp_C": 45,
+      "v_window": [2.5, 4.2],
+      "mode_weights": "mode_weights_assb_si_v1.json",
+      "notes": "No liquid electrolyte modes; no graphite stage LAM_NE peaks"
+    },
+    "Liion_NMC_Gr": {
+      "electrolyte": "liquid",
+      "anode_type": "graphite",
+      "mode_weights": "mode_weights_fullcell_v1.json"
+    }
+  }
+}

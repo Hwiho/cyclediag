@@ -1,0 +1,73 @@
+{
+  "dataset": "260304_900wet_vs_900dry_vs_1300dry",
+  "description": "PNE cycler *_raw.csv only — golden fixtures for CycleDiag / Cloud Agents",
+  "source_root_note": "C:\\260304_900wet_vs_900dry_vs_1300dry (local)",
+  "cells": [
+    {
+      "cell_id": "M01Ch005",
+      "series": "set1_SJ900",
+      "chemistry": "ASSB_SJ900_Si_rich",
+      "path": "example/fixtures/raw/set1_SJ900/M01Ch005_raw.csv",
+      "size_mb": 73.8
+    },
+    {
+      "cell_id": "M01Ch011",
+      "series": "set1_SJ900",
+      "chemistry": "ASSB_SJ900_Si_rich",
+      "path": "example/fixtures/raw/set1_SJ900/M01Ch011_raw.csv",
+      "size_mb": 74.3
+    },
+    {
+      "cell_id": "M01Ch013",
+      "series": "set1_SJ900",
+      "chemistry": "ASSB_SJ900_Si_rich",
+      "path": "example/fixtures/raw/set1_SJ900/M01Ch013_raw.csv",
+      "size_mb": 73.8
+    },
+    {
+      "cell_id": "M01Ch022",
+      "series": "set4_SJ900",
+      "chemistry": "ASSB_SJ900_Si_rich",
+      "path": "example/fixtures/raw/set4_SJ900/M01Ch022_raw.csv",
+      "size_mb": 75.9
+    },
+    {
+      "cell_id": "M01Ch024",
+      "series": "set4_SJ900",
+      "chemistry": "ASSB_SJ900_Si_rich",
+      "path": "example/fixtures/raw/set4_SJ900/M01Ch024_raw.csv",
+      "size_mb": 71.2
+    },
+    {
+      "cell_id": "M01Ch025",
+      "series": "set4_SJ900",
+      "chemistry": "ASSB_SJ900_Si_rich",
+      "path": "example/fixtures/raw/set4_SJ900/M01Ch025_raw.csv",
+      "size_mb": 21.3
+    },
+    {
+      "cell_id": "M01Ch010",
+      "series": "SJ1300_dry",
+      "chemistry": "ASSB_SJ900_Si_rich",
+      "path": "example/fixtures/raw/SJ1300_dry/M01Ch010_raw.csv",
+      "size_mb": 59.3,
+      "notes": "SJ1300 dry; chemistry key may be refined later"
+    },
+    {
+      "cell_id": "M01Ch011",
+      "series": "SJ1300_dry",
+      "chemistry": "ASSB_SJ900_Si_rich",
+      "path": "example/fixtures/raw/SJ1300_dry/M01Ch011_raw.csv",
+      "size_mb": 59.3,
+      "notes": "SJ1300 dry; chemistry key may be refined later"
+    },
+    {
+      "cell_id": "M01Ch012",
+      "series": "SJ1300_dry",
+      "chemistry": "ASSB_SJ900_Si_rich",
+      "path": "example/fixtures/raw/SJ1300_dry/M01Ch012_raw.csv",
+      "size_mb": 59.0,
+      "notes": "SJ1300 dry; chemistry key may be refined later"
+    }
+  ]
+}

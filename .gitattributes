@@ -1,0 +1,2 @@
+# Git LFS — raw cycler CSVs (up to ~80MB each)
+example/fixtures/raw/**/*.csv filter=lfs diff=lfs merge=lfs -text
