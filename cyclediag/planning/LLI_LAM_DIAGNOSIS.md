@@ -15,6 +15,26 @@
 
 추후 하프셀 데이터가 확보되면 full-cell 기반 진단을 **검증·교정**하고, 전극별 열화 기여도 및 정량 추정 정확도를 **고도화**한다.
 
+### Full-cell 우선 스택 (하프셀 없이 — 현재 메인)
+
+상세 DoD·순서: [IMPROVEMENT_ROADMAP.md §0](IMPROVEMENT_ROADMAP.md#0-full-cell-우선-스택-하프셀-없이)
+
+| ID | 기능 | 역할 |
+|----|------|------|
+| F1 | ICA/DVA 곡선 생성 | dQ/dV · dV/dQ |
+| F2 | 피크 자동 검출 | V/H/area/W/sign |
+| F3 | 피크 matching | cycle 간 identity |
+| F4 | 피크 위치 이동 | LLI / slippage pattern |
+| F5 | 피크 면적 감소 | LAM_PE pattern (Si: LAM_NE 피크 단독 금지) |
+| F6 | 곡선 correlation | ΔQ(V) · baseline 유사도 |
+| F7 | 저항·polarization 증가 | 접촉/계면/확산 |
+| F8 | change-point 탐지 | knee · 급변 시점 |
+
+하프셀 DMA는 Phase 3 **교정**이며, 위 8가지의 **전제 조건이 아니다**.
+
+**데이터 (2026-08-06):** BOL 양·음극 하프셀(C/20)이 [`example/fixtures/halfcell/`](../../example/fixtures/halfcell/README.md)에 있음.  
+음극 cycle 1–3. **열화 후 하프셀은 아직 없음.**
+
 ### 삭제된 제한 (적용 금지)
 
 다음 취지의 문장·구현은 **사용하지 않는다**.
@@ -255,6 +275,7 @@ Half-cell 추가 시 full-cell 결과를 **교체하지 않고** 검증·교정�
 - slippage / stoichiometric endpoint 정밀화
 - 전극별 impedance attribution
 - validation · retraining
+- **외부 참고 (내장 금지):** [PyDMA](https://github.com/tum-ees/PyDMA) 과학 기능(LLI/LAM/stoich/blend, OCV+ICA+DVA 가중 fit) + [PyProBE](https://github.com/ImperialCollegeLondon/PyProBE) API(`OCP`/`CompositeOCP`, batch DMA, warm-start, `quantify_degradation_modes`) — 상세 [IMPROVEMENT_ROADMAP.md §12.3–12.4](IMPROVEMENT_ROADMAP.md#123-pydma에서-가져올-것-dma-과학--목표에-가장-근접)
 
 ### Phase 4 — 통합 원인진단
 
@@ -275,4 +296,6 @@ full-cell + 온도 + half-cell reference + post-mortem + stress history → 통�
 
 ---
 
-*2026-07-27: 하프셀 필수조건 제거 · full-cell LLI/LAM 진단 정책으로 개정*
+*2026-07-27: 하프셀 필수조건 제거 · full-cell LLI/LAM 진단 정책으로 개정*  
+*2026-08-06: Phase 3에 PyDMA·PyProBE 참고 링크 추가*  
+*2026-08-06: Full-cell 우선 스택 F1–F8 (하프셀 없이)를 메인 트랙으로 명시*

@@ -55,10 +55,22 @@ DM-P1 Full-cell pattern/est ──► DM-P2 온도 ──► DM-P3 Half-cell cal
 | **1** | `vp_lges_cycle_v2` · LLI/LAM pattern score · confidence · calibration schema | **Done (full-cell)** |
 | **1b** | ASSB metrics: R 3성분, η/PER, ΔQ(V), curve proxies, quality gate | **Done 2026-08-06** |
 | **2** | 온도 동특성 · R 정규화 · 진단 안정성 | Blocked — Temp 로그 0.0 |
-| **3** | Half-cell OCV library · `*_est_hc_calibrated` · peak mapping | Planned (데이터 없음) |
+| **3** | Half-cell OCV library · peak attribution · DMA fit prototype (BOL OCP). `*_est_hc_calibrated`는 aged 후 | **BOL library in progress** |
 | **4** | full-cell + T + half-cell + post-mortem 통합 | Planned |
 
 **원칙:** 하프셀 부재 ≠ LLI·LAM 진단 비활성. Level 1 pattern을 먼저 내고, Level 3은 검증·교정 인터페이스로 병행한다.
+
+### Full-cell 우선 스택 (하프셀 없이 — 메인 트랙)
+
+상세: [IMPROVEMENT_ROADMAP.md §0](IMPROVEMENT_ROADMAP.md#0-full-cell-우선-스택-하프셀-없이) · 실행 [§9.0](IMPROVEMENT_ROADMAP.md#90-full-cell-우선-하프셀-불필요--현재-메인-트랙)
+
+```
+F1 ICA/DVA → F2 detect → F3 match → F4 ΔV · F5 Δarea
+         → F6 curve corr → F7 R/polarization → F8 change-point
+         → pattern_score (fullcell_v1)
+```
+
+DM-P3 half-cell DMA는 위 스택 **완성 후** 교정용.
 
 ---
 
@@ -95,6 +107,8 @@ DM-P1 Full-cell pattern/est ──► DM-P2 온도 ──► DM-P3 Half-cell cal
 **산출물:** `python -m cyclediag extract --input ... --out features.parquet`
 
 **Peak 추적 (병행):** [PEAK_TRACKING_ROADMAP.md](PEAK_TRACKING_ROADMAP.md) · [GOLDEN_CYCLES.md](GOLDEN_CYCLES.md)  
+**열화·수명 확장:** [IMPROVEMENT_ROADMAP.md](IMPROVEMENT_ROADMAP.md) (§5.7 ΔQ(V), **§12** BatteryML·PyBaMM·**PyDMA·PyProBE**·DiffCapAnalyzer)
+
 - `score_cycle_dqdv_quality.py` — 저노이즈 golden cycle 추천  
 - (예정) `track_dqdv_peaks.py` — 전 cycle V/H trajectory
 
@@ -138,6 +152,31 @@ DM-P1 Full-cell pattern/est ──► DM-P2 온도 ──► DM-P3 Half-cell cal
 | 4.2 | Tkinter GUI (roughness simulation / pne_studio 패턴) | Planned |
 | 4.3 | pne_studio 연동 **없음** — 동일 CSV만 드래그앤드롭 | Planned |
 | 4.4 | 모델 레지스트리 (버전·학습 데이터 해시) | Planned |
+
+---
+
+## 외부 오픈소스 참고 (BatteryML · PyBaMM · PyDMA · PyProBE · DiffCapAnalyzer)
+
+상세: [IMPROVEMENT_ROADMAP.md §12](IMPROVEMENT_ROADMAP.md#12-외부-오픈소스-참고-batteryml--pybamm)
+
+**원칙:** 패키지 통째 내장 금지. 과학 기능·API 계약·feature·평가만 흡수.  
+**DMA 추천:** PyDMA(과학) + PyProBE(API 구조).
+
+| 출처 | 가져올 아이디어 | cyclediag 반영 위치 |
+|------|-----------------|---------------------|
+| [BatteryML](https://github.com/microsoft/BatteryML) | Cycler별 파서 → `CellData`/`CycleData`/`FeatureSet` | `io/adapters/`, schema |
+| BatteryML | YAML 실험 · feature↔model · train/val/test | Phase 2 evaluate |
+| BatteryML | Severson ΔQ(V) | §5.7, RUL |
+| [PyBaMM](https://github.com/pybamm-team/PyBaMM) | 전극 SOH 출력 계약 | Layer 2 schema |
+| [PyDMA](https://github.com/tum-ees/PyDMA) | LLI/LAM_NE/LAM_PE · stoich window · blend · OCV+DVA+ICA 가중 fit | DM-P3, `diagnosis/halfcell/` |
+| [PyProBE](https://github.com/ImperialCollegeLondon/PyProBE) | `OCP`/`CompositeOCP` · fit target · batch DMA · warm-start · `quantify_degradation_modes` | 동일 모듈 API |
+| [DiffCapAnalyzer](https://github.com/nicolet5/DiffCapAnalyzer) | ICA peak V/H/area/W/sign · cycle delta · baseline | peak schema, review UI |
+
+**Phase 연계 (초안):**
+- Phase 1+: FeatureSet + ΔQ(V) + ICA peak descriptor 정렬
+- Phase 2+: YAML experiment + RUL
+- DM-P3: OCP/CompositeOCP + batch DMA (하프셀·템플릿 확보 후 수치 채움)
+- PyBaMM: 선택적 forward 합성만 (런타임 비의존)
 
 ---
 

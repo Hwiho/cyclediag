@@ -1,5 +1,11 @@
 # VP Diagnosis — Versions
 
+## Policy note (2026-08-06)
+
+- **Full-cell-first stack (no half-cell required):** ICA/DVA → peak detect/match → ΔV/Δarea → curve corr → R/polarization → change-point → `*_pattern_score`. See [IMPROVEMENT_ROADMAP.md §0](IMPROVEMENT_ROADMAP.md#0-full-cell-우선-스택-하프셀-없이).
+- **Half-cell BOL fixtures available** at `example/fixtures/halfcell/` (C/20; anode cycles 1–3). **Aged half-cell OCP not available yet.**
+- External refs (§12): BatteryML, PyBaMM, PyDMA, PyProBE, DiffCapAnalyzer — concepts/API only, no runtime vendoring. Half-cell DMA is DM-P3 calibration, not a blocker.
+
 ## Policy note (2026-07-27)
 
 - Full-cell **LLI / LAM_PE / LAM_NE** diagnosis is in scope for `vp_lges_cycle_v2` (Level 1 pattern scores first).

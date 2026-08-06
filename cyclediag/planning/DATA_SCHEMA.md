@@ -84,6 +84,21 @@ Reference VP는 **JSON** 한 파일로 관리 (버전 포함):
 cell_id, file, cycle, leg, feature_set, f_Q_max, f_V_avg, ..., label
 ```
 
+### 4.1 목표 계층 (BatteryML 정렬, planned)
+
+현행 flat 테이블은 유지하되, 상위 컨테이너로 승격한다.
+상세: [IMPROVEMENT_ROADMAP.md §12.1](IMPROVEMENT_ROADMAP.md#121-batteryml에서-가져올-것)
+
+```
+CellData
+  └─ CycleData[]
+       └─ FeatureSet   ← extract_* 결과 (flat export와 동등)
+```
+
+진단(LLI/LAM)과 수명 예측(RUL)은 **동일 FeatureSet**, ModelSpec만 분기.
+전극 SOH (`Q_PE_eff` / `Q_NE_eff` / `n_Li`) 및 DMA(LLI/LAM/stoich)는
+[§12.2–12.4](IMPROVEMENT_ROADMAP.md#122-pybamm에서-가져올-것) — PyBaMM 스키마 + PyDMA/PyProBE fit (하프셀 확보 후).
+
 ---
 
 ## 5. 모델 아티팩트

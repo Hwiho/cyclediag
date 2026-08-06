@@ -1,9 +1,11 @@
 # dQ/dV Peak Tracking — 단계별 로드맵
 
-**갱신:** 2026-07-09  
-**관련:** [ROADMAP.md](ROADMAP.md) Phase 1~2, [FEATURES.md](FEATURES.md) Tier 2, [GOLDEN_CYCLES.md](GOLDEN_CYCLES.md)
+**갱신:** 2026-08-06  
+**관련:** [ROADMAP.md](ROADMAP.md) Phase 1~2, [FEATURES.md](FEATURES.md) Tier 2, [GOLDEN_CYCLES.md](GOLDEN_CYCLES.md), [IMPROVEMENT_ROADMAP.md §12.5](IMPROVEMENT_ROADMAP.md#125-diffcapanalyzer에서-가져올-것-ica-피크-descriptor) (DiffCapAnalyzer peak descriptor)
 
-> 목표: **피크를 믿을 수 있게 만들고 → 사이클마다 추적하고 → (데이터 충분 시) ML로 확장**
+> 목표: **피크를 믿을 수 있게 만들고 → 사이클마다 추적하고 → (데이터 충분 시) ML로 확장**  
+> ICA descriptor 참고: peak V / H / area / W / sign / cycle-delta ([DiffCapAnalyzer](https://github.com/nicolet5/DiffCapAnalyzer) — 엔진 교체 없이 스키마 정렬)  
+> **Full-cell 스택:** F1–F5는 하프셀 없이 완성 — [IMPROVEMENT_ROADMAP §0](IMPROVEMENT_ROADMAP.md#0-full-cell-우선-스택-하프셀-없이)
 
 ---
 

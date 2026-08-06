@@ -8,7 +8,9 @@ GUI 없음 · `pne_studio2` 불필요 · 단독 구동.
 
 ## Example fixtures (Git LFS)
 
-`example/fixtures/raw/` — `260304_900wet_vs_900dry_vs_1300dry`에서 가져온 `*_raw.csv` 9개만 포함.
+### Full-cell cycle (`example/fixtures/raw/`)
+
+`260304_900wet_vs_900dry_vs_1300dry`에서 가져온 `*_raw.csv` 9개.
 
 | Series | Cells |
 |--------|-------|
@@ -18,12 +20,18 @@ GUI 없음 · `pne_studio2` 불필요 · 단독 구동.
 
 목록: [`example/fixtures/manifest.json`](example/fixtures/manifest.json)
 
+### Half-cell BOL OCP (`example/fixtures/halfcell/`) — **데이터 있음**
+
+양·음극 **초기(C/20) 하프셀** fixture. 음극 CSV는 **cycle 1–3**.  
+**열화 이후(aged) 하프셀은 아직 없음.**
+
+상세: [`example/fixtures/halfcell/README.md`](example/fixtures/halfcell/README.md) · [`manifest.json`](example/fixtures/halfcell/manifest.json)
+
 ```bash
 git lfs install
 git lfs pull
 python run_cyclediag.py extract --input example/fixtures/raw/set4_SJ900/M01Ch025_raw.csv --out /tmp/f.csv
 ```
-
 ## Cursor Cloud Agents
 
 이 레포를 Cloud Agents에 연결하면 `.cursor/environment.json`의 install이 의존성을 설치합니다.
@@ -64,7 +72,7 @@ python run_cyclediag.py peaks export --input raw.csv --out-dir example/docs/feat
 
 ```
 cyclediag/          # package (diagnosis params under diagnosis/config/)
-example/fixtures/   # raw.csv fixtures (Git LFS)
+example/fixtures/   # raw.csv full-cell + halfcell/ BOL OCP (Git LFS)
 .cursor/            # Cloud Agent environment
 run_cyclediag.py
 ```
