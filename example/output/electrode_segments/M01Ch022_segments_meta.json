@@ -1,9 +1,11 @@
 {
   "cell_id": "M01Ch022",
-  "version": "electrode_side_v1_2",
+  "version": "electrode_side_v1_3",
+  "chemistry": "ASSB_SJ900_Si_on_Gr",
+  "cathode": "NCM82_secondary",
   "n_cycles_sampled": 90,
   "n_feature_rows": 90,
-  "n_segments": 10,
+  "n_segments": 4,
   "baseline_cycle": 7,
   "baseline_note": "early routine_05c with SoHQ>=95",
   "rpt_c3_cycles": [

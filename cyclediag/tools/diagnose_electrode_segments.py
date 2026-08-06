@@ -324,6 +324,8 @@ def main() -> None:
         "pe_peak_hits", "pe_peak_hits_delta", "si_cosign",
         "electrode_narrative", "fade_exponent_b", "knee_cycle_bw",
         "eta_argmax_SOC", "mech_vs_chem_ratio", "PER", "LAM_curve_proxy", "RCF",
+        "Q_relax_pct", "R_ohmic_soc50", "R_ohmic_growth_100", "hyst_area_low",
+        "dchg_fit_residual_argmax_SOC", "si_cosign",
     ] if c in feats.columns]
     traj_path = out_dir / f"{cell_id}_electrode_trajectory.csv"
     feats[keep].sort_values("cycle").to_csv(traj_path, index=False)

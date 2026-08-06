@@ -127,12 +127,12 @@ def _feature_boost(row: dict[str, Any], baseline: dict[str, Any] | None, specs: 
         if cur_f is None or not np.isfinite(cur_f):
             continue
         if rule == "high":
-            # Ignore missing stamped as 0
-            if 5.0 < cur_f < 95.0 and cur_f >= 60.0:
+            # Ignore missing stamped as 0; allow near-100% (true high-SOC residual)
+            if cur_f > 0 and cur_f >= 60.0:
                 hits += 1
                 support.append(f"{feat}={cur_f:.1f}(highSOC)")
         elif rule == "low":
-            if 5.0 < cur_f < 95.0 and cur_f <= 40.0:
+            if 0 < cur_f <= 40.0:
                 hits += 1
                 support.append(f"{feat}={cur_f:.1f}(lowSOC)")
         elif rule == "increase":

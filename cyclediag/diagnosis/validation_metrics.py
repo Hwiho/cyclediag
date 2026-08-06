@@ -86,8 +86,10 @@ def residual_soc_domain_check(features: pd.DataFrame) -> dict[str, Any]:
         "available": True,
         "n": int(len(s)),
         "median": float(s.median()),
-        "frac_in_5_95": float(((s > 5) & (s < 95)).mean()),
-        "frac_near_0_or_100": float(((s <= 5) | (s >= 95)).mean()),
+        "frac_high_soc_ge60": float((s >= 60).mean()),
+        "frac_low_soc_le40": float((s <= 40).mean()),
+        "frac_exact_zero": float((s == 0).mean()),
+        "note": "discharge residual argmax is true SOC (100−DOD); near-100 = start of discharge",
     }
 
 

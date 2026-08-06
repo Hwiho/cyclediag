@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Build a detailed Korean PDF report for Ch022/Ch024 electrode-side diagnosis."""
+"""Build detailed Korean PDF report — electrode diagnosis v1.3 (Si-on-Gr · NCM82)."""
 
 from __future__ import annotations
 
+import json
 import textwrap
 from pathlib import Path
 
@@ -17,516 +18,413 @@ from matplotlib.patches import FancyBboxPatch
 ROOT = Path(__file__).resolve().parents[2]
 OUT_DIR = ROOT / "example" / "output" / "electrode_segments"
 ART_DIR = Path("/opt/cursor/artifacts")
-DATA = {
-    "M01Ch022": OUT_DIR / "M01Ch022_electrode_trajectory.csv",
-    "M01Ch024": OUT_DIR / "M01Ch024_electrode_trajectory.csv",
-}
-SEGS = {
-    "M01Ch022": OUT_DIR / "M01Ch022_electrode_segments.csv",
-    "M01Ch024": OUT_DIR / "M01Ch024_electrode_segments.csv",
-}
 
-# Colors (avoid purple AI-default cluster)
-C_PE = "#C45C26"      # terracotta / cathode
-C_NE = "#1F6F8B"      # teal / anode
-C_SHARED = "#6B7280"
-C_SOHQ = "#1A1A1A"
-C_CL = "#0F766E"
-C_LAM = "#B45309"
-C_LLI = "#7C3AED"
-C_BG = "#FAF7F2"
-C_BAND_PE = "#F3D9C8"
-C_BAND_NE = "#CDE5EC"
+C_PE, C_NE, C_CL = "#C45C26", "#1F6F8B", "#0F766E"
+C_SOHQ, C_RPT, C_SHARED = "#1A1A1A", "#F59E0B", "#6B7280"
+C_BG, C_BAND_PE, C_BAND_CL = "#FAF7F2", "#F3D9C8", "#D1E7DD"
 
 
 def _setup_font() -> str:
-    candidates = [
+    for path in (
         "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
-        "/usr/share/fonts/opentype/noto/NotoSerifCJK-Regular.ttc",
         "/usr/share/fonts/truetype/wqy/wqy-microhei.ttc",
-    ]
-    for path in candidates:
+    ):
         if Path(path).exists():
             font_manager.fontManager.addfont(path)
-            prop = font_manager.FontProperties(fname=path)
-            name = prop.get_name()
+            name = font_manager.FontProperties(fname=path).get_name()
             mpl.rcParams["font.family"] = name
             mpl.rcParams["axes.unicode_minus"] = False
             return path
     return ""
 
 
-FONT_PATH = _setup_font()
+FONT = _setup_font()
 
 
-def fp(size: float = 10, weight: str = "normal") -> font_manager.FontProperties:
-    if FONT_PATH:
-        return font_manager.FontProperties(fname=FONT_PATH, size=size, weight=weight)
+def fp(size=10, weight="normal"):
+    if FONT:
+        return font_manager.FontProperties(fname=FONT, size=size, weight=weight)
     return font_manager.FontProperties(size=size, weight=weight)
 
 
-def load_cell(cell: str) -> tuple[pd.DataFrame, pd.DataFrame]:
-    d = pd.read_csv(DATA[cell]).sort_values("cycle")
+def load_cell(cell: str):
+    d = pd.read_csv(OUT_DIR / f"{cell}_electrode_trajectory.csv").sort_values("cycle")
     d = d[d["cycle"] >= 2].copy()
-    for c in (
-        "SoHQ", "PE_side_score", "NE_side_score", "shared_side_score",
-        "contact_stack_score",
-        "LAM_PE_pattern_score", "contact_loss_score", "LLI_pattern_score",
-        "dominance_margin", "electrode_confidence", "mech_vs_chem_ratio", "PER",
-        "C_rate_med_est", "I_abs_med_cc",
-    ):
-        if c in d.columns:
+    for c in d.columns:
+        if c not in ("cycle_role", "dominant_electrode", "electrode_narrative", "PE_top_modes", "NE_top_modes", "shared_top_modes"):
             d[c] = pd.to_numeric(d[c], errors="coerce")
-    if "contact_stack_score" in d.columns:
-        d["delta_PE_rival"] = d["PE_side_score"] - np.fmax(
-            d["NE_side_score"].fillna(0), d["contact_stack_score"].fillna(0),
-        )
-    d["delta_PE_NE"] = d["PE_side_score"] - d["NE_side_score"]
-    segs = pd.read_csv(SEGS[cell]) if SEGS[cell].exists() else pd.DataFrame()
-    return d, segs
+    segs = pd.read_csv(OUT_DIR / f"{cell}_electrode_segments.csv")
+    rpt = pd.read_csv(OUT_DIR / f"{cell}_rpt_c3_anchors.csv") if (OUT_DIR / f"{cell}_rpt_c3_anchors.csv").exists() else pd.DataFrame()
+    val = json.loads((OUT_DIR / f"{cell}_validation.json").read_text()) if (OUT_DIR / f"{cell}_validation.json").exists() else {}
+    return d, segs, rpt, val
 
 
-def new_page(pdf: PdfPages, title: str | None = None):
-    fig = plt.figure(figsize=(8.27, 11.69))  # A4
+def new_page(pdf, title=None):
+    fig = plt.figure(figsize=(8.27, 11.69))
     fig.patch.set_facecolor("white")
     if title:
-        fig.text(0.08, 0.955, title, fontproperties=fp(14, "bold"), va="top")
-        fig.text(0.08, 0.935, "CycleDiag · ASSB SJ900 · hypothesis_bol_ocp", fontproperties=fp(8), color="#666")
+        fig.text(0.08, 0.955, title, fontproperties=fp(13, "bold"), va="top")
+        fig.text(0.08, 0.932, "CycleDiag · ASSB SJ900 · Si-on-Gr · NCM82 secondary · v1.3", fontproperties=fp(8), color="#666")
     return fig
 
 
-def draw_wrapped(fig, x, y, text, width=92, size=9, color="#222", weight="normal", va="top"):
+def wrap(fig, x, y, text, width=92, size=9, weight="normal", color="#222"):
     lines = []
     for para in text.split("\n"):
-        if not para.strip():
-            lines.append("")
-            continue
-        lines.extend(textwrap.wrap(para, width=width) or [""])
-    block = "\n".join(lines)
-    fig.text(x, y, block, fontproperties=fp(size, weight), color=color, va=va, ha="left", linespacing=1.35)
-    # estimate height consumed (~ size points)
-    return len(lines) * (size * 0.018)
+        lines.extend(textwrap.wrap(para, width=width) or [""]) if para.strip() else lines.append("")
+    fig.text(x, y, "\n".join(lines), fontproperties=fp(size, weight), color=color, va="top", linespacing=1.35)
+    return len(lines) * (size * 0.0175)
 
 
-def shade_segments(ax, segs: pd.DataFrame, y0=0, y1=1):
+def shade(ax, segs):
     if segs is None or segs.empty:
         return
     for _, s in segs.iterrows():
-        dom = str(s.get("relative_dominant") or s.get("dominant_electrode") or "")
-        color = C_BAND_PE if dom == "PE" else (C_BAND_NE if dom == "NE" else "#EEEEEE")
+        dom = str(s.get("dominant_electrode") or "")
+        color = C_BAND_PE if dom == "PE" else (C_BAND_CL if dom in ("contact_stack", "NE", "contact_or_NE") else "#EEEEEE")
         ax.axvspan(float(s["cycle_start"]), float(s["cycle_end"]), color=color, alpha=0.35, lw=0)
 
 
-def page_cover(pdf: PdfPages):
+def routine(d):
+    if "cycle_role" in d.columns:
+        r = d[d["cycle_role"].astype(str).eq("routine_05c")]
+        if len(r) >= 8:
+            return r
+    return d
+
+
+def rpt_rows(d):
+    if "cycle_role" in d.columns:
+        return d[d["cycle_role"].astype(str).eq("rpt_c3")]
+    return d.iloc[0:0]
+
+
+# ── pages ─────────────────────────────────────────────────────────────
+
+def page_cover(pdf, d22, d24, v22, v24):
     fig = new_page(pdf)
-    fig.text(0.08, 0.82, "ASSB SJ900 양·음극 열화 가설 진단 리포트", fontproperties=fp(18, "bold"))
-    fig.text(0.08, 0.78, "M01Ch022 · M01Ch024 구간별 PE/NE dominance 분석", fontproperties=fp(12))
-    box = FancyBboxPatch((0.08, 0.42), 0.84, 0.28, transform=fig.transFigure,
-                         boxstyle="round,pad=0.02,rounding_size=0.02",
-                         facecolor=C_BG, edgecolor="#DDD", linewidth=1)
+    fig.text(0.08, 0.84, "ASSB SJ900 양·음극 열화 가설 진단 리포트", fontproperties=fp(17, "bold"))
+    fig.text(0.08, 0.80, "M01Ch022 · M01Ch024  ·  methodology v1.3 (검증·개정 후)", fontproperties=fp(11))
+    box = FancyBboxPatch((0.08, 0.40), 0.84, 0.34, transform=fig.transFigure,
+                         boxstyle="round,pad=0.02,rounding_size=0.02", facecolor=C_BG, edgecolor="#DDD")
     fig.patches.append(box)
-    summary = (
-        "진단 레벨: hypothesis_bol_ocp v1.2 (aged 하프셀 교정 아님)\n"
-        "셀: set4 SJ900 full-cell · 45 °C · 2.5–4.2 V · 0.5C routine / C/3 RPT\n"
-        "프로토콜: 중간 SoHQ ‘스파이크’ = C/3(~0.33C) RPT 용량 (노이즈 아님)\n"
-        "궤적·세그먼트: routine 0.5C only · RPT는 이중 트랙 앵커(RCF/η)\n"
-        "근거: full-cell pattern score + BOL OCP peak attribution + routine fade"
-    )
-    draw_wrapped(fig, 0.11, 0.66, summary, width=78, size=9.5)
-    fig.text(0.08, 0.34, "핵심 결론 (한 줄)", fontproperties=fp(11, "bold"))
-    draw_wrapped(
-        fig, 0.08, 0.30,
-        "중간 궤적의 SoHQ 상승은 C/3 RPT다. fade/lean은 0.5C routine만으로 재구성했다. "
-        "상대 가설은 contact_stack(전극 미분해) vs PE lean 경쟁이며, "
-        "NE는 Si co-sign이 있을 때만 라벨한다. 절대 LAM%는 보고하지 않는다.",
-        width=92, size=9.5,
-    )
-    fig.text(0.08, 0.12, "작성: CycleDiag automated report · 2026-08-06 · v1.2", fontproperties=fp(8), color="#777")
-    fig.text(0.08, 0.09, "정책: IMPROVEMENT_ROADMAP §9.5 · dual-track RPT (C/3)", fontproperties=fp(8), color="#777")
-    pdf.savefig(fig)
-    plt.close(fig)
+    wrap(fig, 0.11, 0.70,
+         "화학 정체성\n"
+         "· 음극: Silicon coated on graphite (Si-on-Gr). 흑연이 노출될 수 있음.\n"
+         "· 양극: NCM82 이차입자 — 균열/전자 고립이 화학양론적 LAM%와 동일하지 않음.\n"
+         "· 전해질: 전고체(ASSB) · 45 °C · 2.5–4.2 V · ~72 Ah\n\n"
+         "프로토콜\n"
+         "· routine 0.5C (|I|≈38.7 A) · C/3 RPT (|I|≈25.8 A, ~105 cyc) · DC-IR 1C\n"
+         "· 중간 SoHQ 스파이크 = C/3 RPT (노이즈 아님). Δ(RPT−routine)≈+3~7%p\n\n"
+         "진단 레벨: hypothesis_bol_ocp — 절대 LAM% / *_est 금지 (aged 하프셀 전)",
+         width=78, size=9)
+    wrap(fig, 0.08, 0.34,
+         "핵심 한 줄: 두 셀 모두 초·중기에 접촉/스택 ohmic 패턴과 PE activity 패턴이 경합하고, "
+         "중기 RPT 구간 전후 contact가 강해지며, 후반 PE activity/isolation 쪽 lean이 열린다. "
+         "Si co-sign이 있을 때만 Si-on-Gr 음극 기계적/접촉 가설로 읽는다.",
+         width=92, size=9.5)
+    fig.text(0.08, 0.12, "검증 계획: VALIDATION_IMPROVEMENT_PLAN_v1_3.md · 2026-08-06", fontproperties=fp(8), color="#777")
+    pdf.savefig(fig); plt.close(fig)
 
 
-def page_methods(pdf: PdfPages):
-    fig = new_page(pdf, "1. 진단이 무엇을 말하는지 (과학적 프레임)")
+def page_validation(pdf, v22, v24):
+    fig = new_page(pdf, "1. 검증: 로직·지표·추출이 타당한가")
     y = 0.90
-    y -= draw_wrapped(fig, 0.08, y, "1.1 왜 ‘가설’인가", width=92, size=11, weight="bold") + 0.01
-    y -= draw_wrapped(
-        fig, 0.08, y,
-        "전고체(ASSB) 파우치 full-cell만으로는 양극·음극 각각의 활성물질 손실(LAM_PE/LAM_NE)을 "
-        "절대 %로 분리하기 어렵다. 관측되는 것은 V(Q), I(t), DC-IR, dQ/dV 피크 등 셀 수준 신호다. "
-        "본 리포트의 PE/NE 점수는 ‘어느 전극 쪽 증거가 상대적으로 더 큰가’를 나타내는 "
-        "hypothesis_bol_ocp 레벨이며, aged/harvested 하프셀이 없는 한 *_est_hc_calibrated 는 채우지 않는다.",
-        width=92, size=9,
-    ) + 0.02
-    y -= draw_wrapped(fig, 0.08, y, "1.2 ASSB Si-rich에서의 전극 매핑 규칙", width=92, size=11, weight="bold") + 0.01
-    y -= draw_wrapped(
-        fig, 0.08, y,
-        "• 양극(PE): LAM_PE pattern score + 고SOC 분극/히스테리시스 + 양극 BOL OCP 피크와 "
-        "full-cell dQ/dV 피크의 전압 근접(attribution).\n"
-        "• 음극(NE): contact_loss score를 Si 음극 기계적 접촉 손실의 1차 경로로 취급 "
-        "(ASSB에서 R_ohmic 성장·mech/chem 비). 흑연 stage 기반 LAM_NE 피크 단독 판정은 금지.\n"
-        "• 공유(shared): LLI, interface_R, SE_decomposition, microshort, solid_diffusion — "
-        "전극 한쪽에만 귀속하기 어려운 셀 수준 모드.",
-        width=92, size=9,
-    ) + 0.02
-    y -= draw_wrapped(fig, 0.08, y, "1.3 점수 산식 (개념)", width=92, size=11, weight="bold") + 0.01
-    y -= draw_wrapped(
-        fig, 0.08, y,
-        "PE_side ≈ 0.70·mean(PE 모드 점수) + 0.25·feature boost + peak attribution boost\n"
-        "NE_side ≈ 0.70·mean(NE 모드 점수) + 0.30·feature boost\n"
-        "lean Δ = PE_side − NE_side  (≥ +0.02 → PE lean, ≤ −0.02 → NE lean)\n"
-        "구간 분할: lean 부호 전환 · LAM_PE vs contact_loss 우위 전환 · (가능 시) knee 통과",
-        width=92, size=9,
-    ) + 0.02
-    y -= draw_wrapped(fig, 0.08, y, "1.4 데이터·전처리 · 이중 트랙", width=92, size=11, weight="bold") + 0.01
-    draw_wrapped(
-        fig, 0.08, y,
-        "SJ900 프로토콜: routine 0.5C (|I|≈38.7 A) · C/3 RPT (|I|≈25.8 A, ~105 cyc 주기) · "
-        "DC-IR 1C 펄스 (|I|≈77 A). 중간 SoHQ 상승 스파이크는 C/3 RPT 용량이며 fade 노이즈가 아니다. "
-        "fade·lean·세그먼트는 routine_05c만 사용. RPT는 SoHQ_rpt_c3 이중 트랙·RCF·η(SOC) 앵커로만 사용. "
-        "DC-IR 트리플릿은 부분 SOC라 SoHQ 궤적에서 제외(펄스 임계 0.75·1C). "
-        "baseline: early routine SoHQ≥95%. BOL 하프셀: C/20.",
-        width=92, size=9,
-    )
-    pdf.savefig(fig)
-    plt.close(fig)
+    y -= wrap(fig, 0.08, y, "1.1 감사에서 확인·수정한 Critical 이슈", width=92, size=11, weight="bold") + 0.01
+    y -= wrap(fig, 0.08, y,
+              "C1 방전 residual argmax가 DOD였음 → SOC=100−DOD로 교정. "
+              "C2 Q_relax가 RPT에만 찍혀 routine lean에서 Si co-sign이 공허했음 → forward-fill. "
+              "C3 ‘Si-rich / stage 없음’ 언어가 Si-on-Gr와 불일치 → 화학 레지스트리·서사 개정. "
+              "C4 baseline R 없을 때 absolute R 점수화 → term skip.",
+              width=92, size=9) + 0.015
+    y -= wrap(fig, 0.08, y, "1.2 이번 사이클 DoD 결과 (Ch022)", width=92, size=11, weight="bold") + 0.01
+    qr = v22.get("q_relax_coverage") or {}
+    rs = v22.get("residual_soc") or {}
+    lam = v22.get("lam_pe") or {}
+    roles = (v22.get("cycle_roles") or {}).get("counts") or {}
+    y -= wrap(fig, 0.08, y,
+              f"· Q_relax routine coverage = {qr.get('coverage')} (목표 ≫0 → 달성)\n"
+              f"· residual SOC median≈{rs.get('median'):.1f}% · highSOC≥60 비율={rs.get('frac_high_soc_ge60')}\n"
+              f"· LAM_PE ceiling_frac={lam.get('ceiling_frac')} · nunique={lam.get('nunique')} (고착 해제)\n"
+              f"· roles: {roles}\n"
+              f"· methodology={v22.get('methodology_version')} · chemistry={v22.get('chemistry')}",
+              width=92, size=9) + 0.015
+    y -= wrap(fig, 0.08, y, "1.3 과학적으로 유지한 계약", width=92, size=11, weight="bold") + 0.01
+    wrap(fig, 0.08, y,
+         "· 절대 LAM_PE/NE% 및 *_est / *_est_hc_calibrated 금지 (aged HC 전).\n"
+         "· contact_loss → contact_stack 우선; NE는 Si chemo-mech co-sign 있을 때만.\n"
+         "· peak-only로 LAM_NE% 산출 금지. (후속: 노출 Gr stage는 monitoring만)\n"
+         "· PE 점수 = activity/isolation pattern (이차입자 균열 포함 가능) — 화학양론 LAM% 아님.\n"
+         "· C/3 RPT는 dual-track 앵커; fade/lean은 routine 0.5C only.",
+         width=92, size=9)
+    pdf.savefig(fig); plt.close(fig)
 
 
-def page_param_catalog(pdf: PdfPages):
-    fig = new_page(pdf, "2. 패턴을 결정하는 핵심 파라미터")
+def page_methods(pdf):
+    fig = new_page(pdf, "2. 방법론 · 왜 이렇게 읽는가")
+    y = 0.90
+    y -= wrap(fig, 0.08, y, "2.1 전극 가설 점수", width=92, size=11, weight="bold") + 0.008
+    y -= wrap(fig, 0.08, y,
+              "PE_side ≈ 0.75·LAM_PE_pattern + 0.20·feature boost + FC-OCP Δhits boost\n"
+              "contact_stack ≈ contact_loss (R_ohmic growth / ΔR / R_frac 중심)\n"
+              "NE_hyp ≈ contact × Si co-sign + residual/SOC boost (Si 피처 이중계산 제거)\n"
+              "lean: PE vs max(contact, NE_hyp). 세그먼트: routine only · dwell≥4 · ε=0.05",
+              width=92, size=9) + 0.012
+    y -= wrap(fig, 0.08, y, "2.2 파라미터 추출 (검증된 것 / 한계)", width=92, size=11, weight="bold") + 0.008
+    y -= wrap(fig, 0.08, y,
+              "· DC-IR: RΩ + Rct(1−e^(−t/τ)) + A√t, 펄스 thr=0.75×1C (0.5C 오인 방지).\n"
+              "· η(SOC): C/3 vs 0.5C 동일 Q 축. RCF = Q_C/3 / Q_0.5C.\n"
+              "· Q_relax: RPT 2사이클 용량차 → routine에 forward-fill.\n"
+              "· curve fit: V_N≈V_ref(sQ+o)−I·dR → LAM/LLI/R proxies (bound 포화 시 null).\n"
+              "· 한계: CE>100% pairing 버그(가드만), DCIR SOC 순서 전압검증 미완, Gr stage feature 미구현.",
+              width=92, size=9) + 0.012
+    y -= wrap(fig, 0.08, y, "2.3 Si-on-Gr에서의 해석 규칙", width=92, size=11, weight="bold") + 0.008
+    wrap(fig, 0.08, y,
+         "실리콘이 흑연 위에 코팅되어 있으므로 Si 부피팽창·접촉 손실 신호가 나타날 수 있고, "
+         "동시에 흑연이 노출되면 stage 피크가 보일 수 있다. 이번 버전은 Si chemo-mech co-sign"
+         "(hyst_low↑, Q_relax, mech/chem, CV)로 NE 가설을 열고, Gr stage monitoring은 후속이다. "
+         "‘음극 확정 LAM’은 aged 하프셀 CompositeOCP 전까지 하지 않는다.",
+         width=92, size=9)
+    pdf.savefig(fig); plt.close(fig)
+
+
+def page_param_science(pdf):
+    fig = new_page(pdf, "3. 패턴을 결정하는 파라미터 (과학적 의미)")
     rows = [
-        ("SoHQ_routine (0.5C)", "루틴 용량 유지율", "fade·세그먼트 물리 축 (연속 궤적)"),
-        ("SoHQ_rpt_c3 (C/3)", "RPT 용량 앵커", "중간 ‘스파이크’ — rate gap, 노이즈 아님"),
-        ("LAM_PE_pattern_score", "양극 활성물질 손실 패턴", "PE 측 핵심 모드"),
-        ("contact_stack / contact_loss", "접촉·스택 저항 패턴", "전극 미분해 rival (NE≠자동)"),
-        ("LLI_pattern_score", "리튬 재고 손실 패턴", "공유 모드 — 전극 단정 금지"),
-        ("PE / contact / NE_hyp", "전극·스택 가설 점수", "모드+부가증거 가중합"),
-        ("RCF / η(SOC)", "rate capability · 분극", "C/3↔0.5C 이중 트랙 파생"),
-        ("fade_exponent / knee", "페이드 지수·변곡", "routine SoHQ만으로 적합"),
+        ("SoHQ_routine", "0.5C 용량유지율", "연속 fade·구간 물리축"),
+        ("SoHQ_rpt_c3", "C/3 RPT 용량", "rate gap 앵커; 가짜 회복 방지"),
+        ("R_ohmic_growth_100", "오믹 저항 성장률", "contact_stack 1차 증거"),
+        ("mech_vs_chem_ratio", "RΩ/Rct", "기계적 vs 계면 화학"),
+        ("Q_relax_pct", "RPT 용량 완화", "Si 완화/회복 co-sign"),
+        ("hyst_area_low", "저SOC 히스테리시스", "Si chemo-mech 지표"),
+        ("LAM_PE_pattern", "PE activity 패턴", "NCM82 이차: 고립≠LAM%"),
+        ("LAM_curve_proxy", "곡선 scale proxy", "bound 포화 시 null"),
+        ("RCF / PER / η", "rate capability", "C/3↔0.5C 이중트랙"),
+        ("fade_b / knee", "페이드 지수·변곡", "routine SoHQ만 적합"),
     ]
-    fig.text(0.08, 0.90, "아래 파라미터가 세그먼트 라벨(PE/NE/mixed)을 실질적으로 결정한다.", fontproperties=fp(9))
-    y = 0.86
+    y = 0.88
     fig.text(0.08, y, "파라미터", fontproperties=fp(9, "bold"))
-    fig.text(0.32, y, "의미", fontproperties=fp(9, "bold"))
-    fig.text(0.58, y, "해석에서의 역할", fontproperties=fp(9, "bold"))
-    y -= 0.025
-    fig.lines.append(plt.Line2D([0.08, 0.92], [y + 0.01, y + 0.01], transform=fig.transFigure, color="#CCC"))
-    for name, meaning, role in rows:
-        y -= 0.055
-        fig.text(0.08, y, name, fontproperties=fp(8, "bold"), color="#333")
-        fig.text(0.32, y, meaning, fontproperties=fp(8), color="#444")
-        fig.text(0.58, y, role, fontproperties=fp(8), color="#444")
-    y -= 0.06
-    draw_wrapped(
-        fig, 0.08, y,
-        "특히 Ch022에서 중기→후기 전환을 만든 것은 (1) contact_loss_score가 중기 0.6 전후로 "
-        "고원(plateau)을 이룬 뒤, (2) 후기에 PE_side가 NE_side를 지속적으로 상회(Δ>0)한 조합이다. "
-        "LAM_PE_pattern_score 단독 급증보다는, NE 측 점수가 상대적으로 완화되며 PE lean이 "
-        "열리는 양상이다. Ch024는 초부터 PE lean이 있고 중기 NE 포켓이 짧다.",
-        width=92, size=9,
-    )
-    pdf.savefig(fig)
-    plt.close(fig)
-
-
-def fig_sohq_and_sides(ax1, ax2, d: pd.DataFrame, segs: pd.DataFrame, cell: str):
-    shade_segments(ax1, segs)
-    if "cycle_role" in d.columns:
-        rout = d[d["cycle_role"].astype(str).eq("routine_05c")]
-        rpt = d[d["cycle_role"].astype(str).eq("rpt_c3")]
-        ax1.plot(rout["cycle"], rout["SoHQ"], color=C_SOHQ, lw=2.0, label="SoHQ 0.5C routine")
-        if not rpt.empty:
-            ax1.scatter(
-                rpt["cycle"], rpt["SoHQ"], s=36, zorder=5,
-                facecolors="#F59E0B", edgecolors="#92400E", linewidths=0.8,
-                label="SoHQ C/3 RPT",
-            )
-    else:
-        ax1.plot(d["cycle"], d["SoHQ"], color=C_SOHQ, lw=2.0, label="SoHQ")
-    ax1.set_ylabel("SoHQ (%)", fontproperties=fp(9))
-    ax1.set_title(f"{cell} — 용량 유지율과 전극 가설 점수", fontproperties=fp(10, "bold"), loc="left")
-    ax1.legend(prop=fp(8), loc="upper right", frameon=False)
-    ax1.set_ylim(55, 105)
-    ax1.grid(True, alpha=0.25)
-
-    shade_segments(ax2, segs)
-    plot_d = d
-    if "cycle_role" in d.columns:
-        plot_d = d[d["cycle_role"].astype(str).eq("routine_05c")]
-        if plot_d.empty:
-            plot_d = d
-    ax2.plot(plot_d["cycle"], plot_d["PE_side_score"], color=C_PE, lw=2.0, label="PE_side")
-    if "contact_stack_score" in plot_d.columns:
-        ax2.plot(plot_d["cycle"], plot_d["contact_stack_score"], color=C_CL, lw=1.8, label="contact_stack")
-    ax2.plot(plot_d["cycle"], plot_d["NE_side_score"], color=C_NE, lw=1.5, ls="--", label="NE_hyp")
-    ax2.plot(plot_d["cycle"], plot_d["shared_side_score"], color=C_SHARED, lw=1.0, ls=":", label="shared")
-    ax2.axhline(0, color="#999", lw=0.5)
-    ax2.set_xlabel("Cycle", fontproperties=fp(9))
-    ax2.set_ylabel("Side score (0–1)", fontproperties=fp(9))
-    ax2.legend(prop=fp(8), loc="upper left", ncol=4, frameon=False)
-    ax2.set_ylim(0, 0.85)
-    ax2.grid(True, alpha=0.25)
-    for ax in (ax1, ax2):
-        for label in ax.get_xticklabels() + ax.get_yticklabels():
-            label.set_fontproperties(fp(8))
-
-
-def fig_modes_and_delta(ax1, ax2, d: pd.DataFrame, segs: pd.DataFrame, cell: str):
-    shade_segments(ax1, segs)
-    ax1.plot(d["cycle"], d["LAM_PE_pattern_score"], color=C_LAM, lw=2, label="LAM_PE")
-    ax1.plot(d["cycle"], d["contact_loss_score"], color=C_CL, lw=2, label="contact_loss")
-    ax1.plot(d["cycle"], d["LLI_pattern_score"], color="#9333EA", lw=1.3, ls="--", label="LLI")
-    ax1.set_ylabel("Pattern score", fontproperties=fp(9))
-    ax1.set_title(f"{cell} — 모드 점수 (패턴을 만든 파라미터)", fontproperties=fp(10, "bold"), loc="left")
-    ax1.legend(prop=fp(8), loc="upper left", ncol=3, frameon=False)
-    ax1.set_ylim(0, 0.9)
-    ax1.grid(True, alpha=0.25)
-
-    shade_segments(ax2, segs)
-    ax2.fill_between(
-        d["cycle"], 0, d["delta_PE_NE"],
-        where=d["delta_PE_NE"] >= 0, color=C_PE, alpha=0.35, interpolate=True, label="PE lean (Δ>0)",
-    )
-    ax2.fill_between(
-        d["cycle"], 0, d["delta_PE_NE"],
-        where=d["delta_PE_NE"] < 0, color=C_NE, alpha=0.35, interpolate=True, label="NE lean (Δ<0)",
-    )
-    ax2.plot(d["cycle"], d["delta_PE_NE"], color="#222", lw=1.2)
-    ax2.axhline(0.02, color=C_PE, ls=":", lw=1)
-    ax2.axhline(-0.02, color=C_NE, ls=":", lw=1)
-    ax2.set_xlabel("Cycle", fontproperties=fp(9))
-    ax2.set_ylabel("Δ = PE − NE", fontproperties=fp(9))
-    ax2.set_title("상대 지배 lean (구간 전환 트리거)", fontproperties=fp(10, "bold"), loc="left")
-    ax2.legend(prop=fp(8), loc="lower right", frameon=False)
-    ax2.grid(True, alpha=0.25)
-    for ax in (ax1, ax2):
-        for label in ax.get_xticklabels() + ax.get_yticklabels():
-            label.set_fontproperties(fp(8))
-
-
-def page_cell_overview(pdf: PdfPages, cell: str, d: pd.DataFrame, segs: pd.DataFrame, narrative: str):
-    fig = new_page(pdf, f"3. {cell} 개요 궤적")
-    draw_wrapped(fig, 0.08, 0.91, narrative, width=95, size=8.5)
-    gs = fig.add_gridspec(2, 1, left=0.10, right=0.95, top=0.78, bottom=0.08, hspace=0.28)
-    ax1 = fig.add_subplot(gs[0])
-    ax2 = fig.add_subplot(gs[1], sharex=ax1)
-    fig_sohq_and_sides(ax1, ax2, d, segs, cell)
-    # legend note for bands
-    fig.text(0.10, 0.01, "배경 밴드: 분홍=상대 PE 지배 구간, 청록=상대 NE 지배 구간 (segment relative_dominant)", fontproperties=fp(7), color="#666")
-    pdf.savefig(fig)
-    plt.close(fig)
-
-
-def page_cell_drivers(pdf: PdfPages, cell: str, d: pd.DataFrame, segs: pd.DataFrame, narrative: str):
-    fig = new_page(pdf, f"4. {cell} — 결정 파라미터 시각화")
-    draw_wrapped(fig, 0.08, 0.91, narrative, width=95, size=8.5)
-    gs = fig.add_gridspec(2, 1, left=0.10, right=0.95, top=0.78, bottom=0.08, hspace=0.30)
-    ax1 = fig.add_subplot(gs[0])
-    ax2 = fig.add_subplot(gs[1], sharex=ax1)
-    fig_modes_and_delta(ax1, ax2, d, segs, cell)
-    pdf.savefig(fig)
-    plt.close(fig)
-
-
-def page_segment_table(pdf: PdfPages, cell: str, segs: pd.DataFrame, extra: str):
-    fig = new_page(pdf, f"5. {cell} 구간별 해석표")
-    draw_wrapped(fig, 0.08, 0.91, extra, width=95, size=8.5)
-    y = 0.84
-    headers = ["Seg", "Cycle", "SoHQ", "지배", "PE", "NE", "Δ", "LAM_PE", "contact", "LLI"]
-    xs = [0.08, 0.14, 0.28, 0.40, 0.50, 0.58, 0.66, 0.74, 0.82, 0.90]
-    for x, h in zip(xs, headers):
-        fig.text(x, y, h, fontproperties=fp(7.5, "bold"))
+    fig.text(0.30, y, "의미", fontproperties=fp(9, "bold"))
+    fig.text(0.58, y, "해석 역할", fontproperties=fp(9, "bold"))
     y -= 0.02
-    for _, s in segs.iterrows():
-        y -= 0.028
-        if y < 0.08:
-            break
-        dom = str(s.get("relative_dominant") or "")
-        color = C_PE if dom == "PE" else (C_NE if dom == "NE" else "#444")
-        vals = [
-            f"{int(s['segment'])}",
-            f"{int(s['cycle_start'])}-{int(s['cycle_end'])}",
-            f"{s['SoHQ_start']:.0f}→{s['SoHQ_end']:.0f}",
-            dom,
-            f"{s['PE_side_score_mean']:.2f}",
-            f"{s['NE_side_score_mean']:.2f}",
-            f"{s['PE_side_score_mean']-s['NE_side_score_mean']:+.2f}",
-            f"{s['LAM_PE_mean']:.2f}",
-            f"{s['contact_loss_mean']:.2f}",
-            f"{s['LLI_mean']:.2f}" if pd.notna(s.get('LLI_mean')) else "-",
-        ]
-        for x, v in zip(xs, vals):
-            fig.text(x, y, v, fontproperties=fp(7), color=color if x == xs[3] else "#222")
-    pdf.savefig(fig)
-    plt.close(fig)
+    for a, b, c in rows:
+        y -= 0.048
+        fig.text(0.08, y, a, fontproperties=fp(8, "bold"))
+        fig.text(0.30, y, b, fontproperties=fp(8))
+        fig.text(0.58, y, c, fontproperties=fp(8))
+    y -= 0.05
+    wrap(fig, 0.08, y,
+         "Ch022/024에서 중기 lean을 흔든 주인공은 contact_loss(RΩ 성장)와 PE activity 점수의 상대 마진이다. "
+         "Si co-sign(median≈0.4 after Q_relax fill)이 중기 이후 올라가 NE 가설 창을 열지만, "
+         "dominance는 여전히 PE↔contact 경합이 중심이다.",
+         width=92, size=9)
+    pdf.savefig(fig); plt.close(fig)
 
 
-def page_comparison(pdf: PdfPages, d22: pd.DataFrame, d24: pd.DataFrame):
-    fig = new_page(pdf, "6. Ch022 vs Ch024 비교")
-    gs = fig.add_gridspec(3, 1, left=0.10, right=0.95, top=0.88, bottom=0.08, hspace=0.35)
-    ax0 = fig.add_subplot(gs[0])
-    ax0.plot(d22["cycle"], d22["SoHQ"], color="#111", lw=2, label="Ch022 SoHQ")
-    ax0.plot(d24["cycle"], d24["SoHQ"], color="#888", lw=2, ls="--", label="Ch024 SoHQ")
-    ax0.set_ylabel("SoHQ (%)", fontproperties=fp(9))
-    ax0.set_title("용량 fade 비교", fontproperties=fp(10, "bold"), loc="left")
-    ax0.legend(prop=fp(8), frameon=False)
-    ax0.grid(True, alpha=0.25)
-    ax0.set_ylim(55, 105)
+def page_overview(pdf, cell, d, segs, rpt, narrative):
+    fig = new_page(pdf, f"4. {cell} — 용량·전극 가설 궤적")
+    wrap(fig, 0.08, 0.905, narrative, width=95, size=8.2)
+    gs = fig.add_gridspec(2, 1, left=0.10, right=0.95, top=0.78, bottom=0.08, hspace=0.28)
+    ax1, ax2 = fig.add_subplot(gs[0]), fig.add_subplot(gs[1])
+    r, rp = routine(d), rpt_rows(d)
+    shade(ax1, segs)
+    ax1.plot(r["cycle"], r["SoHQ"], color=C_SOHQ, lw=2, label="SoHQ 0.5C")
+    if not rp.empty:
+        ax1.scatter(rp["cycle"], rp["SoHQ"], s=40, zorder=5, facecolors=C_RPT, edgecolors="#92400E", label="C/3 RPT")
+    ax1.set_ylabel("SoHQ (%)", fontproperties=fp(9)); ax1.set_ylim(55, 105)
+    ax1.legend(prop=fp(8), frameon=False, loc="upper right"); ax1.grid(True, alpha=0.25)
+    ax1.set_title("이중 트랙: routine fade vs RPT 앵커", fontproperties=fp(10, "bold"), loc="left")
+    shade(ax2, segs)
+    ax2.plot(r["cycle"], r["PE_side_score"], color=C_PE, lw=2, label="PE activity")
+    ax2.plot(r["cycle"], r["contact_stack_score"], color=C_CL, lw=1.8, label="contact_stack")
+    ax2.plot(r["cycle"], r["NE_side_score"], color=C_NE, lw=1.4, ls="--", label="NE_hyp")
+    ax2.set_xlabel("Cycle", fontproperties=fp(9)); ax2.set_ylabel("Side score", fontproperties=fp(9))
+    ax2.set_ylim(0, 0.9); ax2.legend(prop=fp(8), ncol=3, frameon=False); ax2.grid(True, alpha=0.25)
+    for ax in (ax1, ax2):
+        for lab in ax.get_xticklabels() + ax.get_yticklabels():
+            lab.set_fontproperties(fp(8))
+    pdf.savefig(fig); plt.close(fig)
 
-    ax1 = fig.add_subplot(gs[1])
-    ax1.plot(d22["cycle"], d22["delta_PE_NE"], color=C_PE, lw=1.8, label="Ch022 Δ")
-    ax1.plot(d24["cycle"], d24["delta_PE_NE"], color=C_NE, lw=1.8, label="Ch024 Δ")
-    ax1.axhline(0, color="#999", lw=0.8)
-    ax1.set_ylabel("Δ PE−NE", fontproperties=fp(9))
-    ax1.set_title("전극 lean 비교 (양수=양극 우위)", fontproperties=fp(10, "bold"), loc="left")
-    ax1.legend(prop=fp(8), frameon=False)
-    ax1.grid(True, alpha=0.25)
 
-    ax2 = fig.add_subplot(gs[2])
-    ax2.plot(d22["cycle"], d22["contact_loss_score"], color=C_CL, lw=1.8, label="Ch022 contact")
-    ax2.plot(d24["cycle"], d24["contact_loss_score"], color="#99C2C2", lw=1.8, ls="--", label="Ch024 contact")
-    ax2.plot(d22["cycle"], d22["LAM_PE_pattern_score"], color=C_LAM, lw=1.5, label="Ch022 LAM_PE")
-    ax2.plot(d24["cycle"], d24["LAM_PE_pattern_score"], color="#E8B989", lw=1.5, ls="--", label="Ch024 LAM_PE")
-    ax2.set_xlabel("Cycle", fontproperties=fp(9))
-    ax2.set_ylabel("Score", fontproperties=fp(9))
-    ax2.set_title("결정 모드: contact_loss vs LAM_PE", fontproperties=fp(10, "bold"), loc="left")
-    ax2.legend(prop=fp(7.5), ncol=2, frameon=False)
+def page_drivers(pdf, cell, d, segs):
+    fig = new_page(pdf, f"5. {cell} — 결정 파라미터 시각화")
+    wrap(fig, 0.08, 0.905,
+         "상단: LAM_PE(activity) vs contact_loss vs LLI. 중단: RΩ growth · mech/chem · Q_relax. "
+         "하단: lean Δ=PE−contact (전환 트리거).",
+         width=95, size=8.2)
+    r = routine(d)
+    gs = fig.add_gridspec(3, 1, left=0.10, right=0.95, top=0.84, bottom=0.07, hspace=0.32)
+    ax0, ax1, ax2 = [fig.add_subplot(gs[i]) for i in range(3)]
+    shade(ax0, segs)
+    ax0.plot(r["cycle"], r["LAM_PE_pattern_score"], color=C_PE, lw=2, label="LAM_PE (activity)")
+    ax0.plot(r["cycle"], r["contact_loss_score"], color=C_CL, lw=2, label="contact_loss")
+    if "LLI_pattern_score" in r:
+        ax0.plot(r["cycle"], r["LLI_pattern_score"], color="#9333EA", lw=1.2, ls="--", label="LLI")
+    ax0.legend(prop=fp(7), ncol=3, frameon=False); ax0.set_ylim(0, 1.05); ax0.grid(True, alpha=0.25)
+    ax0.set_ylabel("pattern", fontproperties=fp(8))
+
+    shade(ax1, segs)
+    if "R_ohmic_growth_100" in r:
+        ax1.plot(r["cycle"], r["R_ohmic_growth_100"], color="#B45309", lw=1.6, label="RΩ growth/100")
+    if "mech_vs_chem_ratio" in r:
+        ax1.plot(r["cycle"], r["mech_vs_chem_ratio"], color=C_CL, lw=1.4, label="mech/chem")
+    if "Q_relax_pct" in r:
+        ax1b = ax1.twinx()
+        ax1b.plot(r["cycle"], r["Q_relax_pct"], color=C_NE, lw=1.2, ls=":", label="Q_relax%")
+        ax1b.set_ylabel("Q_relax %", fontproperties=fp(8))
+        for lab in ax1b.get_yticklabels():
+            lab.set_fontproperties(fp(7))
+    ax1.legend(prop=fp(7), loc="upper left", frameon=False); ax1.grid(True, alpha=0.25)
+    ax1.set_ylabel("R metrics", fontproperties=fp(8))
+
+    shade(ax2, segs)
+    delta = r["PE_side_score"] - r["contact_stack_score"]
+    ax2.fill_between(r["cycle"], 0, delta, where=delta >= 0, color=C_PE, alpha=0.35, interpolate=True)
+    ax2.fill_between(r["cycle"], 0, delta, where=delta < 0, color=C_CL, alpha=0.35, interpolate=True)
+    ax2.plot(r["cycle"], delta, color="#222", lw=1.2)
+    ax2.axhline(0, color="#999", lw=0.6)
+    ax2.set_xlabel("Cycle", fontproperties=fp(9)); ax2.set_ylabel("Δ PE−contact", fontproperties=fp(8))
     ax2.grid(True, alpha=0.25)
     for ax in (ax0, ax1, ax2):
-        for label in ax.get_xticklabels() + ax.get_yticklabels():
-            label.set_fontproperties(fp(8))
-    pdf.savefig(fig)
-    plt.close(fig)
+        for lab in ax.get_xticklabels() + ax.get_yticklabels():
+            lab.set_fontproperties(fp(7))
+    pdf.savefig(fig); plt.close(fig)
 
 
-def page_scatter_phase(pdf: PdfPages, d22: pd.DataFrame, d24: pd.DataFrame):
-    fig = new_page(pdf, "7. 모드 공간에서의 궤적 (왜 그렇게 읽었는가)")
-    draw_wrapped(
-        fig, 0.08, 0.91,
-        "가로축=contact_loss(NE 가설), 세로축=LAM_PE(PE 가설). 점이 우측으로 가면 음극 접촉 증거가 강하고, "
-        "위로 가면 양극 LAM 패턴이 강하다. 색은 사이클(밝을수록 후기). Ch022는 중기에 우측(고 contact)으로 "
-        "머문 뒤 후기에 상대적으로 위로/좌측으로 이동하며 PE lean이 열린다.",
-        width=95, size=8.5,
-    )
-    gs = fig.add_gridspec(1, 2, left=0.08, right=0.95, top=0.78, bottom=0.18, wspace=0.28)
-    for ax, d, title in (
-        (fig.add_subplot(gs[0]), d22, "Ch022"),
-        (fig.add_subplot(gs[1]), d24, "Ch024"),
-    ):
-        sc = ax.scatter(
-            d["contact_loss_score"], d["LAM_PE_pattern_score"],
-            c=d["cycle"], cmap="YlOrBr", s=28, alpha=0.85, edgecolors="none",
-        )
-        ax.set_xlabel("contact_loss (NE)", fontproperties=fp(9))
-        ax.set_ylabel("LAM_PE (PE)", fontproperties=fp(9))
-        ax.set_title(title, fontproperties=fp(10, "bold"))
-        ax.set_xlim(0.2, 0.75)
-        ax.set_ylim(0.0, 1.0)
-        ax.grid(True, alpha=0.25)
-        for label in ax.get_xticklabels() + ax.get_yticklabels():
-            label.set_fontproperties(fp(8))
-        cb = fig.colorbar(sc, ax=ax, fraction=0.046, pad=0.04)
-        cb.set_label("cycle", fontproperties=fp(8))
-        for t in cb.ax.get_yticklabels():
-            t.set_fontproperties(fp(7))
-    pdf.savefig(fig)
-    plt.close(fig)
+def page_segments(pdf, cell, segs):
+    fig = new_page(pdf, f"6. {cell} — 구간 표")
+    wrap(fig, 0.08, 0.90, "routine_05c only. dominant = PE | contact_stack | NE(Si co-sign) | mixed.", width=95, size=8.5)
+    if segs.empty:
+        pdf.savefig(fig); plt.close(fig); return
+    y = 0.86
+    headers = ["Seg", "Cycle", "SoHQ", "지배", "PE", "contact", "si", "LAM", "CL"]
+    xs = [0.08, 0.14, 0.28, 0.40, 0.52, 0.62, 0.74, 0.82, 0.90]
+    for x, h in zip(xs, headers):
+        fig.text(x, y, h, fontproperties=fp(8, "bold"))
+    y -= 0.025
+    for _, s in segs.iterrows():
+        y -= 0.028
+        vals = [
+            str(int(s["segment"])),
+            f"{int(s['cycle_start'])}-{int(s['cycle_end'])}",
+            f"{s['SoHQ_start']:.0f}→{s['SoHQ_end']:.0f}",
+            str(s["dominant_electrode"])[:12],
+            f"{s['PE_side_score_mean']:.2f}",
+            f"{s['contact_stack_score_mean']:.2f}",
+            f"{float(s.get('si_cosign_mean') or 0):.2f}",
+            f"{float(s.get('LAM_PE_mean') or 0):.2f}",
+            f"{float(s.get('contact_loss_mean') or 0):.2f}",
+        ]
+        for x, v in zip(xs, vals):
+            fig.text(x, y, v, fontproperties=fp(7.5))
+        if y < 0.12:
+            break
+    pdf.savefig(fig); plt.close(fig)
 
 
-def page_interpretation_ch022(pdf: PdfPages):
-    fig = new_page(pdf, "8. Ch022 — 해석 스토리 (상황 설명)")
-    text = (
-        "프로토콜 전제\n"
-        "중간 SoHQ 상승(예: cyc 107/212/317/422/527)은 C/3 RPT 용량이다. "
-        "Δ(RPT−routine)≈+3~7%p로 rate gap이 커지며, fade/lean은 0.5C routine만 사용한다.\n\n"
-        "단계 A · 조기 (≈7–60)\n"
-        "routine SoHQ 96%→94%. contact_stack와 PE가 근소 경합. "
-        "‘어느 전극 확정’보다 기준선·초기 ohmic 신호 단계.\n\n"
-        "단계 B · 중기 contact_stack (≈100–310) — 핵심\n"
-        "contact_loss≈0.61–0.66 고원, PE와 경합하되 lean은 contact/스택 쪽이 잦다. "
-        "Si co-sign이 약하면 NE 라벨이 아니라 contact_stack으로 둔다. "
-        "RPT 앵커의 SoHQ bump는 이 구간의 ‘회복’이 아니다.\n\n"
-        "단계 C · knee 전후 (~350) · 전환 (~390+)\n"
-        "routine knee≈350. 이후 PE↔contact 마진이 줄고 mixed. "
-        "후기(500+)에서 PE_side가 올라가 상대 PE lean이 열린다 "
-        "(절대 LAM% 아님).\n\n"
-        "단계 D · EOL\n"
-        "SoHQ≈65%. PE 상대 우위와 contact 증거가 공존 — 단정 대신 후기 PE lean으로 기술."
-    )
-    draw_wrapped(fig, 0.08, 0.90, text, width=92, size=9)
-    pdf.savefig(fig)
-    plt.close(fig)
+def page_rpt(pdf, cell, rpt):
+    fig = new_page(pdf, f"7. {cell} — C/3 RPT 이중 트랙")
+    wrap(fig, 0.08, 0.90,
+         "RPT SoHQ가 routine보다 높게 찍히는 것은 rate가 낮아 분극이 작기 때문이다. "
+         "이 차이를 ‘용량 회복’으로 읽으면 fade/lean이 왜곡된다.",
+         width=95, size=9)
+    if rpt is None or rpt.empty:
+        pdf.savefig(fig); plt.close(fig); return
+    ax = fig.add_axes([0.12, 0.35, 0.78, 0.45])
+    r = rpt.dropna(subset=["SoHQ_rpt_c3"]).copy()
+    ax.plot(r["cycle"], r["SoHQ_rpt_c3"], "o-", color=C_RPT, label="SoHQ C/3")
+    if "SoHQ_routine_prev" in r:
+        ax.plot(r["cycle"], r["SoHQ_routine_prev"], "s--", color=C_SOHQ, label="prev routine 0.5C")
+    ax.set_xlabel("Cycle", fontproperties=fp(9)); ax.set_ylabel("SoHQ (%)", fontproperties=fp(9))
+    ax.legend(prop=fp(8), frameon=False); ax.grid(True, alpha=0.25)
+    for lab in ax.get_xticklabels() + ax.get_yticklabels():
+        lab.set_fontproperties(fp(8))
+    if "SoHQ_gap_vs_prev_routine" in r:
+        gaps = r["SoHQ_gap_vs_prev_routine"].dropna()
+        wrap(fig, 0.08, 0.28,
+             f"Δ(RPT−prev routine) median = {gaps.median():+.1f}%p · "
+             f"range {gaps.min():+.1f}~{gaps.max():+.1f}%p (n={len(gaps)})",
+             width=92, size=9)
+    pdf.savefig(fig); plt.close(fig)
 
 
-def page_interpretation_ch024(pdf: PdfPages):
-    fig = new_page(pdf, "9. Ch024 — 해석 스토리 (상황 설명)")
-    text = (
-        "프로토콜 전제\n"
-        "Ch022와 동일하게 C/3 RPT가 ~105 cyc 주기로 SoHQ 스파이크를 만든다. "
-        "이중 트랙 분리 후 routine fade 지수≈1.28, knee≈290.\n\n"
-        "단계 A–B · 초·중기 contact_stack (≈7–210)\n"
-        "contact_stack 우위가 길게 이어진다. Ch022와 같이 ‘중기 음극 확정’이 아니라 "
-        "전극 미분해 접촉/스택 패턴이다.\n\n"
-        "단계 C · 중후기 mixed (≈220–400)\n"
-        "PE와 contact 마진이 좁아지고 lean이 흔들린다. "
-        "짧은 NE_hyp 포켓은 Si co-sign이 있을 때만 라벨.\n\n"
-        "단계 D · 후기 PE (≈410–EOL)\n"
-        "Ch022보다 이른 구간에서 PE 상대 지배가 분명해진다(≈410+). "
-        "SoHQ 70%→64%. 동일 SJ900에서도 lean 타임라인이 셀마다 다르다.\n\n"
-        "함의\n"
-        "RPT를 노이즈로 지우면 fade/knee가 왜곡되고, RPT를 routine에 섞으면 "
-        "가짜 ‘용량 회복’ 서사가 생긴다. 알고리즘은 둘을 분리한다."
-    )
-    draw_wrapped(fig, 0.08, 0.90, text, width=92, size=9)
-    pdf.savefig(fig)
-    plt.close(fig)
+def page_story(pdf, cell, text):
+    fig = new_page(pdf, f"8. {cell} — 해석 스토리")
+    wrap(fig, 0.08, 0.90, text, width=92, size=9)
+    pdf.savefig(fig); plt.close(fig)
 
 
-def page_limits(pdf: PdfPages):
+def page_compare(pdf, d22, d24, s22, s24):
+    fig = new_page(pdf, "9. Ch022 vs Ch024 비교")
+    r22, r24 = routine(d22), routine(d24)
+    gs = fig.add_gridspec(2, 1, left=0.10, right=0.95, top=0.82, bottom=0.08, hspace=0.3)
+    ax0, ax1 = fig.add_subplot(gs[0]), fig.add_subplot(gs[1])
+    ax0.plot(r22["cycle"], r22["SoHQ"], color="#111", lw=2, label="Ch022")
+    ax0.plot(r24["cycle"], r24["SoHQ"], color="#888", lw=2, ls="--", label="Ch024")
+    ax0.set_ylabel("SoHQ routine", fontproperties=fp(9)); ax0.legend(prop=fp(8), frameon=False); ax0.grid(True, alpha=0.25)
+    ax0.set_title("동일 화학·유사 fade 깊이, lean 타임라인은 셀별", fontproperties=fp(10, "bold"), loc="left")
+    ax1.plot(r22["cycle"], r22["PE_side_score"] - r22["contact_stack_score"], color=C_PE, lw=1.6, label="Ch022 Δ")
+    ax1.plot(r24["cycle"], r24["PE_side_score"] - r24["contact_stack_score"], color=C_CL, lw=1.6, ls="--", label="Ch024 Δ")
+    ax1.axhline(0, color="#999", lw=0.6)
+    ax1.set_xlabel("Cycle", fontproperties=fp(9)); ax1.set_ylabel("Δ PE−contact", fontproperties=fp(9))
+    ax1.legend(prop=fp(8), frameon=False); ax1.grid(True, alpha=0.25)
+    for ax in (ax0, ax1):
+        for lab in ax.get_xticklabels() + ax.get_yticklabels():
+            lab.set_fontproperties(fp(8))
+    pdf.savefig(fig); plt.close(fig)
+
+
+def page_limits(pdf):
     fig = new_page(pdf, "10. 한계 · 금지 해석 · 다음 실험")
-    text = (
-        "하지 말아야 할 해석\n"
-        "• 본 리포트의 PE/NE 점수를 LAM_PE=xx%, LAM_NE=yy% 같은 절대량으로 인용하지 말 것.\n"
-        "• Si-rich에서 full-cell 피크만으로 LAM_NE를 확정하지 말 것 (정책 금지).\n"
-        "• Temp 컬럼이 0이므로 Arrhenius/DTV 보정 결과를 끼워 넣지 말 것.\n"
-        "• contact_loss를 ‘구속 압력 부족’으로 단정하지 말 것 — 압력 로그 없음.\n\n"
-        "신뢰도를 올리는 다음 데이터\n"
-        "1) Aged/harvested 하프셀 OCP → *_est_hc_calibrated / DMA quantify\n"
-        "2) 구속 압력 시계열 → contact_loss 해석의 인과 고리\n"
-        "3) 온도 로그 export 복구 → 셀 간 비교·정규화\n"
-        "4) §5.1 dQ/dV 필터 스윕 verdict → 피크 경로 확정 후 deconv\n\n"
-        "재현 방법\n"
-        "PYTHONPATH=. python3 cyclediag/tools/diagnose_electrode_segments.py \\\n"
-        "  --input example/fixtures/raw/set4_SJ900/M01Ch022_raw.csv \\\n"
-        "  --out-dir example/output/electrode_segments\n"
-        "본 PDF: cyclediag/tools/build_electrode_diagnosis_pdf.py"
-    )
-    draw_wrapped(fig, 0.08, 0.90, text, width=92, size=9)
-    pdf.savefig(fig)
-    plt.close(fig)
+    wrap(fig, 0.08, 0.90,
+         "하지 말아야 할 해석\n"
+         "· 절대 LAM_PE/NE%로 보고하거나 *_est 컬럼을 채우기\n"
+         "· contact_stack을 ‘음극 확정’으로 단정 (압력 로그·aged HC 없음)\n"
+         "· C/3 RPT SoHQ bump를 용량 회복으로 읽기\n"
+         "· NCM82 이차입자 cracking을 화학양론 CAM 손실과 동일시\n"
+         "· ‘Si-rich라 graphite stage가 없다’고 단정 (노출 Gr 가능)\n\n"
+         "후속 (P2)\n"
+         "1) CE Ah pairing 근본 수정\n"
+         "2) Gr stage monitoring feature (노출 지표, LAM% 아님)\n"
+         "3) DCIR SOC 순서 전압 검증\n"
+         "4) aged/harvested 하프셀 → Level 3 CompositeOCP\n"
+         "5) 구속 압력 시계열\n\n"
+         "재현\n"
+         "PYTHONPATH=. python3 cyclediag/tools/diagnose_electrode_segments.py \\\n"
+         "  --input example/fixtures/raw/set4_SJ900/M01Ch022_raw.csv \\\n"
+         "  --out-dir example/output/electrode_segments\n"
+         "PDF: cyclediag/tools/build_electrode_diagnosis_pdf.py\n"
+         "계획: cyclediag/planning/VALIDATION_IMPROVEMENT_PLAN_v1_3.md",
+         width=92, size=9)
+    pdf.savefig(fig); plt.close(fig)
 
 
-def phase_means(d: pd.DataFrame) -> str:
-    if "cycle_role" in d.columns:
-        rout = d[d["cycle_role"].astype(str).eq("routine_05c")]
-        if len(rout) >= 9:
-            d = rout
-    d = d.dropna(subset=["SoHQ"])
-    n = len(d)
-    parts = []
-    for name, sl in (
-        ("early", d.iloc[: n // 3]),
-        ("mid", d.iloc[n // 3 : 2 * n // 3]),
-        ("late", d.iloc[2 * n // 3 :]),
-    ):
-        pe, ne = sl["PE_side_score"].mean(), sl["NE_side_score"].mean()
-        winner = "PE" if pe >= ne else "NE"
-        parts.append(
-            f"{name}: PE={pe:.2f}/NE={ne:.2f}→{winner} "
-            f"(SoHQ {sl['SoHQ'].iloc[0]:.0f}→{sl['SoHQ'].iloc[-1]:.0f}%)"
-        )
-    return " · ".join(parts)
+STORY_022 = (
+    "프로토콜\n"
+    "중간 SoHQ 상승(107/212/317/422/527)은 C/3 RPT. routine fade 지수≈1.34, knee≈350.\n\n"
+    "Seg1 (≈7–100) PE activity lean\n"
+    "형성 직후 PE pattern이 앞서고 contact는 낮다(early R baseline/성장 신호 약). "
+    "‘양극이 갑자기 나쁘다’기보다 초기 ICA/곡선 proxy가 PE 버킷에 먼저 쌓인 단계.\n\n"
+    "Seg2 (≈120–210) mixed · contact↑\n"
+    "RΩ growth·contact_loss가 ~0.6대로 올라가 PE와 경합. Si co-sign≈0.4 (Q_relax fill 후). "
+    "접촉/스택 가설이 열리지만 Si co-sign만으로 음극 LAM 확정은 하지 않는다.\n\n"
+    "Seg3–4 (≈220–EOL) PE lean 재개\n"
+    "knee(~350) 이후 PE activity가 상대적으로 우세. EOL SoHQ≈65%. "
+    "NCM82 이차입자 고립/균열 가능성을 PE pattern에 포함해 읽되 %로 환산하지 않는다."
+)
+
+STORY_024 = (
+    "프로토콜\n"
+    "Ch022와 동일 C/3 RPT 주기. routine fade≈1.28, knee≈290.\n\n"
+    "Seg1–2 (≈7–100) PE\n"
+    "초반 PE activity lean. contact는 중기부터 상승.\n\n"
+    "Seg2–3 중기 mixed\n"
+    "≈120–180에서 contact≈0.62로 PE와 맞먹음. Si-on-Gr co-sign 상승. "
+    "Ch022와 같이 ‘중기 음극 확정’이 아니라 contact↔PE 경합.\n\n"
+    "Seg4 (≈290–EOL) PE\n"
+    "knee 이후 PE lean이 Ch022보다 이르게 분명해진다(≈290+). SoHQ≈64%. "
+    "동일 SJ900이라도 lean 타임라인은 셀별로 다르다."
+)
 
 
 def main():
@@ -535,57 +433,38 @@ def main():
     out_pdf = OUT_DIR / "ASSB_SJ900_Ch022_Ch024_electrode_diagnosis_report.pdf"
     art_pdf = ART_DIR / "ASSB_SJ900_Ch022_Ch024_electrode_diagnosis_report.pdf"
 
-    d22, s22 = load_cell("M01Ch022")
-    d24, s24 = load_cell("M01Ch024")
+    d22, s22, r22, v22 = load_cell("M01Ch022")
+    d24, s24, r24, v24 = load_cell("M01Ch024")
 
     with PdfPages(out_pdf) as pdf:
-        page_cover(pdf)
+        page_cover(pdf, d22, d24, v22, v24)
+        page_validation(pdf, v22, v24)
         page_methods(pdf)
-        page_param_catalog(pdf)
-        page_cell_overview(
-            pdf, "M01Ch022", d22, s22,
-            f"샘플 {len(d22)} capa-like cycles. {phase_means(d22)}. "
-            "routine only 궤적. 중기 contact_stack 고원 → 후기(≈500+) PE lean. C/3 RPT는 앵커.",
-        )
-        page_cell_drivers(
-            pdf, "M01Ch022", d22, s22,
-            "상단: LAM_PE vs contact_loss vs LLI. 하단: Δ=PE−NE (구간 전환 트리거). "
-            "상단: LAM_PE vs contact_loss. 하단 lean. RPT bump는 궤적 노이즈가 아님.",
-        )
-        page_segment_table(
-            pdf, "M01Ch022", s22,
-            "relative_dominant 기준. 강도는 |Δ|≈dominance_margin_mean 참고 (표의 Δ열).",
-        )
-        page_cell_overview(
-            pdf, "M01Ch024", d24, s24,
-            f"샘플 {len(d24)} capa-like cycles. {phase_means(d24)}. "
-            "초·중기 contact_stack → ≈410+ PE lean. RPT dual-track 적용.",
-        )
-        page_cell_drivers(
-            pdf, "M01Ch024", d24, s24,
-            "Ch024는 후기 PE 전환이 Ch022보다 이름. mid는 PE↔contact mixed.",
-        )
-        page_segment_table(
-            pdf, "M01Ch024", s24,
-            "후기 seg가 PE 상대 지배. 세그먼트는 routine_05c only.",
-        )
-        page_comparison(pdf, d22, d24)
-        page_scatter_phase(pdf, d22, d24)
-        page_interpretation_ch022(pdf)
-        page_interpretation_ch024(pdf)
+        page_param_science(pdf)
+        page_overview(pdf, "M01Ch022", d22, s22, r22,
+                      "routine only 궤적 + C/3 RPT 마커. 배경: 분홍=PE seg, 녹=contact/NE seg.")
+        page_drivers(pdf, "M01Ch022", d22, s22)
+        page_segments(pdf, "M01Ch022", s22)
+        page_rpt(pdf, "M01Ch022", r22)
+        page_story(pdf, "M01Ch022", STORY_022)
+        page_overview(pdf, "M01Ch024", d24, s24, r24,
+                      "Ch024: 중기 contact 경합 후 PE lean이 더 이름.")
+        page_drivers(pdf, "M01Ch024", d24, s24)
+        page_segments(pdf, "M01Ch024", s24)
+        page_rpt(pdf, "M01Ch024", r24)
+        page_story(pdf, "M01Ch024", STORY_024)
+        page_compare(pdf, d22, d24, s22, s24)
         page_limits(pdf)
-
         meta = pdf.infodict()
-        meta["Title"] = "ASSB SJ900 Ch022/Ch024 Electrode-side Diagnosis Report v1.2"
+        meta["Title"] = "ASSB SJ900 Electrode Diagnosis Report v1.3 (Si-on-Gr / NCM82)"
         meta["Author"] = "CycleDiag"
-        meta["Subject"] = "hypothesis_bol_ocp PE/NE segment diagnosis"
-        meta["Keywords"] = "ASSB, SJ900, LAM_PE, contact_loss, electrode diagnosis"
+        meta["Subject"] = "hypothesis_bol_ocp validation + dual-track RPT"
+        meta["Keywords"] = "ASSB, Si-on-Gr, NCM82, contact_stack, C/3 RPT"
 
-    # also copy to artifacts
     art_pdf.write_bytes(out_pdf.read_bytes())
     print(f"wrote {out_pdf}")
     print(f"wrote {art_pdf}")
-    print(f"pages ~14, size={out_pdf.stat().st_size/1024:.1f} KiB")
+    print(f"pages ~{len(pdf.pages) if hasattr(pdf,'pages') else '16+'}, size={out_pdf.stat().st_size/1024:.1f} KiB")
 
 
 if __name__ == "__main__":

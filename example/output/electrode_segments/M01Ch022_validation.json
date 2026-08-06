@@ -9,19 +9,42 @@
   },
   "lean_sensitivity": {
     "n": 90,
-    "corr_delta_contact": 0.4392916652339679,
-    "corr_delta_lam_pe": 0.9069786297093677,
-    "note": "\u0394 lean should not be a near-proxy of contact alone after v1.1"
+    "corr_delta_contact": -0.8890643725843376,
+    "corr_delta_lam_pe": -0.01968375468929445,
+    "note": "\u0394 lean should not be a near-proxy of contact alone after v1.3"
   },
   "peak_attribution": {
     "available": true,
-    "mean_hits": 0.3,
-    "mean_hits_delta": 0.3,
-    "early_mean_delta": 1.4,
+    "mean_hits": 0.24444444444444444,
+    "mean_hits_delta": 0.24444444444444444,
+    "early_mean_delta": 1.0,
     "late_mean_delta": 0.0
   },
+  "q_relax_coverage": {
+    "routine_n": 60,
+    "q_relax_nonnull": 60,
+    "coverage": 1.0
+  },
+  "residual_soc": {
+    "available": true,
+    "n": 72,
+    "median": 99.68105258813753,
+    "frac_high_soc_ge60": 0.6666666666666666,
+    "frac_low_soc_le40": 0.3333333333333333,
+    "frac_exact_zero": 0.3194444444444444,
+    "note": "discharge residual argmax is true SOC (100\u2212DOD); near-100 = start of discharge"
+  },
+  "cycle_roles": {
+    "available": true,
+    "counts": {
+      "routine_05c": 60,
+      "dcir_pulse": 18,
+      "rpt_c3": 12
+    }
+  },
   "n_rows": 90,
-  "methodology_version": "electrode_side_v1_1",
+  "methodology_version": "electrode_side_v1_3",
+  "chemistry": "ASSB_SJ900_Si_on_Gr",
   "protocol": {
     "routine_n": 60,
     "rpt_c3_n": 12,
