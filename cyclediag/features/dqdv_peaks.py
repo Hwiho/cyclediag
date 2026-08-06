@@ -13,7 +13,10 @@ from .lges_catalog import MAX_DQDV_PEAKS
 try:
     from pne_studio2.core.dqdv_interp import build_dqdv_from_segment
 except ImportError:
-    from pne_studio.core.dqdv_interp import build_dqdv_from_segment
+    try:
+        from pne_studio.core.dqdv_interp import build_dqdv_from_segment
+    except ImportError:
+        from .dqdv_interp import build_dqdv_from_segment
 
 
 @dataclass
