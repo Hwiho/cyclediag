@@ -343,6 +343,19 @@ def main() -> None:
     (out / "mechanism_contrast.md").write_text(narrative, encoding="utf-8")
 
     # markdown report
+    summary_cols = [
+        c for c in (
+            "arm", "cell_id", "SoHQ_end", "fade_exponent_b", "knee_cycle_bw",
+            "early_SoHQ", "early_LAM_PE_pattern_score", "early_contact_loss_score",
+            "late_LAM_PE_pattern_score", "late_contact_loss_score",
+            "delta_LAM_PE_pattern_score", "delta_contact_loss_score",
+            "delta_PE_side_score", "delta_contact_stack_score",
+        ) if c in cell_table.columns
+    ]
+    try:
+        table_md = cell_table[summary_cols].to_markdown(index=False)
+    except ImportError:
+        table_md = "```\n" + cell_table[summary_cols].to_string(index=False) + "\n```"
     lines = [
         f"# DOE3 양극 비교: {name_a} vs {name_b}",
         "",
@@ -354,15 +367,7 @@ def main() -> None:
         "",
         "## 셀별 요약",
         "",
-        cell_table[[
-            c for c in (
-                "arm", "cell_id", "SoHQ_end", "fade_exponent_b", "knee_cycle_bw",
-                "early_SoHQ", "early_LAM_PE_pattern_score", "early_contact_loss_score",
-                "late_LAM_PE_pattern_score", "late_contact_loss_score",
-                "delta_LAM_PE_pattern_score", "delta_contact_loss_score",
-                "delta_PE_side_score", "delta_contact_stack_score",
-            ) if c in cell_table.columns
-        ]].to_markdown(index=False),
+        table_md,
     ]
     (out / "COMPARE_REPORT.md").write_text("\n".join(lines), encoding="utf-8")
 
