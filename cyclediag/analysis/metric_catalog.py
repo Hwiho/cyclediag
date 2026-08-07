@@ -249,15 +249,15 @@ def _peak_family() -> list[MetricSpec]:
     for key, title, unit, desc in (
         ("delta_chg_dQdV_peak1_V", "충전 피크1 ΔV", "V", "기준 대비 충전 dQ/dV 피크1 이동."),
         ("delta_dchg_dQdV_peak1_V", "방전 피크1 ΔV", "V", "기준 대비 방전 dQ/dV 피크1 이동."),
-        ("dchg_dVdQ_SOC0", "방전 dV/dQ @SOC0", "V/Ah", "저SOC cliff dV/dQ."),
+        ("dchg_dVdQ_SOC0", "방전 dV/dQ @SOC0", "V/Ah", "저SOC cliff dV/dQ — DOE/음극 대비 핵심 지표."),
         ("dchg_dVdQ_SOC5", "방전 dV/dQ @SOC5", "V/Ah", "SOC≈5% dV/dQ."),
         ("dchg_dVdQ_SOC10", "방전 dV/dQ @SOC10", "V/Ah", "SOC≈10% dV/dQ."),
         ("dchg_dVdQ_SOCmid", "방전 dV/dQ @mid", "V/Ah", "중SOC dV/dQ."),
         ("dchg_dVdQ_SOC0_Q", "방전 cliff Q", "Ah", "SOC0 dV/dQ 위치 Q."),
-        ("dchg_dVdQ_SOC0_cliff_width", "방전 cliff 폭", "Ah", "저SOC cliff 폭."),
+        ("dchg_dVdQ_SOC0_cliff_width", "방전 cliff 폭", "Ah", "저SOC cliff 폭 — knee와 함께 핵심."),
         ("dchg_dVdQ_SOC0_to_mid_ratio", "cliff/mid 비", "1", "SOC0/mid dV/dQ 비."),
         ("chg_dVdQ_SOC100", "충전 dV/dQ @100", "V/Ah", "만충 부근 dV/dQ."),
-        ("delta_dchg_dVdQ_SOC0", "dV/dQ SOC0 Δ", "V/Ah", "기준 대비."),
+        ("delta_dchg_dVdQ_SOC0", "dV/dQ SOC0 Δ", "V/Ah", "기준 대비 SOC0 — 음극 arm 분기 신호."),
         ("delta_dchg_dVdQ_SOC5", "dV/dQ SOC5 Δ", "V/Ah", "기준 대비."),
         ("delta_dchg_dVdQ_SOC10", "dV/dQ SOC10 Δ", "V/Ah", "기준 대비."),
         ("delta_dchg_dVdQ_SOCmid", "dV/dQ mid Δ", "V/Ah", "기준 대비."),
@@ -432,15 +432,16 @@ def _build_metrics() -> tuple[MetricSpec, ...]:
 
     # life
     items += _expand([
-        _m("fade_exponent_b", "fade 지수 b", "1", "life", "SoHQ power-law 지수.", "SoHQ fit.", "either", 10),
-        _m("fade_exponent_a", "fade 지수 a", "1", "life", "power-law 계수.", "SoHQ fit.", "either", 20),
-        _m("fade_fit_r2", "fade fit R2", "1", "life", "fade 적합도.", "r2.", "either", 30),
-        _m("fade_sohq0", "fade SoHQ0", "%", "life", "fit 초기 SoHQ.", "intercept.", "either", 40),
-        _m("knee_cycle_bw", "knee 사이클", "cyc", "life", "bilinear knee 위치.", "broken-stick SoHQ.", "either", 50),
+        _m("knee_cycle_bw", "knee 사이클", "cyc", "life",
+           "bilinear knee 위치 — SoHQ 변곡점 (핵심).", "broken-stick SoHQ.", "either", 5),
         _m("knee_severity", "knee 심각도", "1", "life", "전후 기울기 차이.", "slope_after-before.", "increase", 60),
         _m("knee_slope_before", "knee 전 기울기", "%/cyc", "life", "knee 이전 fade 기울기.", "bilinear.", "decrease", 70),
         _m("knee_slope_after", "knee 후 기울기", "%/cyc", "life", "knee 이후 fade 기울기.", "bilinear.", "decrease", 80),
         _m("knee_fit_r2", "knee fit R2", "1", "life", "knee 적합도.", "r2.", "either", 90),
+        _m("fade_exponent_b", "fade 지수 b", "1", "life", "SoHQ power-law 지수.", "SoHQ fit.", "either", 100),
+        _m("fade_exponent_a", "fade 지수 a", "1", "life", "power-law 계수.", "SoHQ fit.", "either", 110),
+        _m("fade_fit_r2", "fade fit R2", "1", "life", "fade 적합도.", "r2.", "either", 120),
+        _m("fade_sohq0", "fade SoHQ0", "%", "life", "fit 초기 SoHQ.", "intercept.", "either", 130),
     ])
 
     # mechanism scores
