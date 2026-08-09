@@ -60,6 +60,23 @@ python run_cyclediag.py compare-doe --doe DOE2 --out example/output/DOE2_compare
 python run_cyclediag.py peaks export --input raw.csv --out-dir example/docs/features --cell-id Cell01
 ```
 
+## SoHQ BP + voltage-profile presentation (tagged)
+
+Tagged-routine SoHQ regimes (BP1/BP2, 3 zones) and every-N-cycle V–Q / dQ/dV around each BP:
+
+```bash
+# all default cells (set4 SJ900 + SJ1300 dry)
+python -m cyclediag.tools.run_sohq_bp_presentation --out example/output/sohq_bp_presentation
+
+# smoke (one cell, coarser stride)
+python -m cyclediag.tools.run_sohq_bp_presentation --cells M01Ch022 --step 40 --out /tmp/bp_pres
+```
+
+Outputs per cell: `*_sohq_dsohq_regimes.png`, `*_BP1_BP2_VQ_dQdV.png`, regime slope CSV.
+
+**Cloud / CI:** GitHub Actions workflow `cyclediag-ci` runs pytest + this presentation (artifact upload).  
+Cursor Cloud Agents: clone this repo → install via `.cursor/environment.json` → run the same command.
+
 ## Layout
 
 ```
