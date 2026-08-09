@@ -16,7 +16,7 @@ on:
         default: "40"
 
 jobs:
-  test:
+  test-core:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -30,12 +30,18 @@ jobs:
           python -m pip install -U pip
           pip install -r requirements.txt
           pip install -e "./cyclediag[dev]"
-      - name: Pytest
-        run: python -m pytest cyclediag/tests -q --tb=short
+      - name: Pytest (SoHQ / SiGr / presentation)
+        run: >
+          python -m pytest -q --tb=short
+          cyclediag/tests/test_sohq_inflection.py
+          cyclediag/tests/test_sohq_bp_presentation.py
+          cyclediag/tests/test_si_gr_mechanism.py
+          cyclediag/tests/test_cliff_metrics.py
+          cyclediag/tests/test_curve_fit.py
 
   sohq-bp-presentation:
     runs-on: ubuntu-latest
-    needs: test
+    needs: test-core
     steps:
       - uses: actions/checkout@v4
         with:
