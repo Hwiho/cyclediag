@@ -7,6 +7,13 @@
 | Script | Purpose |
 |--------|---------|
 | `run_doe2_compare.py` | **DOE2: SJ900 vs SJ1300** early params + mode contrast |
+| `run_r60_ec2_arm_compare.py` | EoC dchgR 60s vs Ec2 arm compare + SoHQ BP markers |
+| `run_r60_regime_presentation.py` / `run_r60_profile_growth_plots.py` | R60 regime / V-window growth presentation |
+| `run_dvdq_soc0_arm_plots.py` | dV/dQ @ SOC0 arm 1×2 (inc vs t1) |
+| `run_sj1300_vq_loop_square.py` | Charge+discharge V–Q loop + SoHQ (1500×500) |
+| `run_vq_r60_1x3.py` / `run_vq_early50_zoom.py` | V–Q + R60 1×3 / early ±5 min zoom |
+| `run_lges_lifetime_ranking.py` | LGES indicators vs tagged lifetime Spearman ranking |
+| `plot_eoc_dchgR_60s_definition.py` | R60 definition figure (V_ref → V_60s) |
 | `export_cycle_indicators.py` | **사이클별 Rest V / 저항 / SoHQ·CE → Excel + overview PNG (GUI 없이 점검)** |
 | `export_degradation_diagnosis.py` | **Full-cell LLI/LAM/impedance pattern diagnosis (하프셀 불필요)** |
 | `export_peak_feature_table.py` | Peak feature CSV export (기본: band assign, RPT 제외) |
