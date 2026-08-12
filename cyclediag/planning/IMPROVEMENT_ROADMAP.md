@@ -265,7 +265,7 @@ Layer 3  기구 (mechanism)    : 접촉 손실, SE 분해, 관통, 입자 균열
 
 ## 4. 지표 체계 정비
 
-### 4.1 패밀리 태그 (선행 필수)
+### 4.1 패밀리 태그 (선행 필수) — **구현됨** (§4.4)
 
 지표를 늘리기 전에 정리한다. 상관된 지표를 더 넣으면 z-score anomaly가 악화된다.
 
@@ -286,6 +286,13 @@ FAMILY = {
 2. 나머지는 screening · diagnosis 전용
 3. 상관행렬 산출해 |r| > 0.95 쌍은 빌드 시 경고
 4. registry에 `unit`, `layer`, `family`, `requires`, `valid_when` 기록
+
+위 초안은 물리 계열(coulombic/kinetic/…)로 묶는 안이었으나, 실측 결과 **계열이
+아니라 개별 측정량 단위로 묶어야** 함이 확인됐다. 예를 들어 `hyst_area`(global)와
+`hyst_area_low`는 같은 "coulombic/thermodynamic" 계열이지만 |r| = 0.004로 완전히
+독립이다. 반대로 `hyst_area`와 `hyst_max_dV`는 같은 dV(Q) 구간의 두 요약값이라
+per-cell 0.988로 중복이다. 따라서 실제 구현(§4.4)은 계열 대신 **측정량 패밀리**를
+쓰고, 계열 정보는 `role`로 분리했다.
 
 ### 4.2 신규 지표 총괄
 
@@ -321,14 +328,162 @@ VE = EE / CE          # 전압 효율. 분극 손실만 반영
 dE = E_chg - E_dchg   # 비가역 발열 프록시
 
 # 쿨롱 비효율 시간 정규화 — 45 °C 캘린더 성분 분리
-CI = 1 - CE
-CI_per_hour = CI / cycle_duration_hours
-CI_cumulative = cumsum(CI)
+# CI = 100 - CE 자체는 컬럼으로 내보내지 않는다 (§4.4: CE의 아핀변환, 정보량 0).
+# 시간 정규화된 형태만 내보낸다 — CE와 pooled 0.90 / per-cell 0.96 으로 독립.
+CI_per_hour = (100 - CE) / cycle_duration_hours
+CI_cumulative = cumsum(100 - CE)
 k_SEI = fit(Q_loss ~ a·sqrt(N))   # a 계수
 ```
 
 `VE`는 ASSB에서 특히 유용하다. 계면 저항 증가는 CE를 거의 건드리지 않고 VE만 떨어뜨리므로,
 `CE 유지 + VE 하락` 조합이 **계면 열화의 깨끗한 신호**가 된다.
+
+### 4.4 중복 지표 통폐합 — **구현됨**
+
+모듈: `cyclediag/features/indicator_registry.py`
+
+#### 문제
+
+extract 파이프라인은 사이클당 393개 컬럼을 냈다. 그중 상당수가 같은 측정량의
+다른 이름·단위·정규화였다. "숫자형 컬럼 전부"로 feature pool을 만드는 소비자
+(anomaly score, indicator screen, regime singularity, lifetime ranking)는
+**어떤 물리량이 별칭을 몇 개 가졌는지에 따라 그 물리량의 가중치가 결정**됐다.
+실측된 최악 사례:
+
+| 패밀리 | 구 pool에서 중복 계상 | 컬럼 |
+|---|---|---|
+| `rest_v_eoc_relaxed` | ×6 | `EoC_restV_{60s,30m,end}` + 각 `delta_` |
+| `capacity_discharge` | ×4 | `dchgCapa`, `SoHQ`, `dchg_E`, `dchg_dVdQ_SOC0_Q` |
+| `capacity_charge` | ×4 | `chgCapa`, `chgCCcapa`, `chg_E`, `chg_dQdV_area_sum` |
+| `cv_amount` | ×4 | `chgCVcapa`, `chgCVtime`, `chgCapa_CCratio`, `delta_chgCapa_CCratio` |
+| `r_eod_chg_10s` | ×4 | `EoD_chgR_10s`, `_T25`, `_inc`, `_R10_minus_R0p1` |
+
+구 prefix 필터 pool 168개 컬럼 = 119개 패밀리, **32개 패밀리가 중복 계상**,
+중복 슬롯 49개. 통폐합 후 167개 컬럼 = 167개 패밀리, **중복 0**.
+
+#### 두 개의 직교축
+
+- `role` — 양의 종류. `indicator`(열화 증거) / `target`(건강도 및 그로부터
+  계산된 양) / `covariate`(프로토콜·환경) / `qc`(provenance) / `diagnosis`(진단
+  출력) / `meta`. **자동 pool에는 `indicator`만 들어간다.**
+- `family` — 물리 측정량. 패밀리당 대표 1개만 자동 pool에 진입한다. 나머지
+  멤버는 계속 emit되고 명시적 config·플롯·export에서 그대로 쓸 수 있다.
+  패밀리는 "버려라"가 아니라 **"독립으로 세지 말라"**는 뜻이다.
+
+`delta_<x>` / `<x>_inc`는 셀 내에서 `<x>`의 아핀변환이므로 `canonical_base`가
+자동으로 접어 넣는다 (패밀리 목록에 별도 등재하지 않음).
+
+#### 통폐합 판정 기준
+
+(1) 또는 (2)를 만족하고, **항상 (3)을 만족**해야 병합한다.
+
+1. **구조적 동일성** — 한쪽이 다른 쪽의 정확한 대수 함수. 단위 변환
+   (`f_Q_spec` = `f_Q_max` / active mass), 같은 양을 느리게 변하는 기준으로
+   정규화한 형태 (`Q_relax_pct` = `Q_relax` / 블록 용량), 상대가 없으면 상대값을
+   그대로 반환하는 fallback (`chgCapa_CCratio_norm`).
+2. **실측 중복** — $\min(|r_{\text{pearson}}|, |r_{\text{spearman}}|)$의
+   **per-cell 중앙값이 3셀 이상에서 $\ge 0.98$**. DOE1·DOE2·DOE3·ASSB 6셀 911행.
+   pooled 상관은 교차확인용으로만 기록하고 **단독 근거로 쓰지 않는다** — pooling은
+   셀 간 분산을 상관계수에 섞는다. `chg_temp_avg` ~ `dchg_temp_avg`가 pooled
+   0.996인 것은 셀 간 온도차 때문이고 표본이 충분한 유일한 셀에서는 0.75다.
+   반대로 pooled가 낮아도 병합을 막지 않는다 — `EoD_chgR_10s` ~ `_T25`는 같은
+   이유로 pooled 0.54지만 셀 내부에서 온도보정은 단조변환이라 per-cell 1.0000이다.
+3. **같은 측정량의 같은 구간** — 상관만으로는 부족하다. 의도적으로 만든 분해축
+   (SOC 밴드, SOC 지점, 펄스 지속시간)에서 서로 다른 위치에 있는 두 컬럼은
+   상관이 높아도 병합하지 않는다. 그 축은 열화를 **국소화**하기 위해 존재하므로
+   병합은 중복 제거가 아니라 축 삭제다. 병합은 **한 위치 안에서만** 한다 — 같은
+   밴드의 loop area와 peak \|dV\|, 같은 펄스의 원본과 온도보정값.
+
+#### 폐기된 정확한 별칭 (8개)
+
+컬럼 자체를 없앴다. 옛 테이블은 `apply_aliases`가 이름을 매핑한다. 6셀 911행
+pre-change 추출에서 모든 항등식을 재구성 검증했다 (최대 상대편차 5.7e-16).
+
+| 폐기 | 대체 | 항등식 | 검증 |
+|---|---|---|---|
+| `CI` | `CE` | $CI = 100 - CE$ | n=878, max\|diff\|=0 |
+| `ocv_spread_compression` | `delta_ocv_spread_20_80` | 같은 값을 두 번 대입 | n=75, max\|diff\|=0 |
+| `ocv_spread_slope` | `delta_ocv_spread_20_80` | 등간격 3점 fit → $-\Delta\text{spread}/60$ | n=75, 2.4e-19 |
+| `ocv_block_id` | `block_id` | broadcast 복제 | n=75, max\|diff\|=0 |
+| `ocv_V_inf_soc{80,50,20}` | `V_inf_rest_soc{80,50,20}` | 동일 `self_discharge_for_cycle` fit을 두 번 | n=25×3, max\|diff\|=0 |
+| `R_SOC_diff_20_80` | `R_SOC_slope` | 등간격 3점 fit → $-60 \times \text{slope}$ | n=72, 1.8e-15 |
+
+`CI` 폐기 시 `CI_per_hour`를 `CE`에서 직접 계산하도록 바꿨다. 시간 정규화된
+형태는 `CE`와 pooled 0.90 / per-cell 0.96 으로 **독립이므로 유지해야 한다.**
+
+#### 검토 후 기각한 병합
+
+측정했으나 기준 미달이라 병합하지 않았다. 기록해 두지 않으면 다음 사람이 같은
+병합을 다시 제안한다.
+
+| 후보 | 실측 | 기각 이유 |
+|---|---|---|
+| `V_inf_rest_soc*` ~ `V_inf_est_soc*` | pooled 0.972 / 0.991 / 0.907 | 장시간 rest fit vs 펄스 회복 외삽 — 서로 다른 추정기. 3개 중 2개 미달 |
+| `EoD_restV_60s` ~ `EoD_restV_end` | per-cell 0.976 | 방전측 완화가 충전측보다 느리다. 충전측 `EoC_restV_60s`는 0.998로 병합됨 |
+| `chg_temp_avg` ~ `dchg_temp_avg` | pooled 0.996, per-cell 0.75 | pooled 값이 셀 간 온도차 아티팩트 |
+| `CE` ~ `CI_per_hour` | pooled 0.90 | 사이클 시간 정규화가 새 정보를 만든다 |
+| `tau_CV` ~ `Q_CV_at_Tref` ~ `I_inf_norm` | 데이터 없음 | 같은 CV fit의 서로 다른 파라미터. 픽스처에서 한 번도 채워지지 않아 중복 근거가 0 |
+| `dchg_dVdQ_peak{1,2,3}_Q` ~ `dchgCapa` | pooled 0.27 / 0.55, per-cell 0.39 / 0.76 | `regime_singularity`의 옛 제외 목록이 "capacity proxy"라 단정했으나 **근거 없음** — indicator로 복원 |
+| `hyst_area` ~ `hyst_max_dV_mid` 등 밴드 교차쌍 | per-cell 0.982 ~ 0.995 (6셀) | **기준 2는 통과하나 기준 3에서 기각.** global 적분은 mid 밴드를 구조적으로 포함하고, 교차쌍끼리 서로 모순된다 (global+mid와 high+mid를 병합하면 전 밴드가 한 컬럼으로 붕괴). §5.11 SOC 분해 히스테리시스의 존재 이유인 국소화 축이 사라지므로 4개 패밀리를 유지하고 잔여 중복을 감수한다. low 밴드는 \|r\| = 0.004로 애초에 독립 |
+
+#### role 재분류 (자동 pool 오염 제거)
+
+| 컬럼 | role | 근거 |
+|---|---|---|
+| `dchg_dVdQ_SOC0_Q` | `target` | `dchgCapa`와 min-\|r\| **1.0000** — 방전 종료점의 Q, 즉 용량 그 자체 |
+| `dSoHQ_dN`, `d2SoHQ` | `target` | 용량 상관은 0.34 / 0.10로 낮지만 **타깃을 미분한 값**. anomaly 증거로 쓰면 순환논리 |
+| `dchg_cliff_sg_width_ah` | `qc` | $q_{span} \times sg\_window / (n_{interp}-1)$ — Savitzky-Golay 창 폭. 전 셀에서 용량의 4.19 %로 고정 비례. 셀이 만든 값이 아니라 **처리 파라미터**이므로 capacity 패밀리도 아니다 |
+
+반대로 registry는 구 prefix 필터가 **이름만 보고 버렸던** DC-IR 분해 계열
+(`R_ohmic_*`, `R_ct_*`, `R_diff_frac_*`, `R_recovery_tau*`, `R_SOC_slope` 등 55개)을
+pool에 새로 넣는다. 파이프라인이 내는 가장 직접적인 임피던스 증거인데
+`EoC_`/`EoD_`/`chg_`/`dchg_`/`delta_`/`f_` prefix에 걸리지 않아 anomaly score가
+보지 못하고 있었다.
+
+#### mode weight 중복 증거 제거
+
+한 mode의 evidence 목록에 같은 패밀리가 두 번 들어가면 그 물리량이 mode 점수를
+두 번 지배한다. **패밀리 총 가중치는 보존**하고(fold) 대표 항만 남겼다.
+
+| config · mode | 제거 | 유지 | 가중치 | 911행 점수 변화 |
+|---|---|---|---|---|
+| `assb_si_v1` · LLI | `CI` | `CE` | 1.0+0.9 → 1.9 | **0** (`decrease_from_100` 스케일이 동일해 항등) |
+| `fullcell_v1` · LAM_NE | `chgCapa_CCratio` | `chgCVtime` | 0.6+0.7 → 1.3 | median +0.000, max +0.104 |
+| `fullcell_v1` · impedance | `delta_hyst_max_dV` | `delta_hyst_area` | 0.8+0.7 → 1.5 | median −0.044, max −0.078 |
+
+두 fullcell mode 모두 총 가중치가 보존된다 (6.7 → 6.7, 8.0 → 8.0). 점수가
+움직이는 건 남은 대표항의 evidence 값이 제거된 항과 다르기 때문이다.
+
+LAM_NE에서 `chgCVtime`을 남긴 이유: `chgCapa_CCratio`는 92–100 범위의 **절대
+퍼센트**인데 `direction: decrease`, `scale: 5`로 채점돼 $\tanh(-CCratio/5)$가
+전체 911행에서 −1.0이었다. positive evidence를 낼 수 없고 **영구적으로 자기
+자신을 conflicting feature로 보고**하던 항이다 (별개의 기존 config 버그).
+
+`evidence_count`는 mode당 1 줄어든다 (LAM_NE 8→7, impedance 10→9, LLI 4→3).
+같은 측정량 두 개가 독립된 두 증거로 계상되지 않게 된 결과이므로 의도된 변화다.
+LLI의 경우 `LLI_pattern_score`는 911행에서 **비트 단위로 동일**하고
+`LLI_confidence`만 최대 0.075 움직인다.
+
+#### 폐기한 ad-hoc 제외 목록
+
+registry가 role·family를 대신 판정하므로 손으로 관리하던 목록 4개를 없앴다.
+
+| 위치 | 대체 |
+|---|---|
+| `models/predict.py` `NUMERIC_PREFIX` + `_META_COLS` + prefix 화이트리스트 | `primary_indicator_columns` |
+| `analysis/indicator_screen.py` `_META` | role 태깅 + `one_per_family` |
+| `analysis/indicator_screen_plots.py` `_EXCLUDE_FROM_RANK` | role + `is_family_primary` |
+| `analysis/regime_singularity.py` `_EXCLUDE` (18개) | `primary_indicator_columns` |
+| `tools/run_lges_lifetime_ranking.py` `EXCLUDE` (14개) | registry + 누출 방지 `TARGET_DERIVED`(5개)만 잔존 |
+
+#### 회귀 검증
+
+동일 6셀·동일 사이클 선택으로 재추출: **911행 유지**, 393 → 385 컬럼
+(= 폐기 별칭 8개, 그 외 소실 0, 신규 0). 잔존 385개 컬럼 중 값이 바뀐 것은
+`LLI_confidence` / `LLI_evidence_count` / `diagnosis_quality_score` 3개뿐이고
+모두 위 CE/CI fold의 의도된 결과다. `relax_completeness_soc*`는 채워진 행이
+75 → 25로 줄지만 이는 블록 3사이클에 같은 값을 복제하던 broadcast가 사라진 것으로,
+값이 다른 행은 없고 블록 단위 QC는 `relax_completeness_max`가 그대로 담당한다.
 ---
 
 ## 5. 알고리즘 명세
@@ -1494,15 +1649,20 @@ DC-IR 3600 s pre-pulse rest → SOC 80/50/20 세 점 $V_\infty$.
 
 | 컬럼 | 의미 |
 |---|---|
-| `V_inf_rest_soc{80,50,20}` | pre-pulse quasi-OCV |
+| `V_inf_rest_soc{80,50,20}` | pre-pulse quasi-OCV. 해당 SOC 사이클 행에만 존재 |
 | `ocv_spread_20_80` | $V_{20} - V_{80}$ |
-| `delta_ocv_*` | BOL 블록 대비 drift |
+| `delta_ocv_*` | BOL 블록 대비 drift. 블록 3사이클 전체에 broadcast |
 | `ocv_parallel_shift` | 평행 이동 → **LLI + kinetic termination proxy** (R30 상관 필수) |
-| `ocv_spread_compression` | spread 변화 → **electrode imbalance proxy** (비대칭 LAM/정렬) |
+| `delta_ocv_spread_20_80` | spread 변화 → **electrode imbalance proxy** (비대칭 LAM/정렬) |
 | `ocv_drift_mode` | `lli_parallel` / `lam_spread` / `local_soc*` |
-| `relax_completeness_soc*` | 3600 s 후 잔여 완화 비율 |
+| `relax_completeness_soc*` | 3600 s 후 잔여 완화 비율. 해당 SOC 사이클 행에만 존재 |
+| `relax_completeness_max` | 블록 내 최악값. 블록 3사이클 전체에 broadcast |
 
 모듈: `cyclediag/features/ocv_drift.py` · `enrich_assb` 자동 attach.
+
+§4.4 통폐합으로 `ocv_spread_compression`(= `delta_ocv_spread_20_80`),
+`ocv_spread_slope`(= $-\Delta\text{spread}/60$), `ocv_V_inf_soc*`
+(= `V_inf_rest_soc*` 동일 fit), `ocv_block_id`(= `block_id`) 4개 컬럼이 폐기됐다.
 
 #### D–F (미구현)
 
