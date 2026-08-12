@@ -8,11 +8,7 @@ import numpy as np
 import pandas as pd
 
 from cyclediag.analysis.indicator_screen import _health_column, screen_indicators
-
-# Targets / near-identical capacity — not useful as "correlates with SoHQ"
-_EXCLUDE_FROM_RANK = frozenset({
-    "SoHQ", "dchgCapa", "capacity", "f_Q_max", "chgCapa",
-})
+from cyclediag.features.indicator_registry import ROLE_INDICATOR, role_of
 
 
 def _pick_cell_features(features: pd.DataFrame, cell_id: str | None) -> pd.DataFrame:
@@ -38,7 +34,12 @@ def _rank_by_health(
     if screened is None or screened.empty or "corr_health" not in screened.columns:
         return pd.DataFrame()
     rank = screened.copy()
-    rank = rank[~rank["feature"].isin(_EXCLUDE_FROM_RANK)]
+    # Health targets correlate with health by definition; family aliases would
+    # otherwise occupy several of the top slots with one physical signal.
+    roles = rank["role"] if "role" in rank.columns else rank["feature"].map(role_of)
+    rank = rank[roles == ROLE_INDICATOR]
+    if "is_family_primary" in rank.columns:
+        rank = rank[rank["is_family_primary"].astype(bool)]
     rank["corr_health"] = pd.to_numeric(rank["corr_health"], errors="coerce")
     rank = rank.dropna(subset=["corr_health"])
     if rank.empty:
@@ -192,7 +193,8 @@ def plot_sohq_correlation_report(
     )
     fig.text(
         0.5, 0.915,
-        f"n={n_cyc} cycles  |  {hcol}_end={sohq_txt}  |  blue=+corr, red=−corr  |  exclude: {', '.join(sorted(_EXCLUDE_FROM_RANK)[:4])}…",
+        f"n={n_cyc} cycles  |  {hcol}_end={sohq_txt}  |  blue=+corr, red=−corr"
+        "  |  one representative per indicator family, targets excluded",
         ha="center", fontsize=8.5, color="#555",
     )
 

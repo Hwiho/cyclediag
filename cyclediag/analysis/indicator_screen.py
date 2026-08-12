@@ -5,12 +5,19 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-from cyclediag.models.predict import _numeric_feature_cols
+from cyclediag.features.indicator_registry import (
+    ROLE_COVARIATE,
+    ROLE_INDICATOR,
+    ROLE_TARGET,
+    annotate_indicators,
+    indicator_columns,
+    primary_indicator_columns,
+)
 
-_META = frozenset({
-    "cell_id", "file", "cycle", "leg", "feature_set",
-    "anomaly_score", "flag", "top_features",
-})
+# The descriptive screen reports measurable quantities, targets and protocol
+# covariates included, and tags each row with its registry role and family.
+# Anything that ranks or aggregates uses one representative per family.
+_SCREEN_ROLES = (ROLE_INDICATOR, ROLE_TARGET, ROLE_COVARIATE)
 _HEALTH_COLS = ("SoHQ", "dchgCapa", "capacity", "f_Q_max")
 
 
@@ -45,7 +52,7 @@ def screen_indicators(
 
     df = features.sort_values("cycle").copy()
     hcol = health_col or _health_column(df)
-    cols = _numeric_feature_cols(df)
+    cols = indicator_columns(df, roles=_SCREEN_ROLES)
     if not cols:
         return pd.DataFrame()
 
@@ -115,6 +122,7 @@ def screen_indicators(
     out = pd.DataFrame(rows)
     if out.empty:
         return out
+    out = annotate_indicators(out)
     return out.sort_values("severity", ascending=False).reset_index(drop=True)
 
 
@@ -165,7 +173,7 @@ def compare_cells(
     if len(cells) < 2:
         return pd.DataFrame()
 
-    cols = _numeric_feature_cols(features)
+    cols = primary_indicator_columns(features)
     cyc = pd.to_numeric(features[cycle_col], errors="coerce")
     late_thr = float(cyc.quantile(1.0 - late_frac))
     late = features[cyc >= late_thr].copy()
@@ -214,10 +222,19 @@ def top_problem_indicators(
     *,
     n: int = 15,
     min_severity: float = 0.35,
+    one_per_family: bool = True,
 ) -> pd.DataFrame:
+    """Most severe indicators, by default at most one per indicator family.
+
+    Without the family filter a single physical signal fills the list with its
+    own aliases — end-of-charge rest voltage alone had six columns.
+    """
     if screened is None or screened.empty:
         return pd.DataFrame()
     filt = screened[screened["severity"] >= min_severity]
     if filt.empty:
         filt = screened
+    if one_per_family and "family" in filt.columns:
+        # already sorted by severity, so the first row of each family is its best
+        filt = filt.drop_duplicates(subset="family", keep="first")
     return filt.head(n)

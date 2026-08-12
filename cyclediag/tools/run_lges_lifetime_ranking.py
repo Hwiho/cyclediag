@@ -12,11 +12,10 @@ import numpy as np
 import pandas as pd
 from scipy.stats import spearmanr
 
+from cyclediag.features.indicator_registry import primary_indicator_columns
 from cyclediag.features.lges_extract import LgesExtractConfig, extract_lges_features_table
-from cyclediag.features.lges_catalog import all_lges_feature_columns
 from cyclediag.io.cycle_protocol import build_protocol_exclusion, detect_protocol_flags
 from cyclediag.io.cycler_csv import ColumnMap, load_cycler_csv
-from cyclediag.models.predict import _numeric_feature_cols
 
 warnings.filterwarnings("ignore", category=RuntimeWarning)
 
@@ -37,19 +36,12 @@ PREEXPORTED: dict[str, Path] = {
 
 DOE2_IDS = {"M01Ch022", "M01Ch024", "M01Ch025", "M01Ch010", "M01Ch011", "M01Ch012"}
 
-EXCLUDE = {
-    "cycle",
-    "tagged_cycle",
-    "SoHQ",
-    "dchgCapa",
-    "chgCapa",
-    "chgCCcapa",
-    "chgCVcapa",
+# Ranking indicators against lifetime is circular for anything computed from
+# the health target itself. Roles and duplicate families are handled by the
+# indicator registry; only this leakage guard is specific to the tool.
+TARGET_DERIVED = {
     "dSoHQ_dN",
     "d2SoHQ",
-    "dchg_fit_degenerate_flag",
-    "dchg_cliff_valid",
-    "diagnosis_valid",
     "CE",
     "CE_rev",
     "CE_local_20",
@@ -57,11 +49,11 @@ EXCLUDE = {
 
 
 def _feature_cols(feat: pd.DataFrame) -> list[str]:
-    cols = [c for c in _numeric_feature_cols(feat) if c not in EXCLUDE]
-    for c in all_lges_feature_columns():
-        if c in feat.columns and c not in cols and c not in EXCLUDE:
-            if pd.to_numeric(feat[c], errors="coerce").notna().sum() > 0:
-                cols.append(c)
+    cols = [
+        c for c in primary_indicator_columns(feat)
+        if c not in TARGET_DERIVED
+        and pd.to_numeric(feat[c], errors="coerce").notna().sum() > 0
+    ]
     return sorted(set(cols))
 
 

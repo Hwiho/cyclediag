@@ -8,19 +8,7 @@ import numpy as np
 import pandas as pd
 
 from cyclediag.analysis.sohq_inflection import detect_sohq_inflections
-
-_EXCLUDE = frozenset({
-    "cell_id", "tagged_cycle", "pair_label", "cycle", "tagged_source", "file",
-    "SoHQ", "dchgCapa", "chgCapa", "capacity", "f_Q_max",
-    "chgCCcapa", "chgCVcapa",
-    # capacity / energy proxies (track SoHQ almost 1:1)
-    "dchg_E", "chg_E",
-    "dchg_dQdV_area_sum", "chg_dQdV_area_sum",
-    # Q at SOC0 ≈ discharge Qmax — capacity proxy, not dV/dQ intensity
-    "dchg_dVdQ_SOC0_Q",
-    "dchg_dVdQ_peak1_Q", "dchg_dVdQ_peak2_Q", "dchg_dVdQ_peak3_Q",
-    "chg_dVdQ_peak1_Q", "chg_dVdQ_peak2_Q", "chg_dVdQ_peak3_Q",
-})
+from cyclediag.features.indicator_registry import primary_indicator_columns
 
 
 def _x_col(df: pd.DataFrame) -> str:
@@ -30,13 +18,13 @@ def _x_col(df: pd.DataFrame) -> str:
 
 
 def _numeric_cols(df: pd.DataFrame) -> list[str]:
+    """One representative per indicator family, with enough coverage to fit.
+
+    Role and family membership come from the indicator registry, which replaced
+    the hand-maintained exclusion list this module used to carry.
+    """
     cols = []
-    for c in df.columns:
-        base = c[6:] if c.startswith("delta_") else c
-        if c in _EXCLUDE or base in _EXCLUDE:
-            continue
-        if c.endswith("_inc") and c[:-4] in _EXCLUDE:
-            continue
+    for c in primary_indicator_columns(df):
         s = pd.to_numeric(df[c], errors="coerce")
         if s.notna().sum() < 40:
             continue

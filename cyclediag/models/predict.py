@@ -5,28 +5,21 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-NUMERIC_PREFIX = "f_"
+from cyclediag.features.indicator_registry import primary_indicator_columns
+
 FLAG_WATCH = 0.55
 FLAG_ALERT = 0.75
-_META_COLS = frozenset({
-    "cell_id", "file", "cycle", "leg", "feature_set", "cv_method",
-    "has_cv", "anomaly_score", "flag", "top_features",
-})
 
 
-def _numeric_feature_cols(df: pd.DataFrame) -> list[str]:
-    cols = []
-    for c in df.columns:
-        if c in _META_COLS:
-            continue
-        if not pd.api.types.is_numeric_dtype(df[c]):
-            continue
-        if c.startswith(NUMERIC_PREFIX) or c.startswith(("EoC_", "EoD_", "chg_", "dchg_", "delta_", "CE", "SoHQ")):
-            cols.append(c)
-            continue
-        if c in ("CE", "CE_rev", "dchgCapa", "chgCapa", "chgCCcapa", "chgCVcapa", "chgCapa_CCratio", "chgCVtime"):
-            cols.append(c)
-    return cols
+def anomaly_feature_cols(df: pd.DataFrame) -> list[str]:
+    """Input pool for the anomaly score: one representative per indicator family.
+
+    The score is a mean over |z|, so a physical signal that owns several
+    aliases would otherwise weight the score by its alias count. The registry
+    also keeps health targets, protocol covariates, QC provenance and
+    diagnosis outputs out of the pool.
+    """
+    return primary_indicator_columns(df)
 
 
 def predict_features(
@@ -42,7 +35,7 @@ def predict_features(
     if features is None or features.empty:
         return pd.DataFrame()
 
-    cols = _numeric_feature_cols(features)
+    cols = anomaly_feature_cols(features)
     if not cols:
         out = features.copy()
         out["anomaly_score"] = np.nan
