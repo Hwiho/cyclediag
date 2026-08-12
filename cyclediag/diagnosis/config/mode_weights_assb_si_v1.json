@@ -65,8 +65,8 @@
       "description": "Loss of lithium inventory — CE / slippage / curve offset",
       "layer": 2,
       "evidence": [
-        {"feature": "CE", "direction": "decrease_from_100", "weight": 1.0, "scale": 2.0},
-        {"feature": "CI", "direction": "increase", "weight": 0.9, "scale": 2.0},
+        {"feature": "CE", "direction": "decrease_from_100", "weight": 1.9, "scale": 2.0,
+         "note": "weight 1.0 + 0.9 folded from the retired CI term; CI was exactly 100-CE at the same scale, so the two produced identical evidence"},
         {"feature": "delta_EoD_restV_end", "direction": "increase", "weight": 0.9, "scale": 0.05},
         {"feature": "delta_dchg_V_cutoff_margin", "direction": "decrease", "weight": 1.0, "scale": 0.05},
         {"feature": "V_inf_est_soc50", "direction": "either", "weight": 0.5, "scale": 0.02}

@@ -389,10 +389,6 @@ def extract_lges_cycle_row(
     cv = detect_cv_signal(chg, column_cv_ah=column_cv)
     row.update(signal_cv_to_row(cv))
 
-    # §4.3 VE / CI placeholders (filled after shape indicators)
-    row["CI"] = (100.0 - row["CE"]) if row.get("CE") is not None else None
-
-
     chg_q = _capacity_series(chg, "charge")
     dqdv_cfg = cfg.resolved_dqdv_config()
     if chg_q is not None and not chg.empty and "voltage" in chg.columns:
@@ -446,8 +442,11 @@ def extract_lges_cycle_row(
         if tt.notna().any():
             dur_h = float(tt.max() - tt.min()) / 3600.0
     row["cycle_duration_h"] = dur_h
-    if row.get("CI") is not None and dur_h and dur_h > 0:
-        row["CI_per_hour"] = float(row["CI"]) / dur_h
+    # Coulombic inefficiency per hour. The bare inefficiency (100 - CE) is not
+    # emitted: it is an exact affine transform of CE, so it carried no extra
+    # information while making CE count twice wherever both were consumed.
+    if ce is not None and np.isfinite(ce) and dur_h and dur_h > 0:
+        row["CI_per_hour"] = (100.0 - float(ce)) / dur_h
     else:
         row["CI_per_hour"] = None
 

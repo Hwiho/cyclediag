@@ -53,7 +53,6 @@ EARLY_PARAM_CANDIDATES: tuple[str, ...] = (
     "R_30s_total_soc20",
     "R_30s_total_soc50",
     "R_30s_total_soc80",
-    "R_SOC_diff_20_80",
     "R_SOC_slope",
     "PER",
 )
@@ -669,7 +668,7 @@ def _write_plots(
         ("EoD_chgR_R30_minus_R0p1", "doe2_EoD_Rslow.png"),
         ("dchg_Q_low_frac", "doe2_Q_low_frac.png"),
         ("dchg_f_graphite_proxy", "doe2_f_graphite_proxy.png"),
-        ("R_SOC_diff_20_80", "doe2_R_SOC_diff.png"),
+        ("R_SOC_slope", "doe2_R_SOC_slope.png"),
         ("hyst_mean", "doe2_hyst.png"),
         ("dchg_dQdV_peak1_V", "doe2_dQdV_peak1_V.png"),
     ):

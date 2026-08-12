@@ -404,12 +404,12 @@ def soc_ratio_features(rows: list[dict[str, Any]]) -> dict[str, Any]:
             ys.append(float(key))
     if len(xs) >= 2:
         slope, intercept = _linreg(np.asarray(xs), np.asarray(ys))
+        # R_SOC_slope in mOhm per %SOC. R20 - R80 is not reported separately:
+        # for the three evenly spaced SOC points it equals -60 * slope.
         out["R_SOC_slope"] = slope
         if len(xs) == 3:
             coef = np.polyfit(xs, ys, 2)
             out["R_SOC_curvature"] = float(coef[0])
-        if r20 is not None and r80 is not None:
-            out["R_SOC_diff_20_80"] = float(r20) - float(r80)
     return out
 
 

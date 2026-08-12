@@ -120,17 +120,17 @@ def test_detect_current_settle_flags_slow_ramp():
 def test_ocv_drift_classify():
     from cyclediag.features.ocv_drift import _classify_drift
 
-    mode, par, _, _ = _classify_drift(
+    mode, par = _classify_drift(
         d80=-0.05, d50=-0.05, d20=-0.05, d_spread_20_80=0.0,
     )
     assert mode == "parallel_shift"
     assert par == pytest.approx(-0.05, abs=0.001)
 
-    mode0, par0, _, _ = _classify_drift(d80=0.0, d50=0.0, d20=0.0, d_spread_20_80=0.0)
+    mode0, par0 = _classify_drift(d80=0.0, d50=0.0, d20=0.0, d_spread_20_80=0.0)
     assert mode0 == "stable"
     assert par0 == pytest.approx(0.0, abs=1e-9)
 
-    mode_sp, par_sp, _, _ = _classify_drift(
+    mode_sp, par_sp = _classify_drift(
         d80=0.0, d50=0.0, d20=-0.03, d_spread_20_80=-0.03,
     )
     assert mode_sp in ("spread_change", "local_soc20", "spread_and_shift")
