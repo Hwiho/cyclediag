@@ -41,8 +41,8 @@
         {"feature": "dchg_dVdQ_SOC0_cliff_width", "direction": "either", "weight": 0.7, "scale": 2.0},
         {"feature": "delta_dchg_V_cutoff_margin", "direction": "decrease", "weight": 1.0, "scale": 0.05},
         {"feature": "EoD_chgR_10s_inc", "direction": "increase", "weight": 0.9, "scale": 20.0},
-        {"feature": "chgCVtime", "direction": "increase", "weight": 0.6, "scale": 100.0},
-        {"feature": "chgCapa_CCratio", "direction": "decrease", "weight": 0.7, "scale": 5.0},
+        {"feature": "chgCVtime", "direction": "increase", "weight": 1.3, "scale": 100.0,
+         "note": "weight 0.6 + 0.7 folded from the chgCapa_CCratio term; same cv_amount family at min-|r| 0.998, and a longer CV phase is the same event as a lower CC share. chgCVtime is the member kept because chgCapa_CCratio is an absolute percent (92-100) scored with direction=decrease and scale=5, so tanh(-CCratio/5) was -1.0 on every fixture row: it could never contribute positive evidence and permanently listed itself as a conflicting feature"},
         {"feature": "delta_dchg_dVdQ_SOC5", "direction": "increase", "weight": 0.6, "scale": 3.0}
       ]
     },
@@ -54,8 +54,8 @@
         {"feature": "EoD_chgR_10s_inc", "direction": "increase", "weight": 1.0, "scale": 20.0},
         {"feature": "EoD_chgR_60s_inc", "direction": "increase", "weight": 0.9, "scale": 20.0},
         {"feature": "EoC_dchgR_10_60_ratio", "direction": "either", "weight": 0.5, "scale": 0.2},
-        {"feature": "delta_hyst_area", "direction": "increase", "weight": 0.8, "scale": 0.1},
-        {"feature": "delta_hyst_max_dV", "direction": "increase", "weight": 0.7, "scale": 0.05},
+        {"feature": "delta_hyst_area", "direction": "increase", "weight": 1.5, "scale": 0.1,
+         "note": "weight 0.8 + 0.7 folded from the delta_hyst_max_dV term; same hysteresis_global family, per-cell min-|r| 0.988"},
         {"feature": "EoC_restV_tau", "direction": "increase", "weight": 0.5, "scale": 100.0},
         {"feature": "chgCVtime", "direction": "increase", "weight": 0.6, "scale": 100.0},
         {"feature": "EoC_dchgR_10s_growth_50", "direction": "increase", "weight": 0.8, "scale": 0.001}
