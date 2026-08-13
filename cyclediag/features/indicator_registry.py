@@ -202,7 +202,16 @@ FAMILIES: dict[str, tuple[str, ...]] = {
         "dchg_dVdQ_SOC0_cliff_width_abs",
         "dchg_dVdQ_SOC0_cliff_width",
     ),
-    "q_relax": ("Q_relax_pct", "Q_relax"),
+    # Q_relax: primary prefers RPT-block definition; DCIR-pre is the fallback
+    # alias emitted on the same physical quantity (see enrich_assb).
+    "q_relax": (
+        "Q_relax_pct", "Q_relax",
+        "Q_relax_rpt_pct", "Q_relax_rpt",
+        "Q_relax_dcir_pct", "Q_relax_dcir",
+    ),
+    # Low-SOC hysteresis band is independent of the global loop (per-cell
+    # |r|≈0.004 vs hyst_area) — keep its own family for Si localization.
+    "hysteresis_low": ("hyst_area_low", "hyst_max_dV_low", "hyst_frac_low"),
 }
 
 _FAMILY_OF: dict[str, str] = {}
@@ -223,6 +232,8 @@ _META_EXACT = frozenset({
     "diagnosis_method", "diagnosis_model_version", "diagnosis_version",
     "anomaly_score", "flag", "top_features", "quality_gate_failed_groups",
     "protocol_kind", "protocol_excluded",
+    "Q_relax_source",
+    "diagnosis_constraints", "diagnosis_scored_row",
     # indicator scoring track rollups — never re-enter the scoring pool
     "indicator_score", "indicator_flag", "indicator_top", "indicator_n_scored",
     "scoring_row", "score_layer",
@@ -261,7 +272,8 @@ _QC_EXACT = frozenset({
     "rest_sufficiency", "pulse_sample_count_1s", "pulse_current_stability",
     "leg_completeness", "quality_score", "cv_detect_mismatch_pct",
     "relax_completeness_max", "diagnosis_quality_score", "diagnosis_valid",
-    "Q_relax_significant", "dchg_cliff_valid", "dchg_cliff_thr_used",
+    "Q_relax_significant", "Q_relax_rpt_significant", "Q_relax_dcir_significant",
+    "dchg_cliff_valid", "dchg_cliff_thr_used",
     # the Savitzky-Golay smoothing width actually used, reported in Ah. It is
     # q_span * sg_window / (n_interp - 1), so it scales with capacity at a
     # fixed 4.19 % on every fixture cell — a processing parameter, not a width

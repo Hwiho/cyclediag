@@ -61,6 +61,8 @@ def score_dataframe(
     ``diagnose_feature_table``). Default ``routine_only=True`` excludes RPT /
     post-RPT / DC-IR spikes from the score.
     """
+    from cyclediag.analysis.indicator_layers import split_by_layer
+
     result = score_indicators(
         features,
         reference=reference,
@@ -68,6 +70,7 @@ def score_dataframe(
         routine_only=routine_only,
         grain="both",
     )
+    layers = split_by_layer(result.indicator_summary)
     return {
         "score_layer": "indicator",
         "causal_track": "separate",
@@ -75,6 +78,7 @@ def score_dataframe(
         "cycle_contributions": result.cycle_contributions,
         "indicator_summary": result.indicator_summary,
         "top_indicators": top_scored_indicators(result.indicator_summary, n=top_n),
+        "by_layer": layers,
         "meta": result.meta,
     }
 

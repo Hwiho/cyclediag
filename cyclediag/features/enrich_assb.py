@@ -70,38 +70,95 @@ def _q(row: pd.Series) -> float | None:
     return None
 
 
+def _write_q_relax_pair(
+    out: pd.DataFrame,
+    c1: int,
+    c2: int,
+    *,
+    prefix: str,
+    noise_floor_pct: float,
+) -> bool:
+    """Write ``{prefix}`` / ``{prefix}_pct`` / ``{prefix}_significant`` for c1,c2."""
+    by = {int(r.cycle): r for r in out.itertuples()}
+    if c1 not in by or c2 not in by:
+        return False
+    q1, q2 = _q(pd.Series(by[c1]._asdict())), _q(pd.Series(by[c2]._asdict()))
+    if q1 is None or q2 is None or q2 == 0 or min(q1, q2) < 10:
+        return False
+    q_relax = q2 - q1
+    q_relax_pct = q_relax / q2 * 100.0
+    for col, default in (
+        (prefix, np.nan),
+        (f"{prefix}_pct", np.nan),
+        (f"{prefix}_significant", None),
+    ):
+        if col not in out.columns:
+            out[col] = default
+    for c in (c1, c2):
+        mask = out["cycle"] == c
+        out.loc[mask, prefix] = q_relax
+        out.loc[mask, f"{prefix}_pct"] = q_relax_pct
+        out.loc[mask, f"{prefix}_significant"] = abs(q_relax_pct) > noise_floor_pct
+    return True
+
+
 def attach_q_relax_from_dcir_blocks(
     features: pd.DataFrame,
     dcir_blocks: list[list[int]],
     *,
     noise_floor_pct: float = Q_RELAX_NOISE_FLOOR_PCT,
+    rpt_blocks: list[list[int]] | None = None,
 ) -> pd.DataFrame:
-    """Q_relax from the two high-Q cycles immediately before each DC-IR block."""
+    """Attach Q_relax with explicit source aliases.
+
+    * ``Q_relax_dcir*`` — two high-Q cycles immediately before each DC-IR block
+    * ``Q_relax_rpt*`` — first two cycles of each RPT block (when provided)
+    * ``Q_relax*`` (primary) — prefers RPT definition, else DCIR-pre
+    * ``Q_relax_source`` — ``rpt_block`` | ``dcir_pre``
+    """
     out = features.copy()
-    for col in ("Q_relax", "Q_relax_pct", "Q_relax_significant"):
+    for col in (
+        "Q_relax", "Q_relax_pct", "Q_relax_significant",
+        "Q_relax_dcir", "Q_relax_dcir_pct", "Q_relax_dcir_significant",
+        "Q_relax_rpt", "Q_relax_rpt_pct", "Q_relax_rpt_significant",
+        "Q_relax_source",
+    ):
         if col not in out.columns:
-            out[col] = np.nan if col != "Q_relax_significant" else None
-    by = {int(r.cycle): r for r in out.itertuples()}
-    for block in dcir_blocks:
+            out[col] = (
+                None if col.endswith("significant") or col == "Q_relax_source" else np.nan
+            )
+
+    for block in dcir_blocks or []:
         if not block:
             continue
         start = int(block[0])
-        c1, c2 = start - 2, start - 1
-        if c1 not in by or c2 not in by:
+        _write_q_relax_pair(
+            out, start - 2, start - 1,
+            prefix="Q_relax_dcir", noise_floor_pct=noise_floor_pct,
+        )
+
+    for block in rpt_blocks or []:
+        if len(block) < 2:
             continue
-        q1, q2 = _q(pd.Series(by[c1]._asdict())), _q(pd.Series(by[c2]._asdict()))
-        if q1 is None or q2 is None or q2 == 0:
-            continue
-        # prefer larger Q as capa_full (skip tiny SOC steps)
-        if min(q1, q2) < 10:
-            continue
-        q_relax = q2 - q1
-        q_relax_pct = q_relax / q2 * 100.0
-        for c in (c1, c2):
-            mask = out["cycle"] == c
-            out.loc[mask, "Q_relax"] = q_relax
-            out.loc[mask, "Q_relax_pct"] = q_relax_pct
-            out.loc[mask, "Q_relax_significant"] = abs(q_relax_pct) > noise_floor_pct
+        _write_q_relax_pair(
+            out, int(block[0]), int(block[1]),
+            prefix="Q_relax_rpt", noise_floor_pct=noise_floor_pct,
+        )
+
+    # Primary: RPT when present on the row, else DCIR-pre.
+    for idx in out.index:
+        rpt = out.at[idx, "Q_relax_rpt_pct"]
+        dcir = out.at[idx, "Q_relax_dcir_pct"]
+        if pd.notna(rpt):
+            out.at[idx, "Q_relax"] = out.at[idx, "Q_relax_rpt"]
+            out.at[idx, "Q_relax_pct"] = rpt
+            out.at[idx, "Q_relax_significant"] = out.at[idx, "Q_relax_rpt_significant"]
+            out.at[idx, "Q_relax_source"] = "rpt_block"
+        elif pd.notna(dcir):
+            out.at[idx, "Q_relax"] = out.at[idx, "Q_relax_dcir"]
+            out.at[idx, "Q_relax_pct"] = dcir
+            out.at[idx, "Q_relax_significant"] = out.at[idx, "Q_relax_dcir_significant"]
+            out.at[idx, "Q_relax_source"] = "dcir_pre"
     return out
 
 
@@ -173,7 +230,24 @@ def enrich_feature_table(
     meta["dcir_blocks"] = dcir_blocks
     meta["baseline_cycle_auto"] = first_capa_baseline(out, dcir_blocks)
 
-    out = attach_q_relax_from_dcir_blocks(out, dcir_blocks)
+    # RPT 2-cycle pairs sit immediately before each DC-IR block on SJ900.
+    # Prefer protocol-derived blocks when available; else use the pre-DCIR pair.
+    rpt_blocks: list[list[int]] = []
+    try:
+        from cyclediag.io.cycle_protocol import build_protocol_exclusion
+
+        se = raw_df.groupby(["cycle", "StepNo"], as_index=False).tail(1) if "StepNo" in raw_df.columns else raw_df
+        prot = build_protocol_exclusion(se)
+        rpt_blocks = list(prot.rpt_blocks or [])
+    except Exception:
+        rpt_blocks = []
+    if not rpt_blocks:
+        rpt_blocks = [
+            [int(b[0]) - 2, int(b[0]) - 1]
+            for b in dcir_blocks if b
+        ]
+    out = attach_q_relax_from_dcir_blocks(out, dcir_blocks, rpt_blocks=rpt_blocks)
+    meta["rpt_blocks"] = rpt_blocks
 
     capa_anchors: set[int] = set()
     for block in dcir_blocks:

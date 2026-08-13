@@ -510,6 +510,32 @@ API:
 
 이후 개선(CE 강등, cliff 3분량, hyst 밴드 점수, Q_relax 정의 단일화 등)은
 **트랙 A 점수 품질**과 **트랙 B 매핑 품질**을 따로 올린다.
+
+### 4.6 두 트랙 후속 TODO — **구현됨**
+
+물리화학 해석을 전제로 제안했던 P0–P3를 적용했다. 지표 점수(A)와 원인
+진단(B)은 계속 분리한다.
+
+| 우선순위 | 항목 | 적용 위치 |
+|---|---|---|
+| P0 | 진단도 routine-only 게이트 | `diagnosis/engine.py` → `filter_scoring_rows` |
+| P0 | CE 강등, LLI에 OCV/VE/EoD 강화 | `mode_weights_*_v1.json` |
+| P1 | cliff 3분량 + absolute-Ah | LAM_NE / contact_loss 가중치 |
+| P1 | hyst low-band (`hyst_frac_low` / `hyst_area_low`) | contact / contact_loss; impedance에서 total hyst 제거 |
+| P1 | Health / Mechanism / Anchor 리포트 층 | `analysis/indicator_layers.py`, `api.score_dataframe["by_layer"]` |
+| P2 | `Q_relax_rpt` / `Q_relax_dcir` + primary + `Q_relax_source` | `features/enrich_assb.py` |
+| P2 | R 성분·랜드마크 앵커 요약 | `analysis/resistance_anchors.py` |
+| P2 | LLI vs kinetic-termination 판별 | `analysis/lli_kinetic_split.py` |
+| P2 | SoHQ 구간 셀 비교 + knee split | `analysis/sohq_interval_compare.py` |
+| P3 | temp / stack pressure / halfcell 신뢰도 캡 | `diagnosis/constraints.py` |
+| P3 | set4 brief 제품 경로 | `tools/export_set4_brief.py` |
+
+```bash
+python -m cyclediag.tools.export_set4_brief \
+  --fixtures example/fixtures/doe/DOE1/set4_SJ900 \
+  --out example/output/set4_brief --with-causal
+```
+
 ---
 
 ## 5. 알고리즘 명세

@@ -354,42 +354,45 @@ def test_mode_evidence_never_uses_a_retired_alias(config_name):
             assert canonical_name(term["feature"]) == term["feature"]
 
 
-def test_assb_lli_ce_merge_is_score_neutral():
-    """Folding CI's weight into CE must not move the LLI pattern score.
+def test_assb_lli_demotes_ce_and_prefers_ocv_ve():
+    """CE is a weak auxiliary on ASSB LLI; OCV/VE/EoD carry the score.
 
-    CI was ``100 - CE`` at the same scale and the CE term used
-    ``decrease_from_100``, so both terms produced identical evidence.
+    set4 CE is often >100 and RPT-spike contaminated, so the CE+CI fold at
+    weight 1.9 was retired in favour of ocv_parallel_shift / VE / EoD rest.
     """
     from cyclediag.diagnosis.pattern_scoring import load_mode_weights, score_mode_for_row
 
-    merged = load_mode_weights(_CONFIG_DIR / "mode_weights_assb_si_v1.json")
-    lli_terms = merged["modes"]["LLI"]["evidence"]
-    assert [t["feature"] for t in lli_terms].count("CE") == 1
+    cfg = load_mode_weights(_CONFIG_DIR / "mode_weights_assb_si_v1.json")
+    lli_terms = cfg["modes"]["LLI"]["evidence"]
+    features = [t["feature"] for t in lli_terms]
+    assert features.count("CE") == 1
+    assert "CI" not in features
+    assert "ocv_parallel_shift" in features
+    assert "VE" in features
     ce_term = next(t for t in lli_terms if t["feature"] == "CE")
-    assert ce_term["weight"] == pytest.approx(1.9)
+    assert ce_term["weight"] < 0.5
 
-    # reconstruct the pre-merge config: CE back at 1.0 plus the CI duplicate
-    before = json.loads(json.dumps(merged))
-    before_terms = []
-    for term in before["modes"]["LLI"]["evidence"]:
-        if term["feature"] == "CE":
-            before_terms.append({**term, "weight": 1.0})
-            before_terms.append(
-                {"feature": "CI", "direction": "increase", "weight": 0.9, "scale": 2.0}
-            )
-        else:
-            before_terms.append(term)
-    before["modes"]["LLI"]["evidence"] = before_terms
-
-    row = {
-        "CE": 97.5,
-        "delta_EoD_restV_end": 0.04,
-        "delta_dchg_V_cutoff_margin": -0.06,
-        "V_inf_est_soc50": 0.01,
+    # With the full LLI feature set present, demoted CE cannot outrank OCV/VE/EoD
+    base = {
+        "CE": 99.5,
+        "ocv_parallel_shift": 0.0,
+        "delta_EoD_restV_end": 0.0,
+        "delta_dchg_V_cutoff_margin": 0.0,
+        "VE": 0.95,
+        "V_inf_est_soc50": 0.0,
     }
-    after_score = score_mode_for_row(row, "LLI", merged).estimate
-    before_score = score_mode_for_row({**row, "CI": 100.0 - row["CE"]}, "LLI", before).estimate
-    assert after_score == pytest.approx(before_score, rel=1e-12)
+    ce_bad = {**base, "CE": 95.0}
+    phys_bad = {
+        **base,
+        "ocv_parallel_shift": 0.10,
+        "delta_EoD_restV_end": 0.08,
+        "delta_dchg_V_cutoff_margin": -0.10,
+        "VE": 0.80,
+    }
+    s_ce = score_mode_for_row(ce_bad, "LLI", cfg).estimate
+    s_phys = score_mode_for_row(phys_bad, "LLI", cfg).estimate
+    assert s_phys > s_ce
+    assert s_phys > 0.2
 
 
 def test_lam_ne_keeps_the_cv_member_that_can_carry_evidence():

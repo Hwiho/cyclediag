@@ -6,18 +6,26 @@
   "conflict_threshold": 0.25,
   "min_evidence_for_valid": 2,
   "mode_collision_score": 0.65,
+  "constraints": {
+    "stack_pressure_MPa": null,
+    "halfcell_calibrated": false,
+    "temperature_log_required_for_arrhenius": true
+  },
   "modes": {
     "LLI": {
       "description": "Loss of Lithium Inventory — window shift / endpoint early arrival",
       "evidence": [
         {"feature": "delta_dchg_V_cutoff_margin", "direction": "decrease", "weight": 1.2, "scale": 0.05},
         {"feature": "delta_EoD_restV_end", "direction": "increase", "weight": 1.0, "scale": 0.05},
+        {"feature": "ocv_parallel_shift", "direction": "increase", "weight": 1.0, "scale": 0.05},
         {"feature": "delta_EoC_restV_end", "direction": "decrease", "weight": 0.9, "scale": 0.03},
+        {"feature": "VE", "direction": "decrease", "weight": 0.8, "scale": 0.05},
         {"feature": "delta_dchg_dVdQ_SOC0", "direction": "increase", "weight": 0.8, "scale": 5.0},
         {"feature": "delta_dchg_dQdV_peak1_V", "direction": "either", "weight": 0.7, "scale": 0.02},
         {"feature": "delta_chg_dQdV_peak1_V", "direction": "either", "weight": 0.6, "scale": 0.02},
-        {"feature": "CE", "direction": "decrease_from_100", "weight": 0.5, "scale": 2.0},
         {"feature": "dchg_shape_DTW", "direction": "increase", "weight": 0.5, "scale": 0.01},
+        {"feature": "CE", "direction": "decrease_from_100", "weight": 0.25, "scale": 2.0,
+         "note": "demoted — prefer OCV/rest/VE evidence"},
         {"feature": "delta_EoD_restV_tau", "direction": "either", "weight": 0.4, "scale": 50.0}
       ]
     },
@@ -34,15 +42,20 @@
       ]
     },
     "LAM_NE": {
-      "description": "Negative electrode active material loss — low-SOC cliff / charge accept",
+      "description": "Negative electrode active material loss — absolute-Ah cliff / charge accept",
       "evidence": [
         {"feature": "delta_dchg_dVdQ_SOC0", "direction": "increase", "weight": 1.2, "scale": 5.0},
         {"feature": "dchg_dVdQ_SOC0_to_mid_ratio", "direction": "increase", "weight": 1.0, "scale": 1.0},
-        {"feature": "dchg_dVdQ_SOC0_cliff_width", "direction": "either", "weight": 0.7, "scale": 2.0},
+        {"feature": "dchg_dVdQ_SOC0_cliff_width_abs", "direction": "increase", "weight": 0.9, "scale": 2.0,
+         "note": "absolute-Ah width preferred over SOC-norm; direction=increase (not either)"},
+        {"feature": "dchg_Q_cliff_abs", "direction": "either", "weight": 0.6, "scale": 5.0,
+         "note": "cliff onset position (Ah)"},
+        {"feature": "dchg_dVdQ_post_cliff", "direction": "increase", "weight": 0.6, "scale": 0.05,
+         "note": "post-cliff steepness"},
         {"feature": "delta_dchg_V_cutoff_margin", "direction": "decrease", "weight": 1.0, "scale": 0.05},
         {"feature": "EoD_chgR_10s_inc", "direction": "increase", "weight": 0.9, "scale": 20.0},
         {"feature": "chgCVtime", "direction": "increase", "weight": 1.3, "scale": 100.0,
-         "note": "weight 0.6 + 0.7 folded from the chgCapa_CCratio term; same cv_amount family at min-|r| 0.998, and a longer CV phase is the same event as a lower CC share. chgCVtime is the member kept because chgCapa_CCratio is an absolute percent (92-100) scored with direction=decrease and scale=5, so tanh(-CCratio/5) was -1.0 on every fixture row: it could never contribute positive evidence and permanently listed itself as a conflicting feature"},
+         "note": "weight 0.6 + 0.7 folded from the chgCapa_CCratio term; same cv_amount family"},
         {"feature": "delta_dchg_dVdQ_SOC5", "direction": "increase", "weight": 0.6, "scale": 3.0}
       ]
     },
@@ -54,8 +67,6 @@
         {"feature": "EoD_chgR_10s_inc", "direction": "increase", "weight": 1.0, "scale": 20.0},
         {"feature": "EoD_chgR_60s_inc", "direction": "increase", "weight": 0.9, "scale": 20.0},
         {"feature": "EoC_dchgR_10_60_ratio", "direction": "either", "weight": 0.5, "scale": 0.2},
-        {"feature": "delta_hyst_area", "direction": "increase", "weight": 1.5, "scale": 0.1,
-         "note": "weight 0.8 + 0.7 folded from the delta_hyst_max_dV term; same hysteresis_global family, per-cell min-|r| 0.988"},
         {"feature": "EoC_restV_tau", "direction": "increase", "weight": 0.5, "scale": 100.0},
         {"feature": "chgCVtime", "direction": "increase", "weight": 0.6, "scale": 100.0},
         {"feature": "EoC_dchgR_10s_growth_50", "direction": "increase", "weight": 0.8, "scale": 0.001}
@@ -76,8 +87,9 @@
     "plating": {
       "description": "Lithium plating suspect patterns (heuristic)",
       "evidence": [
-        {"feature": "CE", "direction": "decrease_from_100", "weight": 1.2, "scale": 3.0},
-        {"feature": "CE_local_20", "direction": "decrease_from_100", "weight": 1.0, "scale": 3.0},
+        {"feature": "CE_local_20", "direction": "decrease_from_100", "weight": 1.2, "scale": 3.0},
+        {"feature": "CE", "direction": "decrease_from_100", "weight": 0.5, "scale": 3.0,
+         "note": "demoted vs CE_local_20"},
         {"feature": "delta_EoC_restV_end", "direction": "decrease", "weight": 0.7, "scale": 0.03},
         {"feature": "chg_dVdQ_SOC100", "direction": "increase", "weight": 0.8, "scale": 3.0},
         {"feature": "dSoHQ_dN", "direction": "decrease", "weight": 0.6, "scale": 0.05}
@@ -89,6 +101,8 @@
         {"feature": "EoC_dchgR_10s_inc", "direction": "increase", "weight": 1.3, "scale": 25.0},
         {"feature": "EoD_chgR_10s_inc", "direction": "increase", "weight": 1.3, "scale": 25.0},
         {"feature": "EoC_dchgR_10_60_ratio", "direction": "increase", "weight": 0.9, "scale": 0.15},
+        {"feature": "hyst_frac_low", "direction": "increase", "weight": 0.9, "scale": 0.05,
+         "note": "low-SOC band lead; hyst_area_low same family — keep one"},
         {"feature": "chg_ir_drop_proxy", "direction": "increase", "weight": 0.7, "scale": 0.05},
         {"feature": "dchg_ir_drop_proxy", "direction": "increase", "weight": 0.7, "scale": 0.05}
       ]

@@ -400,6 +400,9 @@ def _summarize_indicators(
     out = pd.DataFrame(rows)
     if out.empty:
         return out
+    from cyclediag.analysis.indicator_layers import annotate_layers
+
+    out = annotate_layers(out)
     return out.sort_values("indicator_score", ascending=False).reset_index(drop=True)
 
 

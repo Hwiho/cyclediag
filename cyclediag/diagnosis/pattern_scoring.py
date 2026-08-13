@@ -177,7 +177,18 @@ def score_mode_for_row(
     conflicting = [n for n, s in zip(names, signed_vals) if s <= -conflict_thr]
 
     agree = float(np.average((s_arr > 0).astype(float), weights=w_arr))
-    conf = 0.45 * data_quality + 0.40 * agree + 0.15 * min(1.0, n / 5.0)
+    # Prefer extract quality_score when present over evidence fill-rate alone.
+    q_row = row.get("quality_score")
+    try:
+        q_row_f = float(q_row) if q_row is not None else float("nan")
+    except (TypeError, ValueError):
+        q_row_f = float("nan")
+    dq = (
+        0.6 * data_quality + 0.4 * max(0.0, min(1.0, q_row_f))
+        if math.isfinite(q_row_f)
+        else data_quality
+    )
+    conf = 0.45 * dq + 0.40 * agree + 0.15 * min(1.0, n / 5.0)
 
     # Mode collision: another mode also high → lower confidence
     if other_mode_scores:
@@ -188,8 +199,13 @@ def score_mode_for_row(
         if rivals:
             conf *= 0.7
 
+    from .constraints import confidence_multiplier, constraint_flags
+
+    cflags = constraint_flags(row, config)
+    conf *= confidence_multiplier(mode, cflags)
+
     conf = float(np.clip(conf, 0.0, 1.0))
-    valid = n >= min_ev and data_quality >= 0.3 and conf >= 0.25
+    valid = n >= min_ev and dq >= 0.3 and conf >= 0.25 and conf > 0.0
 
     return DiagnosisResult(
         degradation_mode=mode,
@@ -200,7 +216,7 @@ def score_mode_for_row(
         evidence_count=n,
         supporting_features=supporting,
         conflicting_features=conflicting,
-        data_quality_score=data_quality,
+        data_quality_score=dq,
         diagnosis_valid=valid,
         diagnosis_version=str(config.get("diagnosis_version", DIAGNOSIS_VERSION_FULLCELL)),
         diagnosis_method=str(config.get("diagnosis_method", "rule_pattern")),
