@@ -484,6 +484,32 @@ registry가 role·family를 대신 판정하므로 손으로 관리하던 목록
 모두 위 CE/CI fold의 의도된 결과다. `relax_completeness_soc*`는 채워진 행이
 75 → 25로 줄지만 이는 블록 3사이클에 같은 값을 복제하던 broadcast가 사라진 것으로,
 값이 다른 행은 없고 블록 단위 QC는 `relax_completeness_max`가 그대로 담당한다.
+
+### 4.5 두 트랙 분리 — 지표 점수 vs 원인 해석
+
+물리화학적 해석(LLI / LAM_NE / Si hysteresis / contact …)은 **맞다는 전제**를
+유지하되, 실행 순서를 둘로 나눈다.
+
+| 트랙 | 질문 | 모듈 | 기본 입력 |
+|---|---|---|---|
+| **A. 지표 점수** (선행) | 어떤 지표가 얼마나 움직였나? | `models/indicator_scoring.py` | **routine only** (RPT/post-RPT/DC-IR 제외), 패밀리당 대표 1개 |
+| **B. 원인 해석** (후행, 분리) | 왜 움직였나? 어느 모드인가? | `diagnosis/*` + mode_weights | 트랙 A에서 신뢰된 증거만 사용 |
+
+트랙 A 출력 (`score_layer=indicator`):
+- `indicator_score` / `indicator_flag` / `indicator_top` (사이클 롤업)
+- `indicator_summary` (지표별 점수, mode 라벨 없음)
+- CLI: `python -m cyclediag.tools.export_indicator_scores …`
+
+트랙 B 출력 (`*_pattern_score`, `degradation_mode` …)은 extract의
+`with_diagnosis=True`로만 켜며, 지표 점수 테이블에 mode 이름을 섞지 않는다.
+
+API:
+- `api.score_dataframe` → 트랙 A만
+- `api.diagnose_dataframe` → 트랙 A (+ 기술 스크린). 이름과 달리 **원인 진단이 아님**
+- 원인 진단 → `cyclediag.diagnosis.diagnose_feature_table`
+
+이후 개선(CE 강등, cliff 3분량, hyst 밴드 점수, Q_relax 정의 단일화 등)은
+**트랙 A 점수 품질**과 **트랙 B 매핑 품질**을 따로 올린다.
 ---
 
 ## 5. 알고리즘 명세

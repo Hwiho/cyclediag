@@ -223,6 +223,9 @@ _META_EXACT = frozenset({
     "diagnosis_method", "diagnosis_model_version", "diagnosis_version",
     "anomaly_score", "flag", "top_features", "quality_gate_failed_groups",
     "protocol_kind", "protocol_excluded",
+    # indicator scoring track rollups — never re-enter the scoring pool
+    "indicator_score", "indicator_flag", "indicator_top", "indicator_n_scored",
+    "scoring_row", "score_layer",
 })
 
 # Health targets, the columns that tracked them at min-|r| >= 0.997, and the

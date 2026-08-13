@@ -1,24 +1,30 @@
-"""Unsupervised diagnosis MVP — z-score anomaly score."""
+"""Unsupervised anomaly rollup — thin wrapper over the indicator scoring track.
+
+Prefer ``cyclediag.models.indicator_scoring.score_indicators`` for new code.
+This module keeps the historical ``anomaly_score`` / ``flag`` / ``top_features``
+column names for callers that have not migrated yet.
+
+Causal mode scores (LLI / LAM / …) live in ``cyclediag.diagnosis`` and are
+never produced here.
+"""
 
 from __future__ import annotations
 
-import numpy as np
 import pandas as pd
 
 from cyclediag.features.indicator_registry import primary_indicator_columns
+from cyclediag.models.indicator_scoring import FLAG_ALERT, FLAG_WATCH, score_indicators
 
-FLAG_WATCH = 0.55
-FLAG_ALERT = 0.75
+__all__ = [
+    "FLAG_ALERT",
+    "FLAG_WATCH",
+    "anomaly_feature_cols",
+    "predict_features",
+]
 
 
 def anomaly_feature_cols(df: pd.DataFrame) -> list[str]:
-    """Input pool for the anomaly score: one representative per indicator family.
-
-    The score is a mean over |z|, so a physical signal that owns several
-    aliases would otherwise weight the score by its alias count. The registry
-    also keeps health targets, protocol covariates, QC provenance and
-    diagnosis outputs out of the pool.
-    """
+    """Input pool for the anomaly score: one representative per indicator family."""
     return primary_indicator_columns(df)
 
 
@@ -26,45 +32,36 @@ def predict_features(
     features: pd.DataFrame,
     *,
     reference: pd.DataFrame | None = None,
+    raw_df: pd.DataFrame | None = None,
+    routine_only: bool = True,
 ) -> pd.DataFrame:
     """Add anomaly_score, flag, top_features to feature rows.
 
-  Uses reference median/std when provided; otherwise leave-one-out style
-  stats across the input batch (MVP only — not for production eval).
+    Delegates to :func:`score_indicators` (indicator track). By default only
+    routine cycles contribute to the score so RPT / DC-IR spikes do not dominate.
+    Pass ``routine_only=False`` to restore the historical all-rows behaviour.
     """
     if features is None or features.empty:
         return pd.DataFrame()
 
-    cols = anomaly_feature_cols(features)
-    if not cols:
+    result = score_indicators(
+        features,
+        reference=reference,
+        raw_df=raw_df,
+        routine_only=routine_only,
+        grain="cycle",
+    )
+    out = result.cycle_scores
+    if out.empty:
         out = features.copy()
-        out["anomaly_score"] = np.nan
+        out["anomaly_score"] = pd.NA
         out["flag"] = "ok"
         out["top_features"] = ""
         return out
 
-    ref = reference if reference is not None and not reference.empty else features
-    med = ref[cols].median(numeric_only=True)
-    std = ref[cols].std(numeric_only=True).replace(0, np.nan)
-
-    out = features.copy()
-    scores = []
-    tops = []
-    for _, row in features.iterrows():
-        z = ((row[cols] - med) / std).abs()
-        z = z.replace([np.inf, -np.inf], np.nan).fillna(0.0)
-        score = float(np.clip(z.mean() / 3.0, 0.0, 1.0)) if len(z) else 0.0
-        scores.append(score)
-        if len(z):
-            top = z.sort_values(ascending=False).head(3)
-            tops.append(", ".join(f"{k}={v:.2g}" for k, v in top.items()))
-        else:
-            tops.append("")
-
-    out["anomaly_score"] = scores
-    out["flag"] = [
-        "alert" if s >= FLAG_ALERT else ("watch" if s >= FLAG_WATCH else "ok")
-        for s in scores
-    ]
-    out["top_features"] = tops
+    # Historical column names for downstream compatibility.
+    out = out.copy()
+    out["anomaly_score"] = out["indicator_score"]
+    out["flag"] = out["indicator_flag"]
+    out["top_features"] = out["indicator_top"]
     return out

@@ -15,6 +15,7 @@ from cyclediag.analysis.indicator_screen import (
 )
 from cyclediag.features.lges_extract import LgesExtractConfig, extract_lges_features_table
 from cyclediag.io.cycler_csv import ColumnMap, load_cycler_csv, normalize_cycler_dataframe
+from cyclediag.models.indicator_scoring import score_indicators, top_scored_indicators
 from cyclediag.models.predict import predict_features
 
 
@@ -46,27 +47,76 @@ def extract_features(
     )
 
 
+def score_dataframe(
+    features: pd.DataFrame,
+    *,
+    reference: pd.DataFrame | None = None,
+    raw_df: pd.DataFrame | None = None,
+    routine_only: bool = True,
+    top_n: int = 15,
+) -> dict[str, Any]:
+    """Indicator scoring track — *how much* each indicator moved, not *why*.
+
+    Separate from physicochemical causal diagnosis (``cyclediag.diagnosis`` /
+    ``diagnose_feature_table``). Default ``routine_only=True`` excludes RPT /
+    post-RPT / DC-IR spikes from the score.
+    """
+    result = score_indicators(
+        features,
+        reference=reference,
+        raw_df=raw_df,
+        routine_only=routine_only,
+        grain="both",
+    )
+    return {
+        "score_layer": "indicator",
+        "causal_track": "separate",
+        "cycle_scores": result.cycle_scores,
+        "cycle_contributions": result.cycle_contributions,
+        "indicator_summary": result.indicator_summary,
+        "top_indicators": top_scored_indicators(result.indicator_summary, n=top_n),
+        "meta": result.meta,
+    }
+
+
 def diagnose_dataframe(
     features: pd.DataFrame,
     *,
     reference: pd.DataFrame | None = None,
     with_screen: bool = True,
+    routine_only: bool = True,
 ) -> dict[str, Any]:
-    """Score features and optionally run indicator / dQ/dV screens."""
-    scored = predict_features(features, reference=reference)
+    """Indicator scoring + optional descriptive screens.
+
+    Name kept for compatibility. This is **not** the causal diagnosis track
+    (LLI/LAM mode scores) — that lives in ``cyclediag.diagnosis`` and is
+    invoked from extract via ``with_diagnosis=True``.
+    """
+    scored = predict_features(
+        features, reference=reference, routine_only=routine_only,
+    )
+    indicator = score_dataframe(
+        features, reference=reference, routine_only=routine_only,
+    )
     out: dict[str, Any] = {
         "features": features,
         "scored": scored,
+        "score_layer": "indicator",
+        "indicator_summary": indicator["indicator_summary"],
+        "indicator_top": indicator["top_indicators"],
         "indicator_screen": pd.DataFrame(),
-        "top_indicators": pd.DataFrame(),
+        "top_indicators": indicator["top_indicators"],
         "dqdv_screen": pd.DataFrame(),
         "top_dqdv": pd.DataFrame(),
         "compare_cells": pd.DataFrame(),
+        "meta": indicator["meta"],
     }
     if with_screen and features is not None and not features.empty:
         screened = screen_indicators_by_file(features)
         out["indicator_screen"] = screened
-        out["top_indicators"] = top_problem_indicators(screened)
+        # Prefer scored summary when available; fall back to descriptive screen.
+        if out["top_indicators"] is None or out["top_indicators"].empty:
+            out["top_indicators"] = top_problem_indicators(screened)
         dq = screen_dqdv_by_file(features)
         out["dqdv_screen"] = dq
         out["top_dqdv"] = top_dqdv_problems(dq)

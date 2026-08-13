@@ -630,6 +630,14 @@ def extract_lges_features_table(
             cfg.baseline_cycle = int(enrich_meta["baseline_cycle_auto"])
 
     table = apply_lges_delta_features(table, baseline_cycle=cfg.baseline_cycle)
+
+    # Protocol flags for the indicator-scoring track (routine vs RPT/DC-IR).
+    # Causal diagnosis remains a separate optional step below.
+    if raw_df is not None and not table.empty:
+        from cyclediag.models.indicator_scoring import attach_protocol_flags
+
+        table = attach_protocol_flags(table, raw_df)
+
     if cfg.with_diagnosis:
         from cyclediag.diagnosis import diagnose_feature_table
 
