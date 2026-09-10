@@ -10,6 +10,8 @@
 | `run_r60_ec2_arm_compare.py` | EoC dchgR 60s vs Ec2 arm compare + SoHQ BP markers |
 | `run_r60_regime_presentation.py` / `run_r60_profile_growth_plots.py` | R60 regime / V-window growth presentation |
 | `run_dvdq_soc0_arm_plots.py` | dV/dQ @ SOC0 arm 1×2 (inc vs t1) |
+| `build_dvdq_soc0_slides.py` | matplotlib PNG 장표 |
+| `origin_ppt` | **dVdQ@SOC0 Origin OLE PPT** (HPPC와 같은 OLE 붙여넣기) |
 | `run_sj1300_vq_loop_square.py` | Charge+discharge V–Q loop + SoHQ (1500×500) |
 | `run_vq_r60_1x3.py` / `run_vq_early50_zoom.py` | V–Q + R60 1×3 / early ±5 min zoom |
 | `run_lges_lifetime_ranking.py` | LGES indicators vs tagged lifetime Spearman ranking |
@@ -26,6 +28,10 @@
 | `compare_sg_window_peaks.py` 등 | SG/neighbor/range peak 비교 유틸 |
 
 ```bash
+# Origin OLE 장표 (Origin 2025 + PowerPoint 데스크톱)
+python -m cyclediag.origin_ppt
+python -m cyclediag.origin_ppt --skip-profiles
+
 # 사이클 지표 점검 → Excel + Inspect CSV + overview PNG (2×3)
 python cyclediag/tools/export_cycle_indicators.py --input cell_raw.csv
 python run_export_cycle_indicators.py --input C:/data/folder --out-dir C:/tmp

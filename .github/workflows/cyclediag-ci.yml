@@ -38,6 +38,7 @@ jobs:
           cyclediag/tests/test_si_gr_mechanism.py
           cyclediag/tests/test_cliff_metrics.py
           cyclediag/tests/test_curve_fit.py
+          cyclediag/tests/test_origin_ppt_data.py
 
   sohq-bp-presentation:
     runs-on: ubuntu-latest

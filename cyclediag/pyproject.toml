@@ -19,6 +19,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=7.0"]
+origin = ["python-pptx>=1.0", "pywin32"]
 
 [project.scripts]
 cyclediag = "cyclediag.__main__:main"
@@ -33,6 +34,7 @@ packages = [
   "cyclediag.features",
   "cyclediag.io",
   "cyclediag.models",
+  "cyclediag.origin_ppt",
   "cyclediag.tools",
 ]
 

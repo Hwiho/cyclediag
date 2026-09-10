@@ -77,13 +77,28 @@ Outputs per cell: `*_sohq_dsohq_regimes.png`, `*_BP1_BP2_VQ_dQdV.png`, regime sl
 **Cloud / CI:** GitHub Actions workflow `cyclediag-ci` runs pytest + this presentation (artifact upload).  
 Cursor Cloud Agents: clone this repo → install via `.cursor/environment.json` → run the same command.
 
+## dVdQ@SOC0 Origin OLE PowerPoint
+
+HPPC와 같이 Origin 그래프를 PowerPoint에 OLE로 붙여 넣습니다. Origin 2025 + 데스크톱 PowerPoint가 필요합니다.
+
+```bash
+pip install -e "./cyclediag[origin]"
+python -m cyclediag.origin_ppt
+python -m cyclediag.origin_ppt --skip-profiles
+python cyclediag/tools/build_dvdq_soc0_slides.py --skip-raw
+```
+
+출력: `example/output/dvdq_soc0_slides/`
+
 ## Layout
 
 ```
 cyclediag/          # package (diagnosis params under diagnosis/config/)
+  origin_ppt/       # dVdQ@SOC0 Origin OLE deck
 example/fixtures/   # DOE raw.csv + halfcell/ BOL OCP (Git LFS)
 .cursor/            # Cloud Agent environment
 run_cyclediag.py
+run_export_cycle_indicators.py
 ```
 
 `pne_studio2` Diagnosis 탭 · rest_voltage는 이 패키지를 사용합니다.
