@@ -117,3 +117,63 @@ def add_summary_table(path: Path) -> None:
     tmp = path.with_suffix(".tmp.pptx")
     prs.save(tmp)
     tmp.replace(path)
+
+
+def add_last_value_table(path: Path, tagged: dict, metrics) -> None:
+    """Last tagged-cycle value per cell for the selected overlay metrics."""
+    from .config import OVERLAY_CELLS
+
+    headers = ["Arm", "Cell", "t#"] + [m.column for m in metrics]
+    rows: list[tuple[str, ...]] = [tuple(headers)]
+    for arm, cells in OVERLAY_CELLS.items():
+        df = tagged.get(arm)
+        if df is None:
+            continue
+        for cell in cells:
+            g = df[df["cell_id"] == cell]
+            if g.empty:
+                continue
+            last = g.sort_values("tagged_cycle").iloc[-1]
+            tidx = last.get("tagged_cycle", "")
+            values = [arm, str(cell).replace("M01", ""), str(int(tidx) if pd.notna(tidx) else "")]
+            for item in metrics:
+                val = last[item.column] if item.column in last.index else None
+                if val is None or pd.isna(val):
+                    values.append("—")
+                else:
+                    number = float(val)
+                    values.append(f"{number:.4g}" if abs(number) < 1000 else f"{number:.1f}")
+            rows.append(tuple(values))
+
+    prs = Presentation(str(path))
+    target = None
+    for slide in prs.slides:
+        title = _slide_title(slide)
+        if "말기" in title or "last" in title.casefold() or "요약" in title:
+            target = slide
+            break
+    if target is None:
+        target = prs.slides[-1]
+    n_col = len(headers)
+    left = _pt(BODY_LEFT)
+    top = _pt(BODY_TOP)
+    width = _pt(BODY_WIDTH)
+    height = _pt(min(280.0, (SLIDE_H - BODY_TOP - 30)))
+    table = target.shapes.add_table(len(rows), n_col, left, top, width, height).table
+    first_w = 0.12 + 0.12 + 0.08
+    rest = (1.0 - first_w) / max(n_col - 3, 1)
+    widths = [0.12, 0.12, 0.08] + [rest] * (n_col - 3)
+    for i, frac in enumerate(widths):
+        table.columns[i].width = _pt(BODY_WIDTH * frac)
+    for r, row in enumerate(rows):
+        for c, val in enumerate(row):
+            cell = table.cell(r, c)
+            if r == 0:
+                _write(cell, val, size=9, bold=True, color=WHITE)
+                _fill(cell, "15325B")
+            else:
+                _write(cell, val, size=10, bold=False, color=INK)
+                _fill(cell, "F4F7FA" if r % 2 else "FFFFFF")
+    tmp = path.with_suffix(".tmp.pptx")
+    prs.save(tmp)
+    tmp.replace(path)

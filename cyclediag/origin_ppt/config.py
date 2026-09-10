@@ -14,8 +14,18 @@ _AX_CANDIDATES = (
 AX_TEMPLATE = next((p for p in _AX_CANDIDATES if p.exists()), _AX_CANDIDATES[-1])
 CACHE_DIR = PACKAGE / "cache"
 WORK_OPJU = CACHE_DIR / "work.opju"
-DEFAULT_OUT = ROOT / "example" / "output" / "dvdq_soc0_slides" / "dVdQ_SOC0_SJ900_SJ1300_ole.pptx"
 XY_CACHE = ROOT / "example" / "output" / "dvdq_soc0_slides" / "origin_xy"
+
+
+def default_out(deck_id: str, *, backend: str = "origin") -> Path:
+    suffix = "ole" if backend == "origin" else "mpl"
+    folder = ROOT / "example" / "output" / f"{deck_id}_slides"
+    if deck_id == "dvdq_soc0" and backend == "origin":
+        return folder / "dVdQ_SOC0_SJ900_SJ1300_ole.pptx"
+    return folder / f"{deck_id}_SJ900_SJ1300_{suffix}.pptx"
+
+
+DEFAULT_OUT = default_out("dvdq_soc0")
 
 ARM_CSV = ROOT / "example" / "output" / "crossover_vs_sohq" / "present_1600x1000" / "dvdq_soc0_arm"
 TAGGED = {

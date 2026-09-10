@@ -39,6 +39,11 @@ python run_cyclediag.py diagnose --input raw.csv --out-dir out/diag
 python run_cyclediag.py predict --features features.csv --out scores.csv
 python run_cyclediag.py report --input-dir path/to/folder
 python run_cyclediag.py peaks export --input raw.csv --out-dir example/docs/features --cell-id Cell01
+
+# lifetime-indicator PowerPoint (named decks or any tagged columns)
+python -m cyclediag.origin_ppt --list-decks
+python -m cyclediag.origin_ppt --deck sohq --backend matplotlib
+python -m cyclediag.origin_ppt --metrics SoHQ,CE,EoC_dchgR_60s --backend matplotlib
 ```
 
 ## Layout

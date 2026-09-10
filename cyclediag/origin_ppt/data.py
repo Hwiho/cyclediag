@@ -222,3 +222,25 @@ def overlay_metrics() -> tuple[tuple[str, str, str], ...]:
         ("dchg_Q_cliff_abs", "Q_cliff_abs (Ah)", "cliff"),
         ("dchg_dVdQ_at_Qabs_5", "|dV/dQ| at Qmax-5 Ah (V/Ah)", "qabs5"),
     )
+
+
+def list_metric_columns(tagged: dict) -> list[str]:
+    """Numeric tagged columns with registry role, for ``--list-metrics``."""
+    from cyclediag.features.indicator_registry import ROLE_INDICATOR, ROLE_TARGET, role_of
+
+    cols: dict[str, str] = {}
+    for df in tagged.values():
+        for col in df.columns:
+            name = str(col)
+            if name in cols:
+                continue
+            if not pd.api.types.is_numeric_dtype(df[col]):
+                continue
+            cols[name] = role_of(name)
+    wanted = {ROLE_INDICATOR, ROLE_TARGET}
+    lines = []
+    for name in sorted(cols):
+        if cols[name] not in wanted:
+            continue
+        lines.append(f"{name:<36} {cols[name]}")
+    return lines

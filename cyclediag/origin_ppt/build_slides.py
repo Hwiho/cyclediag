@@ -1,6 +1,7 @@
-"""Build dVdQ@SOC0 Origin OLE PowerPoint.
+"""Build Origin OLE PowerPoint from a named indicator deck.
 
-    python -m cyclediag.origin_ppt --out example/output/dvdq_soc0_slides/dVdQ_SOC0_SJ900_SJ1300_ole.pptx
+    python -m cyclediag.origin_ppt --deck sohq
+    python -m cyclediag.origin_ppt --metrics SoHQ,CE,EoC_dchgR_60s
 
 Needs Origin 2025, originpro, pywin32, pandas, python-pptx.
 Shell is the AX 16:9 template when present; graphs are Origin OLE (origin95.graph).
@@ -8,50 +9,32 @@ Shell is the AX 16:9 template when present; graphs are Origin OLE (origin95.grap
 
 from __future__ import annotations
 
-import argparse
 import shutil
 import subprocess
 import time
 from pathlib import Path
 
-import win32com.client
-
 from .config import (
-    ARM_CELLS,
     AX_TEMPLATE,
     BODY_HEIGHT,
     BODY_LEFT,
     BODY_TOP,
     BODY_WIDTH,
-    DEFAULT_OUT,
     GRAPH_GAP,
     MSO_EMBEDDED_OLE_OBJECT,
     MSO_FALSE,
     MSO_TEXT_HORIZONTAL,
     MSO_TRUE,
     ORIGIN_OLE_PROG_ID,
-    OVERLAY_CELLS,
-    PANEL_ORDER,
     PP_LAYOUT_BLANK,
     PP_PASTE_OLE_OBJECT,
     PP_SAVE_AS_OPENXML,
     SLIDE_H,
     SLIDE_W,
 )
-from .data import (
-    arm_profile_cell,
-    load_arm_tables,
-    load_tagged,
-    nice_inc,
-    overlay_metric_series,
-    overlay_metrics,
-    profile_series,
-    series_for_cells,
-    xlim_of,
-    ylim_of,
-)
+from .decks import all_slides, slides_for
 from .origin_graphs import OriginSession
-from .tables import add_summary_table
+from .tables import add_last_value_table, add_summary_table
 
 
 def _graph_box(n: int, index: int, *, rows: int | None = None) -> tuple[float, float, float, float]:
@@ -67,181 +50,6 @@ def _graph_box(n: int, index: int, *, rows: int | None = None) -> tuple[float, f
     gh = (BODY_HEIGHT - GRAPH_GAP * max(rows - 1, 0)) / rows
     r, c = divmod(index, cols)
     return BODY_LEFT + c * (gw + GRAPH_GAP), BODY_TOP + r * (gh + GRAPH_GAP), gw, gh
-
-
-def _spec(series, *, x_title, y_title, ole_name, graph_width, graph_height, legend_pt=14.0) -> dict:
-    xl = xlim_of(series)
-    yl = ylim_of(series)
-    return {
-        "series": series,
-        "x_title": x_title,
-        "y_title": y_title,
-        "x_limits": xl,
-        "y_limits": yl,
-        "x_inc": nice_inc(xl[1] - xl[0]),
-        "y_inc": nice_inc(yl[1] - yl[0]),
-        "ole_name": ole_name,
-        "graph_width": graph_width,
-        "graph_height": graph_height,
-        "legend_pt": legend_pt,
-    }
-
-
-def _share_ylim(graphs: list[dict]) -> None:
-    lo = min(g["y_limits"][0] for g in graphs)
-    hi = max(g["y_limits"][1] for g in graphs)
-    inc = nice_inc(hi - lo)
-    for g in graphs:
-        g["y_limits"] = (lo, hi)
-        g["y_inc"] = inc
-
-
-def all_slides(arm_tables: dict, tagged: dict, *, refresh_profiles: bool, skip_profiles: bool) -> list[dict]:
-    slides: list[dict] = [
-        {
-            "kind": "cover",
-            "title": "dV/dQ @ SOC0 — Si/Gr 열화",
-            "subtitle": "SJ900 vs SJ1300 · tagged routine · Origin OLE",
-        },
-        {
-            "kind": "text",
-            "title": "지표 정의",
-            "subtitle": "방전 끝단(저전압 Si 꼬리). 절대 Ah와 SOC 정규화를 섞지 말 것.",
-            "body": (
-                "dchg_dVdQ_SOC0  방전 종료점 |dV/dQ|. SOC% 정규화라 H1/H2 단독 판별은 약함.\r"
-                "SOC0/mid  끝단 ÷ 중반(SOC 40-60%). 끝단만 뾰족해지면 상승 → H1 방향.\r"
-                "Q_cliff_abs  cliff 시작 절대 Ah ≈ Gr 구간 길이. H1이면 거의 고정, H2면 감소.\r"
-                "Qmax-5 Ah  끝에서 5 Ah 고정점의 |dV/dQ|. SOC로 다시 나누지 않음."
-            ),
-        },
-    ]
-
-    if not skip_profiles:
-        pair = []
-        for arm in ("SJ900", "SJ1300"):
-            cell = arm_profile_cell(arm)
-            series = profile_series(cell, ycol="dVdQ", xcol="Q_dvdq", step=50, refresh=refresh_profiles)
-            pair.append(
-                _spec(
-                    series,
-                    x_title="Q (Ah)",
-                    y_title="dV/dQ (V/Ah)",
-                    ole_name=f"Graph_profile_{arm}",
-                    graph_width=420,
-                    graph_height=300,
-                    legend_pt=10.0,
-                )
-            )
-        _share_ylim(pair)
-        slides.append(
-            {
-                "kind": "graphs",
-                "layout": "pair",
-                "title": "dV/dQ profile every 50 tagged (dots = SOC0)",
-                "subtitle": "left SJ900 Ch022 · right SJ1300 Ch012 · signed dV/dQ · shared y",
-                "graphs": pair,
-            }
-        )
-
-    soc0_pair = []
-    inc_pair = []
-    for arm in ("SJ900", "SJ1300"):
-        cells = ARM_CELLS[arm]
-        soc0 = series_for_cells(arm_tables, cells, xcol="tagged_cycle", ycol="dchg_dVdQ_SOC0")
-        inc = series_for_cells(arm_tables, cells, xcol="tagged_cycle", ycol="SOC0_inc_pct_vs_t1", do_smooth=True)
-        soc0_pair.append(
-            _spec(soc0, x_title="Tagged cycle #", y_title="dVdQ_SOC0 (V/Ah)", ole_name=f"Graph_SOC0_{arm}", graph_width=420, graph_height=300)
-        )
-        inc_pair.append(
-            _spec(inc, x_title="Tagged cycle #", y_title="inc% vs t1", ole_name=f"Graph_inc_{arm}", graph_width=420, graph_height=300)
-        )
-    _share_ylim(soc0_pair)
-    _share_ylim(inc_pair)
-    slides.append(
-        {
-            "kind": "graphs",
-            "layout": "pair",
-            "title": "dVdQ @ SOC0 vs tagged cycle",
-            "subtitle": "SJ900 Ch022/024 · SJ1300 Ch010/011/012 · signed · shared y",
-            "graphs": soc0_pair,
-        }
-    )
-    slides.append(
-        {
-            "kind": "graphs",
-            "layout": "pair",
-            "title": "SOC0 increase % vs tagged cycle 1",
-            "subtitle": "same cells · shared y · SoHQ breakpoints are not drawn (edit in Origin if needed)",
-            "graphs": inc_pair,
-        }
-    )
-
-    for arm in ("SJ900", "SJ1300"):
-        df = tagged[arm]
-        cells = OVERLAY_CELLS[arm]
-        graphs = []
-        for col, ylab, tag in overlay_metrics():
-            series = overlay_metric_series(df, cells, col)
-            graphs.append(
-                _spec(
-                    series,
-                    x_title="Tagged cycle #",
-                    y_title=ylab,
-                    ole_name=f"Graph_{arm}_{tag}",
-                    graph_width=330,
-                    graph_height=200,
-                    legend_pt=12.0,
-                )
-            )
-        slides.append(
-            {
-                "kind": "graphs",
-                "layout": "quad",
-                "title": f"{arm} family overlay (tagged routine)",
-                "subtitle": "SOC0 · SOC0/mid · Q_cliff_abs · |dV/dQ| at Qmax-5 Ah",
-                "graphs": graphs,
-            }
-        )
-
-    if not skip_profiles:
-        for arm, cell in PANEL_ORDER:
-            vq = profile_series(cell, ycol="V", xcol="Q_v", step=50, refresh=refresh_profiles)
-            dvdq = profile_series(cell, ycol="dVdQ", xcol="Q_dvdq", step=50, refresh=refresh_profiles)
-            traj = series_for_cells(
-                {cell: arm_tables[cell]} if cell in arm_tables else {},
-                (cell,),
-                xcol="tagged_cycle",
-                ycol="dchg_dVdQ_SOC0",
-                abs_y=True,
-            )
-            if cell not in arm_tables and arm in tagged:
-                g = tagged[arm]
-                traj = overlay_metric_series(g, (cell,), "dchg_dVdQ_SOC0")
-                for row in traj:
-                    row["y"] = [abs(v) for v in row["y"]]
-            graphs = [
-                _spec(vq, x_title="Q (Ah)", y_title="V (V)", ole_name=f"Graph_{cell}_VQ", graph_width=268, graph_height=201, legend_pt=9.0),
-                _spec(dvdq, x_title="Q (Ah)", y_title="dV/dQ (V/Ah)", ole_name=f"Graph_{cell}_dVdQ", graph_width=268, graph_height=201, legend_pt=9.0),
-                _spec(traj, x_title="Tagged cycle #", y_title="|dV/dQ| @ SOC0 (V/Ah)", ole_name=f"Graph_{cell}_SOC0", graph_width=268, graph_height=201),
-            ]
-            slides.append(
-                {
-                    "kind": "graphs",
-                    "layout": "triple",
-                    "title": f"{arm} {cell} — V-Q / dV/dQ / |dV/dQ|@SOC0",
-                    "subtitle": "profiles every 50 tagged · SOC0 trajectory is |dV/dQ| · double-click graph to edit in Origin",
-                    "graphs": graphs,
-                }
-            )
-
-    slides.append(
-        {
-            "kind": "summary",
-            "title": "당시 판정 요약",
-            "subtitle": "si_gr_mechanism/mechanism_summary.csv · 말기 RPT · fit_s/o/dR는 null",
-        }
-    )
-    return slides
 
 
 def _close_target_ppt(powerpoint, out_ppt: Path) -> None:
@@ -334,12 +142,28 @@ def _blank_header(slide, title: str, subtitle: str) -> None:
     _set_text(note, subtitle, size=10, bold=False)
 
 
-def build(out_ppt: Path, *, refresh_profiles: bool = False, skip_profiles: bool = False) -> None:
+def build(
+    out_ppt: Path,
+    *,
+    deck: str = "dvdq_soc0",
+    metrics: tuple[str, ...] | None = None,
+    refresh_profiles: bool = False,
+    skip_profiles: bool = False,
+) -> None:
+    import win32com.client
+
+    from .data import load_tagged
+
     started = time.perf_counter()
-    arm_tables = load_arm_tables()
     tagged = load_tagged()
-    slides = all_slides(arm_tables, tagged, refresh_profiles=refresh_profiles, skip_profiles=skip_profiles)
-    print(f"Building {len(slides)} slides -> {out_ppt}", flush=True)
+    deck_spec, slides = slides_for(
+        deck,
+        tagged=tagged,
+        refresh_profiles=refresh_profiles,
+        skip_profiles=skip_profiles,
+        metrics=metrics,
+    )
+    print(f"Building {len(slides)} slides [{deck_spec.id}] -> {out_ppt}", flush=True)
     out_ppt.parent.mkdir(parents=True, exist_ok=True)
 
     origin = OriginSession()
@@ -400,15 +224,8 @@ def build(out_ppt: Path, *, refresh_profiles: bool = False, skip_profiles: bool 
     time.sleep(0.4)
     subprocess.run(["taskkill", "/IM", "POWERPNT.EXE", "/F"], capture_output=True, check=False)
     time.sleep(0.6)
-    add_summary_table(out_ppt)
+    if deck_spec.summary == "mechanism":
+        add_summary_table(out_ppt)
+    elif deck_spec.summary == "last_values":
+        add_last_value_table(out_ppt, tagged, deck_spec.metrics)
     print(f"Done in {time.perf_counter() - started:.1f}s", flush=True)
-
-
-def main() -> int:
-    parser = argparse.ArgumentParser(description="Build dVdQ@SOC0 Origin OLE PowerPoint")
-    parser.add_argument("--out", type=Path, default=DEFAULT_OUT)
-    parser.add_argument("--refresh-profiles", action="store_true")
-    parser.add_argument("--skip-profiles", action="store_true", help="Skip V-Q / dV/dQ curve OLE (faster)")
-    args = parser.parse_args()
-    build(args.out.resolve(), refresh_profiles=args.refresh_profiles, skip_profiles=args.skip_profiles)
-    return 0
